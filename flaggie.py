@@ -5,7 +5,7 @@
 
 PV = '0.1'
 
-import sys
+import sys, os.path
 from optparse import OptionParser
 import portage
 from portage.dbapi.dep_expand import dep_expand
@@ -39,10 +39,54 @@ Actions:''')
 class ParserError(Exception):
 	pass
 
+class FlagCache:
+	def __init__(self, dbapi):
+		self.dbapi = dbapi
+		self.cache = {}
+
+	def glob(self):
+		if None not in self.cache:
+			flags = set()
+			for r in self.dbapi.porttrees:
+				try:
+					f = open(os.path.join(r, 'profiles', 'use.desc'), 'r')
+				except IOError:
+					pass
+				else:
+					for l in f:
+						ll = l.split(' - ', 1)
+						if len(ll) > 1:
+							flags.add(ll[0])
+					f.close()
+			self.cache[None] = flags
+			
+		return self.cache[None]
+
+	def __getitem__(self, k):
+		if k not in self.cache:
+			flags = set()
+			# get widest match possible to make sure we do not complain without a reason
+			for p in self.dbapi.xmatch('match-all', k):
+				flags |= set(self.dbapi.aux_get(p, ('IUSE',))[0].split())
+			self.cache[k] = flags
+		return self.cache[k]
+
 class Action:
 	class _argopt:
 		def __init__(self, arg, key):
 			self.arg = arg if arg != '' else None
+
+		def check_validity(self, pkgs, flagcache):
+			if self.arg is None:
+				return True
+			if not pkgs:
+				return self.arg in flagcache.glob()
+
+			for p in pkgs:
+				if self.arg in flagcache[p]:
+					return True
+				
+			return False
 
 	class _argreq(_argopt):
 		def __init__(self, arg, key):
@@ -79,13 +123,16 @@ class Action:
 		else:
 			raise cls.NotAnAction
 
-def parse_actions(args):
-	out = [([], [])]
-	i = 1
-
+def get_dbapi():
 	ptrees = portage.create_trees()
 	# XXX: support ${ROOT}
 	dbapi = ptrees['/']['porttree'].dbapi
+
+	return dbapi
+
+def parse_actions(args, dbapi):
+	out = [([], [])]
+	i = 1
 
 	for a in args:
 		try:
@@ -122,14 +169,22 @@ def main(argv):
 			help = 'print help message and exit')
 	(opts, args) = opt.parse_args(argv[1:])
 
+	dbapi = get_dbapi()
 	try:
-		act = parse_actions(args)
+		act = parse_actions(args, dbapi)
 	except ParserError as e:
 		print(e)
 		return 1
 
 	if not act[-1][1]:
 		print_help(None, '', '', opt)
+
+	flagcache = FlagCache(dbapi)
+	for (pkgs, actions) in act:
+		for a in actions:
+			if not a.check_validity(pkgs, flagcache):
+				print('Warning: %s seems to be incorrect flag for %s' % (a.arg, pkgs))
+	
 	print(act)
 
 	return 0
