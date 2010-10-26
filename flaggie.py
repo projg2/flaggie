@@ -5,7 +5,7 @@
 
 PV = '0.1'
 
-import sys, os.path
+import codecs, glob, sys, os.path
 from optparse import OptionParser
 import portage
 from portage.dbapi.dep_expand import dep_expand
@@ -38,6 +38,48 @@ Actions:''')
 
 class ParserError(Exception):
 	pass
+
+class PackageFileSet:
+	class PackageFile(list):
+		class Whitespace:
+			def __init__(self, l):
+				self.data = l
+
+			def toString(self):
+				return self.data
+
+		def __init__(self, path):
+			self.modified = False
+			self.path = path
+			f = codecs.open(path, 'r', 'utf8')
+			for l in f:
+				self.append(self.Whitespace(l))
+			f.close()
+
+		def write(self):
+			if not self.modified:
+				return
+
+			f = codecs.open(self.path, 'w', 'utf8')
+			for l in self:
+				f.write(l.toString())
+			f.close()
+
+			self.modified = False
+
+	def __init__(self, path):
+		self.files = []
+		if os.path.isdir(path):
+			files = sorted(glob.glob(os.path.join(path, '*')))
+		else:
+			files = [path]
+
+		for path in files:
+			self.files.append(self.PackageFile(path))
+
+	def write(self):
+		for f in self.files:
+			f.write()
 
 class FlagCache:
 	def __init__(self, dbapi):
@@ -194,12 +236,17 @@ def main(argv):
 		else:
 			localpkgs |= set(pkgs)
 
+	# (only for testing, to be replaced by something more optimal)
+	puse = PackageFileSet('/etc/portage/package.use')
+
 	if globact:
 		act.remove(([], globact))
 		print('Warning: global actions are not supported yet')
 
 	if localpkgs:
 		print(act)
+
+	puse.write()
 
 	return 0
 
