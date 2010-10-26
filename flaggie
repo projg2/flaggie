@@ -202,9 +202,9 @@ def parse_actions(args, dbapi):
 
 def main(argv):
 	opt = OptionParser(
-			usage='%prog [options] <package-or-action> [...]',
+			usage='%prog [options] [<global-use-actions>] [<package> <actions>] [...]',
 			version='%%prog %s' % PV,
-			description='Easily manipulate USE flags in make.conf and package.use. Specify package names (or DEPEND atoms) and any amount of actions following it. The actions will be applied to the package prepending them. If more than one package is specified one after another (without actions between them), the following actions will be applied to all of them. The actions prepending the first package will be applied to the global USE flags.',
+			description='Easily manipulate USE flags in make.conf and package.use.',
 			add_help_option=False
 	)
 	opt.disable_interspersed_args()
