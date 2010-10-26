@@ -118,6 +118,20 @@ class PackageFileSet:
 		for f in self.files:
 			f.write()
 
+	def __iter__(self):
+		""" Iterate over package entries. """
+		for f in self.files:
+			for e in f:
+				if isinstance(e, f.PackageEntry):
+					yield e
+
+	def __getitem__(self, pkg):
+		""" Get package entries for a package in order of occurence
+			(the last declarations are effective). """
+		for e in self:
+			if e.package == pkg:
+				yield e
+
 class FlagCache:
 	def __init__(self, dbapi):
 		self.dbapi = dbapi
