@@ -67,7 +67,7 @@ class FlagCache:
 			flags = set()
 			# get widest match possible to make sure we do not complain without a reason
 			for p in self.dbapi.xmatch('match-all', k):
-				flags |= set(self.dbapi.aux_get(p, ('IUSE',))[0].split())
+				flags |= set([x.lstrip('+') for x in self.dbapi.aux_get(p, ('IUSE',))[0].split()])
 			self.cache[k] = flags
 		return self.cache[k]
 
