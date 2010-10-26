@@ -86,6 +86,7 @@ class FlagCache:
 		self.dbapi = dbapi
 		self.cache = {}
 
+	@property
 	def glob(self):
 		if None not in self.cache:
 			flags = set()
@@ -122,7 +123,7 @@ class Action:
 			if self.arg is None:
 				return True
 			if not pkgs:
-				return self.arg in flagcache.glob()
+				return self.arg in flagcache.glob
 
 			for p in pkgs:
 				if self.arg in flagcache[p]:
