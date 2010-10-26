@@ -48,12 +48,49 @@ class PackageFileSet:
 			def toString(self):
 				return self.data
 
+		class InvalidPackageEntry(Exception):
+			pass
+
+		class PackageEntry:
+			class PackageFlag:
+				def __init__(self, s):
+					if s[0] in ('-', '+'):
+						self.modifier = s[0]
+						self.name = s[1:]
+					else:
+						self.modifier = ''
+						self.name = s
+
+				def toString(self):
+					return '%s%s' % (self.modifier, self.name)
+
+			def __init__(self, l):
+				sl = l.split()
+				if not sl or sl[0].startswith('#'): # whitespace
+					raise self.InvalidPackageEntry()
+
+				self.as_str = l
+				self.modified = False
+				self.package = sl.pop(0)
+				self.flags = [self.PackageFlag(x) for x in sl]
+
+			def toString(self):
+				if not self.modified:
+					return self.as_str
+				else:
+					return ' '.join([self.package] + \
+							[x.toString() for x in self.flags]) + '\n'
+
 		def __init__(self, path):
 			self.modified = False
 			self.path = path
 			f = codecs.open(path, 'r', 'utf8')
 			for l in f:
-				self.append(self.Whitespace(l))
+				try:
+					e = self.PackageEntry(l)
+				except self.InvalidPackageEntry:
+					e = self.Whitespace(l)
+				self.append(e)
 			f.close()
 
 		def write(self):
