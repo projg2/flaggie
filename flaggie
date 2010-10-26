@@ -81,6 +81,18 @@ class PackageFileSet:
 					return ' '.join([self.package] + \
 							[x.toString() for x in self.flags]) + '\n'
 
+			def __iter__(self):
+				""" Iterate over all flags in the entry. """
+				for f in self.flags:
+					yield f
+
+			def __getitem__(self, flag):
+				""" Iterate over occurences of flag in the entry,
+					returning them in the order of occurence. """
+				for f in self.flags:
+					if f.name == flag:
+						yield f
+
 		def __init__(self, path):
 			self.modified = False
 			self.path = path
@@ -128,6 +140,16 @@ class PackageFileSet:
 	def __getitem__(self, pkg):
 		""" Get package entries for a package in order of occurence
 			(the last declarations are effective). """
+		if isinstance(pkg, tuple):
+			if len(pkg) == 2:
+				(pkg, flag) = pkg
+				for e in self[pkg]:
+					for f in e[flag]:
+						yield f
+				return
+			else:
+				raise KeyError('Invalid tuple passed as the key')
+
 		for e in self:
 			if e.package == pkg:
 				yield e
