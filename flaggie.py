@@ -180,12 +180,26 @@ def main(argv):
 		print_help(None, '', '', opt)
 
 	flagcache = FlagCache(dbapi)
+	globact = None
+	localpkgs = set()
 	for (pkgs, actions) in act:
 		for a in actions:
 			if not a.check_validity(pkgs, flagcache):
-				print('Warning: %s seems to be incorrect flag for %s' % (a.arg, pkgs))
-	
-	print(act)
+				if pkgs:
+					print('Warning: %s seems to be an incorrect flag for %s' % (a.arg, pkgs))
+				else:
+					print('Warning: %s seems to be an incorrect global flag' % a.arg)
+		if not pkgs:
+			globact = actions
+		else:
+			localpkgs |= set(pkgs)
+
+	if globact:
+		act.remove(([], globact))
+		print('Warning: global actions are not supported yet')
+
+	if localpkgs:
+		print(act)
 
 	return 0
 
