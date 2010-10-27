@@ -81,17 +81,26 @@ class PackageFileSet:
 					return ' '.join([self.package] + \
 							[x.toString() for x in self.flags]) + '\n'
 
+			class DynamicPackageFlags(object):
+				""" A class representing a set of flags in a package
+					entry. """
+				def __init__(self, flag = None, parent = None):
+					self.flag = flag
+					self.parent = parent
+
+				def __iter__(self):
+					for f in self.parent.flags:
+						if self.flag is None or self.flag == f.name:
+							yield f
+
 			def __iter__(self):
 				""" Iterate over all flags in the entry. """
-				for f in self.flags:
-					yield f
+				return self.DynamicPackageFlags(parent = self)
 
 			def __getitem__(self, flag):
 				""" Iterate over occurences of flag in the entry,
 					returning them in the order of occurence. """
-				for f in self.flags:
-					if f.name == flag:
-						yield f
+				return self.DynamicPackageFlags(flag, parent = self)
 
 		def __init__(self, path):
 			self.modified = False
@@ -130,29 +139,28 @@ class PackageFileSet:
 		for f in self.files:
 			f.write()
 
+	class DynamicPackageEntries(object):
+		""" A class representing a set of package.* file entries. """
+		def __init__(self, pkg = None, parent = None):
+			self.parent = parent
+			self.pkg = pkg
+
+		def __iter__(self):
+			for f in self.parent.files:
+				for e in f:
+					if not isinstance(e, f.PackageEntry):
+						continue
+					if self.pkg is None or e.package == self.pkg:
+						yield e
+
 	def __iter__(self):
 		""" Iterate over package entries. """
-		for f in self.files:
-			for e in f:
-				if isinstance(e, f.PackageEntry):
-					yield e
+		return self.DynamicPackageEntries(parent = self)
 
 	def __getitem__(self, pkg):
 		""" Get package entries for a package in order of occurence
 			(the last declarations are effective). """
-		if isinstance(pkg, tuple):
-			if len(pkg) == 2:
-				(pkg, flag) = pkg
-				for e in self[pkg]:
-					for f in e[flag]:
-						yield f
-				return
-			else:
-				raise KeyError('Invalid tuple passed as the key')
-
-		for e in self:
-			if e.package == pkg:
-				yield e
+		return self.DynamicPackageEntries(pkg, parent = self)
 
 class FlagCache:
 	def __init__(self, dbapi):
@@ -214,7 +222,18 @@ class Action(object):
 	class EffectiveEntryOp(_argreq):
 		def grab_effective_entries(self, f):
 			for p in self.pkgs:
-				yield list(f[(p, self.arg)])[-1]
+				entries = f[p]
+				found = False
+				for pe in reversed(list(entries)):
+					flags = pe[self.arg]
+					for f in reversed(list(flags)):
+						print((p, pe, f))
+						yield f
+						found = True
+						break
+					if found:
+						break
+
 
 	class enable(EffectiveEntryOp):
 		def __call__(self, puse):
