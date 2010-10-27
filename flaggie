@@ -41,12 +41,20 @@ class ParserError(Exception):
 
 class PackageFileSet:
 	class PackageFile(list):
-		class Whitespace:
+		class Whitespace(object):
 			def __init__(self, l):
 				self.data = l
 
 			def toString(self):
 				return self.data
+
+			@property
+			def modified(self):
+				return False
+
+			@modified.setter
+			def modified(self, newval):
+				pass
 
 		class InvalidPackageEntry(Exception):
 			pass
@@ -103,7 +111,6 @@ class PackageFileSet:
 				return self.DynamicPackageFlags(flag, parent = self)
 
 		def __init__(self, path):
-			self.modified = False
 			self.path = path
 			f = codecs.open(path, 'r', 'utf8')
 			for l in f:
@@ -114,6 +121,13 @@ class PackageFileSet:
 				self.append(e)
 			f.close()
 
+		@property
+		def modified(self):
+			for e in self:
+				if e.modified:
+					return True
+			return False
+
 		def write(self):
 			if not self.modified:
 				return
@@ -123,7 +137,8 @@ class PackageFileSet:
 				f.write(l.toString())
 			f.close()
 
-			self.modified = False
+			for e in self:
+				e.modified = False
 
 	def __init__(self, path):
 		self.files = []
@@ -220,15 +235,16 @@ class Action(object):
 			Action._argopt.__init__(*newargs, **kwargs)
 
 	class EffectiveEntryOp(_argreq):
-		def grab_effective_entries(self, f):
+		def grab_effective_entries(self, f, rw = False):
 			for p in self.pkgs:
 				entries = f[p]
 				found = False
 				for pe in reversed(list(entries)):
 					flags = pe[self.arg]
 					for f in reversed(list(flags)):
-						print((p, pe, f))
 						yield f
+						if rw:
+							pe.modified = True
 						found = True
 						break
 					if found:
@@ -237,11 +253,13 @@ class Action(object):
 
 	class enable(EffectiveEntryOp):
 		def __call__(self, puse):
-			for p in self.grab_effective_entries(puse):
-				print(p)
+			for p in self.grab_effective_entries(puse, rw = True):
+				p.modifier = ''
 
-	class disable(_argreq):
-		pass
+	class disable(EffectiveEntryOp):
+		def __call__(self, puse):
+			for p in self.grab_effective_entries(puse, rw = True):
+				p.modifier = '-'
 
 	class reset(_argopt):
 		pass
