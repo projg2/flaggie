@@ -187,7 +187,7 @@ class FlagCache:
 			self.cache[k] = flags
 		return self.cache[k]
 
-class Action:
+class Action(object):
 	class _argopt:
 		def __init__(self, arg, key):
 			self.arg = arg if arg != '' else None
@@ -232,8 +232,7 @@ class Action:
 	class NotAnAction(Exception):
 		pass
 
-	@classmethod
-	def get(cls, a):
+	def __new__(cls, a):
 		if a[0] in cls.mapping:
 			return cls.mapping[a[0]](a[1:], a[0])
 		else:
@@ -255,7 +254,7 @@ def parse_actions(args, dbapi):
 			if a == '':
 				continue
 			try:
-				out[-1][1].append(Action.get(a))
+				out[-1][1].append(Action(a))
 			except Action.NotAnAction:
 				if out[-1][1]:
 					out.append(([], []))
