@@ -188,13 +188,12 @@ class FlagCache:
 		return self.cache[k]
 
 class Action(object):
-	class _argopt:
+	class _argopt(object):
 		def __init__(self, arg, key, pkgs, flagcache = None):
+			self.arg = arg
 			if not arg:
-				self.arg = arg
-			else:
-				self.arg = None
 				return
+			self.pkgs = pkgs
 
 			if not pkgs:
 				if arg not in flagcache.glob:
@@ -212,8 +211,15 @@ class Action(object):
 			newargs = (self, arg) + args
 			Action._argopt.__init__(*newargs, **kwargs)
 
-	class enable(_argreq):
-		pass
+	class EffectiveEntryOp(_argreq):
+		def grab_effective_entries(self, f):
+			for p in self.pkgs:
+				yield list(f[(p, self.arg)])[-1]
+
+	class enable(EffectiveEntryOp):
+		def __call__(self, puse):
+			for p in self.grab_effective_entries(puse):
+				print(p)
 
 	class disable(_argreq):
 		pass
@@ -315,7 +321,9 @@ def main(argv):
 		print('Warning: global actions are not supported yet')
 
 	if localpkgs:
-		print(act)
+		for (pkgs, actions) in act:
+			for a in actions:
+				a(puse)
 
 	puse.write()
 
