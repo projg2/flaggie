@@ -189,26 +189,28 @@ class FlagCache:
 
 class Action(object):
 	class _argopt:
-		def __init__(self, arg, key):
-			self.arg = arg if arg != '' else None
+		def __init__(self, arg, key, pkgs, flagcache = None):
+			if not arg:
+				self.arg = arg
+			else:
+				self.arg = None
+				return
 
-		def check_validity(self, pkgs, flagcache):
-			if self.arg is None:
-				return True
 			if not pkgs:
-				return self.arg in flagcache.glob
-
-			for p in pkgs:
-				if self.arg in flagcache[p]:
-					return True
-				
-			return False
+				if arg not in flagcache.glob:
+					print('Warning: %s seems to be an incorrect global flag' % arg)
+			else:
+				for p in pkgs:
+					if arg not in flagcache[p]:
+						print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
 
 	class _argreq(_argopt):
-		def __init__(self, arg, key):
-			if arg == '':
-				raise ParserError, '%s action requires an argument!' % key
-			self.arg = arg
+		def __init__(self, arg, *args, **kwargs):
+			if not arg:
+				raise ParserError('%s action requires an argument!' % key)
+
+			newargs = (self, arg) + args
+			Action._argopt.__init__(*newargs, **kwargs)
 
 	class enable(_argreq):
 		pass
@@ -232,9 +234,11 @@ class Action(object):
 	class NotAnAction(Exception):
 		pass
 
-	def __new__(cls, a):
+	def __new__(cls, *args, **kwargs):
+		a = args[0]
 		if a[0] in cls.mapping:
-			return cls.mapping[a[0]](a[1:], a[0])
+			newargs = (a[1:], a[0]) + args[1:]
+			return cls.mapping[a[0]](*newargs, **kwargs)
 		else:
 			raise cls.NotAnAction
 
@@ -249,12 +253,13 @@ def parse_actions(args, dbapi):
 	out = [([], [])]
 	i = 1
 
+	flagcache = FlagCache(dbapi)
 	for a in args:
 		try:
 			if a == '':
 				continue
 			try:
-				out[-1][1].append(Action(a))
+				out[-1][1].append(Action(a, out[-1][0], flagcache = flagcache))
 			except Action.NotAnAction:
 				if out[-1][1]:
 					out.append(([], []))
@@ -294,16 +299,9 @@ def main(argv):
 	if not act[-1][1]:
 		print_help(None, '', '', opt)
 
-	flagcache = FlagCache(dbapi)
 	globact = None
 	localpkgs = set()
 	for (pkgs, actions) in act:
-		for a in actions:
-			if not a.check_validity(pkgs, flagcache):
-				if pkgs:
-					print('Warning: %s seems to be an incorrect flag for %s' % (a.arg, pkgs))
-				else:
-					print('Warning: %s seems to be an incorrect global flag' % a.arg)
 		if not pkgs:
 			globact = actions
 		else:
