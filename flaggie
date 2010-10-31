@@ -97,7 +97,7 @@ class PackageFileSet:
 					self.parent = parent
 
 				def __iter__(self):
-					for f in self.parent.flags:
+					for f in reversed(self.parent.flags):
 						if self.flag is None or self.flag == f.name:
 							yield f
 
@@ -161,8 +161,8 @@ class PackageFileSet:
 			self.pkg = pkg
 
 		def __iter__(self):
-			for f in self.parent.files:
-				for e in f:
+			for f in reversed(self.parent.files):
+				for e in reversed(f):
 					if not isinstance(e, f.PackageEntry):
 						continue
 					if self.pkg is None or e.package == self.pkg:
@@ -239,9 +239,9 @@ class Action(object):
 			for p in self.pkgs:
 				entries = f[p]
 				found = False
-				for pe in reversed(list(entries)):
+				for pe in entries:
 					flags = pe[self.arg]
-					for f in reversed(list(flags)):
+					for f in flags:
 						yield f
 						if rw:
 							pe.modified = True
