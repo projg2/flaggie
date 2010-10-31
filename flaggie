@@ -294,7 +294,10 @@ class Action(object):
 		def __call__(self, puse):
 			if not self.arg:
 				raise NotImplementedError('? is not implemented yet.')
-			pass
+			for p in self.pkgs:
+				l = [p]
+				l.extend([f.toString() for f in self.grab_effective_entries(p, puse)])
+				print(' '.join(l))
 
 	mapping = {
 		'+': enable,
