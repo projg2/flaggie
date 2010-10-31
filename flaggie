@@ -101,6 +101,13 @@ class PackageFileSet:
 						if self.flag is None or self.flag == f.name:
 							yield f
 
+			def append(self, flag):
+				if not isinstance(flag, self.PackageFlag):
+					flag = self.PackageFlag(flag)
+				self.flags.append(flag)
+				self.modified = True
+				return flag
+
 			def __iter__(self):
 				""" Iterate over all flags in the entry. """
 				return self.DynamicPackageFlags(parent = self)
@@ -167,6 +174,14 @@ class PackageFileSet:
 						continue
 					if self.pkg is None or e.package == self.pkg:
 						yield e
+
+	def append(self, pkg):
+		f = self.files[-1]
+		if not isinstance(pkg, f.PackageEntry):
+			pkg = f.PackageEntry(pkg)
+		pkg.modified = True
+		f.append(pkg)
+		return pkg
 
 	def __iter__(self):
 		""" Iterate over package entries. """
@@ -249,7 +264,15 @@ class Action(object):
 						break
 					if found:
 						break
-
+				else:
+					# No matching flag found. Try to append to the last
+					# package entry if there's one. Otherwise, append
+					# a new entry.
+					for pe in entries:
+						yield pe.append(self.arg)
+						break
+					else:
+						yield f.append(p).append(self.arg)
 
 	class enable(EffectiveEntryOp):
 		def __call__(self, puse):
