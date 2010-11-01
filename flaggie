@@ -119,6 +119,8 @@ class PackageFileSet:
 
 		def __init__(self, path):
 			self.path = path
+			# _modified is for when items are removed
+			self._modified = False
 			f = codecs.open(path, 'r', 'utf8')
 			for l in f:
 				try:
@@ -130,10 +132,16 @@ class PackageFileSet:
 
 		@property
 		def modified(self):
+			if self._modified:
+				return True
 			for e in self:
 				if e.modified:
 					return True
 			return False
+
+		@modified.setter
+		def modified(self, val):
+			self._modified = val
 
 		def write(self):
 			if not self.modified:
@@ -146,6 +154,7 @@ class PackageFileSet:
 
 			for e in self:
 				e.modified = False
+			self.modified = False
 
 	def __init__(self, path):
 		self.files = []
@@ -191,6 +200,17 @@ class PackageFileSet:
 		""" Get package entries for a package in order of occurence
 			(the last declarations are effective). """
 		return self.DynamicPackageEntries(pkg, parent = self)
+
+	def __delitem__(self, pkg):
+		""" Delete all package entries for a package. """
+		for f in self.files:
+			entries = []
+			for e in f:
+				if e.package == pkg:
+					entries.append(e)
+			for e in entries:
+				f.remove(e)
+			f.modified = True
 
 class FlagCache:
 	def __init__(self, dbapi):
@@ -287,7 +307,12 @@ class Action(object):
 					f.modifier = '-'
 
 	class reset(_argopt):
-		pass
+		def __call__(self, pkgs, puse):
+			for p in pkgs:
+				if '' in self.args:
+					del puse[p]
+				else:
+					raise NotImplementedError('%* is not implemented yet.')
 
 	class output(_argopt, EffectiveEntryOp):
 		def __call__(self, pkgs, puse):
