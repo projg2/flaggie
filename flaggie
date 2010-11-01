@@ -228,7 +228,7 @@ class FlagCache:
 class Action(object):
 	class _argopt(object):
 		def __init__(self, arg, key, flagcache = None):
-			self.args = [arg]
+			self.args = set([arg])
 
 #			if not pkgs:
 #				if arg not in flagcache.glob:
@@ -239,7 +239,10 @@ class Action(object):
 #						print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
 
 		def append(self, arg):
-			self.args.append(arg)
+			if isinstance(arg, self.__class__):
+				self.args.update(arg.args)
+			else:
+				self.args.add(arg)
 
 	class _argreq(_argopt):
 		def __init__(self, arg, key, *args, **kwargs):
@@ -292,7 +295,7 @@ class Action(object):
 				raise NotImplementedError('? is not implemented yet.')
 			for p in pkgs:
 				l = [p]
-				for arg in self.args:
+				for arg in sorted(self.args):
 					f = self.grab_effective_entry(p, arg, puse)
 					l.append(f.toString() if f else '?%s' % arg)
 
@@ -330,7 +333,13 @@ class ActionSet(list):
 
 	def append(self, item):
 		if isinstance(item, Action._argopt):
-			list.append(self, item)
+			for a in self:
+				if isinstance(item, a.__class__):
+					a.append(item)
+					break
+			else:
+				list.append(self, item)
+				self.sort(key = lambda x: Action.mapping.values().index(x.__class__))
 		elif isinstance(item, basestring):
 			self.pkgs.append(item)
 		else:
