@@ -227,19 +227,18 @@ class FlagCache:
 
 class Action(object):
 	class _argopt(object):
-		def __init__(self, arg, key, pkgs, flagcache = None):
+		def __init__(self, arg, key, flagcache = None):
 			self.arg = arg
 			if not arg:
 				return
-			self.pkgs = pkgs
 
-			if not pkgs:
-				if arg not in flagcache.glob:
-					print('Warning: %s seems to be an incorrect global flag' % arg)
-			else:
-				for p in pkgs:
-					if arg not in flagcache[p]:
-						print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
+#			if not pkgs:
+#				if arg not in flagcache.glob:
+#					print('Warning: %s seems to be an incorrect global flag' % arg)
+#			else:
+#				for p in pkgs:
+#					if arg not in flagcache[p]:
+#						print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
 
 	class _argreq(_argopt):
 		def __init__(self, arg, key, *args, **kwargs):
@@ -276,14 +275,14 @@ class Action(object):
 					yield f.append(p).append(self.arg)
 
 	class enable(_argreq, EffectiveEntryOp):
-		def __call__(self, puse):
-			for p in self.pkgs:
+		def __call__(self, pkgs, puse):
+			for p in pkgs:
 				for f in self.grab_effective_entries(p, puse, rw = True):
 					f.modifier = ''
 
 	class disable(_argreq, EffectiveEntryOp):
-		def __call__(self, puse):
-			for p in self.pkgs:
+		def __call__(self, pkgs, puse):
+			for p in pkgs:
 				for f in self.grab_effective_entries(p, puse, rw = True):
 					f.modifier = '-'
 
@@ -291,10 +290,10 @@ class Action(object):
 		pass
 
 	class output(_argopt, EffectiveEntryOp):
-		def __call__(self, puse):
+		def __call__(self, pkgs, puse):
 			if not self.arg:
 				raise NotImplementedError('? is not implemented yet.')
-			for p in self.pkgs:
+			for p in pkgs:
 				l = [p]
 				l.extend([f.toString() for f in self.grab_effective_entries(p, puse)])
 				print(' '.join(l))
@@ -324,29 +323,48 @@ def get_dbapi():
 
 	return dbapi
 
+class ActionSet(list):
+	def __init__(self):
+		list.__init__(self)
+		self.pkgs = []
+
+	def append(self, item):
+		if isinstance(item, Action._argopt):
+			list.append(self, item)
+		elif isinstance(item, basestring):
+			self.pkgs.append(item)
+		else:
+			raise ValueError('Incorrect type passed to ActionSet.append()')
+
 def parse_actions(args, dbapi):
-	out = [([], [])]
+	out = []
+	actset = ActionSet()
 
 	flagcache = FlagCache(dbapi)
 	for i, a in enumerate(args):
+		if not a:
+			continue
 		try:
-			if a == '':
-				continue
 			try:
-				out[-1][1].append(Action(a, out[-1][0], flagcache = flagcache))
+				a = Action(a, flagcache = flagcache)
 			except Action.NotAnAction:
-				if out[-1][1]:
-					out.append(([], []))
+				if actset:
+					out.append(actset)
+					actset = ActionSet()
 				try:
 					atom = dep_expand(a, mydb = dbapi, settings = portage.settings)
 				except portage.exception.AmbiguousPackageName as e:
 					raise ParserError, 'ambiguous package name, matching: %s' % e
 				if atom.startswith('null/'):
 					raise ParserError, 'unable to determine the category (mistyped name?)'
-				out[-1][0].append(atom)
+				actset.append(atom)
+			else:
+				actset.append(a)
 		except ParserError as e:
 			raise ParserError, 'At argv[%d]=\'%s\': %s' % (i, a, e)
 
+	if actset:
+		out.append(actset)
 	return out
 
 def main(argv):
@@ -368,28 +386,18 @@ def main(argv):
 		print(e)
 		return 1
 
-	if not act[-1][1]:
+	if not act:
 		print_help(None, '', '', opt)
-
-	globact = None
-	localpkgs = set()
-	for (pkgs, actions) in act:
-		if not pkgs:
-			globact = actions
-		else:
-			localpkgs |= set(pkgs)
 
 	# (only for testing, to be replaced by something more optimal)
 	puse = PackageFileSet('/etc/portage/package.use')
 
-	if globact:
-		act.remove(([], globact))
-		print('Warning: global actions are not supported yet')
-
-	if localpkgs:
-		for (pkgs, actions) in act:
-			for a in actions:
-				a(puse)
+	for actset in act:
+		if actset.pkgs:
+			for a in actset:
+				a(actset.pkgs, puse)
+		else:
+			raise NotImplementedError('Global actions are not supported yet')
 
 	puse.write()
 
