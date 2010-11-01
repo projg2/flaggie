@@ -228,9 +228,7 @@ class FlagCache:
 class Action(object):
 	class _argopt(object):
 		def __init__(self, arg, key, flagcache = None):
-			self.arg = arg
-			if not arg:
-				return
+			self.args = [arg]
 
 #			if not pkgs:
 #				if arg not in flagcache.glob:
@@ -239,6 +237,9 @@ class Action(object):
 #				for p in pkgs:
 #					if arg not in flagcache[p]:
 #						print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
+
+		def append(self, arg):
+			self.args.append(arg)
 
 	class _argreq(_argopt):
 		def __init__(self, arg, key, *args, **kwargs):
@@ -249,11 +250,11 @@ class Action(object):
 			Action._argopt.__init__(*newargs, **kwargs)
 
 	class EffectiveEntryOp(object):
-		def grab_effective_entries(self, p, f, rw = False):
+		def grab_effective_entries(self, p, arg, f, rw = False):
 			entries = f[p]
 			found = False
 			for pe in entries:
-				flags = pe[self.arg]
+				flags = pe[arg]
 				for f in flags:
 					yield f
 					if rw:
@@ -269,33 +270,36 @@ class Action(object):
 				# package entry if there's one. Otherwise, append
 				# a new entry.
 				for pe in entries:
-					yield pe.append(self.arg)
+					yield pe.append(arg)
 					break
 				else:
-					yield f.append(p).append(self.arg)
+					yield f.append(p).append(arg)
 
 	class enable(_argreq, EffectiveEntryOp):
 		def __call__(self, pkgs, puse):
 			for p in pkgs:
-				for f in self.grab_effective_entries(p, puse, rw = True):
-					f.modifier = ''
+				for arg in self.args:
+					for f in self.grab_effective_entries(p, arg, puse, rw = True):
+						f.modifier = ''
 
 	class disable(_argreq, EffectiveEntryOp):
 		def __call__(self, pkgs, puse):
 			for p in pkgs:
-				for f in self.grab_effective_entries(p, puse, rw = True):
-					f.modifier = '-'
+				for arg in self.args:
+					for f in self.grab_effective_entries(p, arg, puse, rw = True):
+						f.modifier = '-'
 
 	class reset(_argopt):
 		pass
 
 	class output(_argopt, EffectiveEntryOp):
 		def __call__(self, pkgs, puse):
-			if not self.arg:
+			if '' in self.args:
 				raise NotImplementedError('? is not implemented yet.')
 			for p in pkgs:
 				l = [p]
-				l.extend([f.toString() for f in self.grab_effective_entries(p, puse)])
+				for arg in self.args:
+					l.extend([f.toString() for f in self.grab_effective_entries(p, arg, puse)])
 				print(' '.join(l))
 
 	mapping = {
