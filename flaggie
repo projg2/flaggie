@@ -326,10 +326,9 @@ def get_dbapi():
 
 def parse_actions(args, dbapi):
 	out = [([], [])]
-	i = 1
 
 	flagcache = FlagCache(dbapi)
-	for a in args:
+	for i, a in enumerate(args):
 		try:
 			if a == '':
 				continue
@@ -347,8 +346,6 @@ def parse_actions(args, dbapi):
 				out[-1][0].append(atom)
 		except ParserError as e:
 			raise ParserError, 'At argv[%d]=\'%s\': %s' % (i, a, e)
-		else:
-			i += 1
 
 	return out
 
