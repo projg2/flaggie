@@ -250,44 +250,38 @@ class Action(object):
 			Action._argopt.__init__(*newargs, **kwargs)
 
 	class EffectiveEntryOp(object):
-		def grab_effective_entries(self, p, arg, f, rw = False):
+		def grab_effective_entry(self, p, arg, f, rw = False):
 			entries = f[p]
-			found = False
 			for pe in entries:
 				flags = pe[arg]
 				for f in flags:
-					yield f
 					if rw:
 						pe.modified = True
-					found = True
-					break
-				if found:
-					break
+					return f
 			else:
 				if not rw:
-					return
+					return None
 				# No matching flag found. Try to append to the last
 				# package entry if there's one. Otherwise, append
 				# a new entry.
 				for pe in entries:
-					yield pe.append(arg)
-					break
+					return pe.append(arg)
 				else:
-					yield f.append(p).append(arg)
+					return f.append(p).append(arg)
 
 	class enable(_argreq, EffectiveEntryOp):
 		def __call__(self, pkgs, puse):
 			for p in pkgs:
 				for arg in self.args:
-					for f in self.grab_effective_entries(p, arg, puse, rw = True):
-						f.modifier = ''
+					f = self.grab_effective_entry(p, arg, puse, rw = True)
+					f.modifier = ''
 
 	class disable(_argreq, EffectiveEntryOp):
 		def __call__(self, pkgs, puse):
 			for p in pkgs:
 				for arg in self.args:
-					for f in self.grab_effective_entries(p, arg, puse, rw = True):
-						f.modifier = '-'
+					f = self.grab_effective_entry(p, arg, puse, rw = True)
+					f.modifier = '-'
 
 	class reset(_argopt):
 		pass
@@ -299,7 +293,9 @@ class Action(object):
 			for p in pkgs:
 				l = [p]
 				for arg in self.args:
-					l.extend([f.toString() for f in self.grab_effective_entries(p, arg, puse)])
+					f = self.grab_effective_entry(p, arg, puse)
+					l.append(f.toString() if f else '?%s' % arg)
+
 				print(' '.join(l))
 
 	mapping = {
