@@ -242,11 +242,11 @@ class Action(object):
 						print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
 
 	class _argreq(_argopt):
-		def __init__(self, arg, *args, **kwargs):
+		def __init__(self, arg, key, *args, **kwargs):
 			if not arg:
 				raise ParserError('%s action requires an argument!' % key)
 
-			newargs = (self, arg) + args
+			newargs = (self, arg, key) + args
 			Action._argopt.__init__(*newargs, **kwargs)
 
 	class EffectiveEntryOp(object):
