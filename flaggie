@@ -89,24 +89,6 @@ class PackageFileSet:
 					return ' '.join([self.package] + \
 							[x.toString() for x in self.flags]) + '\n'
 
-			class DynamicPackageFlags(object):
-				""" A class representing a set of flags in a package
-					entry. """
-				def __init__(self, flag = None, parent = None):
-					self.flag = flag
-					self.parent = parent
-
-				def __nonzero__(self):
-					for f in self:
-						return True
-					else:
-						return False
-
-				def __iter__(self):
-					for f in reversed(self.parent.flags):
-						if self.flag is None or self.flag == f.name:
-							yield f
-
 			def append(self, flag):
 				if not isinstance(flag, self.PackageFlag):
 					flag = self.PackageFlag(flag)
@@ -116,18 +98,18 @@ class PackageFileSet:
 
 			def __iter__(self):
 				""" Iterate over all flags in the entry. """
-				return self.DynamicPackageFlags(parent = self)
+				for f in reversed(self.flags):
+					yield f
 
-			def __nonzero__(self):
-				for f in self.flags:
-					return True
-				else:
-					return False
+			def __len__(self):
+				return len(self.flags)
 
 			def __getitem__(self, flag):
 				""" Iterate over occurences of flag in the entry,
 					returning them in the order of occurence. """
-				return self.DynamicPackageFlags(flag, parent = self)
+				for f in self:
+					if f.name == flag:
+						yield f
 
 			def __delitem__(self, flag):
 				""" Remove all occurences of a flag. """
@@ -193,20 +175,6 @@ class PackageFileSet:
 		for f in self.files:
 			f.write()
 
-	class DynamicPackageEntries(object):
-		""" A class representing a set of package.* file entries. """
-		def __init__(self, pkg = None, parent = None):
-			self.parent = parent
-			self.pkg = pkg
-
-		def __iter__(self):
-			for f in reversed(self.parent.files):
-				for e in reversed(f):
-					if not isinstance(e, f.PackageEntry):
-						continue
-					if self.pkg is None or e.package == self.pkg:
-						yield e
-
 	def append(self, pkg):
 		f = self.files[-1]
 		if not isinstance(pkg, f.PackageEntry):
@@ -230,12 +198,18 @@ class PackageFileSet:
 
 	def __iter__(self):
 		""" Iterate over package entries. """
-		return self.DynamicPackageEntries(parent = self)
+		for f in reversed(self.files):
+			for e in reversed(f):
+				if isinstance(e, f.PackageEntry):
+					yield e
 
 	def __getitem__(self, pkg):
-		""" Get package entries for a package in order of occurence
-			(the last declarations are effective). """
-		return self.DynamicPackageEntries(pkg, parent = self)
+		""" Get package entries for a package in order of effectiveness
+			(the last declarations in the file are effective, and those
+			will be returned first). """
+		for e in self:
+			if e.package == pkg:
+				yield e
 
 	def __delitem__(self, pkg):
 		""" Delete all package entries for a package. """
