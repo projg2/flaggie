@@ -222,7 +222,7 @@ class PackageFileSet:
 				f.remove(e)
 			f.modified = True
 
-class FlagCache:
+class FlagCache(object):
 	def __init__(self, dbapi):
 		self.dbapi = dbapi
 		self.cache = {}
@@ -255,9 +255,48 @@ class FlagCache:
 			self.cache[k] = flags
 		return self.cache[k]
 
+class KeywordCache(object):
+	def __init__(self, dbapi):
+		kws = set()
+		for r in dbapi.porttrees:
+			try:
+				f = open(os.path.join(r, 'profiles', 'arch.list'), 'r')
+			except IOError:
+				pass
+			else:
+				for l in f:
+					if l.strip() and not l.startswith('#'):
+						kws.add(l.strip())
+				f.close()
+		self._keywords = kws
+
+	@property
+	def glob(self):
+		return self._keywords
+
+	def __getitem__(self, k):
+		return self._keywords
+
 class Caches(object):
 	def __init__(self, dbapi):
 		self.flags = FlagCache(dbapi)
+		self.keywords = KeywordCache(dbapi)
+
+	def glob_whatis(self, arg):
+		ret = set()
+		if arg in self.flags.glob:
+			ret.add('use')
+		if arg in self.keywords.glob:
+			ret.add('keyword')
+		return ret
+
+	def whatis(self, arg, pkg):
+		ret = set()
+		if arg in self.flags[pkg]:
+			ret.add('use')
+		if arg in self.keywords[pkg]:
+			ret.add('keyword')
+		return ret
 
 class Action(object):
 	class _argopt(object):
@@ -270,11 +309,13 @@ class Action(object):
 				if not arg:
 					pass
 				elif not pkgs:
-					if arg not in cache.flags.glob:
+					wis = cache.glob_whatis(arg)
+					if 'use' not in wis:
 						print('Warning: %s seems to be an incorrect global flag' % arg)
 				else:
 					for p in pkgs:
-						if arg not in cache.flags[p]:
+						wis = cache.whatis(arg, p)
+						if 'use' not in wis:
 							print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
 
 		def append(self, arg):
