@@ -258,7 +258,8 @@ class FlagCache:
 class Action(object):
 	class _argopt(object):
 		def __init__(self, arg, key, flagcache = None):
-			self.args = set([arg])
+			self.args = set()
+			self.append(arg)
 
 #			if not pkgs:
 #				if arg not in flagcache.glob:
