@@ -257,17 +257,21 @@ class FlagCache:
 
 class Action(object):
 	class _argopt(object):
-		def __init__(self, arg, key, flagcache = None):
+		def __init__(self, arg, key):
 			self.args = set()
 			self.append(arg)
 
-#			if not pkgs:
-#				if arg not in flagcache.glob:
-#					print('Warning: %s seems to be an incorrect global flag' % arg)
-#			else:
-#				for p in pkgs:
-#					if arg not in flagcache[p]:
-#						print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
+		def clarify(self, pkgs, flagcache):
+			for arg in self.args:
+				if not arg:
+					pass
+				elif not pkgs:
+					if arg not in flagcache.glob:
+						print('Warning: %s seems to be an incorrect global flag' % arg)
+				else:
+					for p in pkgs:
+						if arg not in flagcache[p]:
+							print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
 
 		def append(self, arg):
 			if isinstance(arg, self.__class__):
@@ -374,12 +378,14 @@ def get_dbapi():
 	return dbapi
 
 class ActionSet(list):
-	def __init__(self):
+	def __init__(self, flagcache = None):
 		list.__init__(self)
+		self._flagcache = flagcache
 		self.pkgs = []
 
 	def append(self, item):
 		if isinstance(item, Action._argopt):
+			item.clarify(self.pkgs, self._flagcache)
 			for a in self:
 				if isinstance(item, a.__class__):
 					a.append(item)
@@ -394,19 +400,19 @@ class ActionSet(list):
 
 def parse_actions(args, dbapi):
 	out = []
-	actset = ActionSet()
-
 	flagcache = FlagCache(dbapi)
+	actset = ActionSet(flagcache = flagcache)
+
 	for i, a in enumerate(args):
 		if not a:
 			continue
 		try:
 			try:
-				a = Action(a, flagcache = flagcache)
+				a = Action(a)
 			except Action.NotAnAction:
 				if actset:
 					out.append(actset)
-					actset = ActionSet()
+					actset = ActionSet(flagcache = flagcache)
 				try:
 					atom = dep_expand(a, mydb = dbapi, settings = portage.settings)
 				except portage.exception.AmbiguousPackageName as e:
