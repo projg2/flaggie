@@ -330,13 +330,20 @@ class Action(object):
 
 	class output(_argopt, EffectiveEntryOp):
 		def __call__(self, pkgs, puse):
-			if '' in self.args:
-				raise NotImplementedError('? is not implemented yet.')
 			for p in pkgs:
 				l = [p]
-				for arg in sorted(self.args):
-					f = self.grab_effective_entry(p, arg, puse)
-					l.append(f.toString() if f else '?%s' % arg)
+				if '' in self.args:
+					flags = {}
+					for pe in puse[p]:
+						for f in pe:
+							if f.name not in flags:
+								flags[f.name] = f
+					for fn in sorted(flags):
+						l.append(flags[fn].toString())
+				else:
+					for arg in sorted(self.args):
+						f = self.grab_effective_entry(p, arg, puse)
+						l.append(f.toString() if f else '?%s' % arg)
 
 				print(' '.join(l))
 
