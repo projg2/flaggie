@@ -59,14 +59,14 @@ def parse_actions(args, dbapi, settings):
 				try:
 					atom = dep_expand(a, mydb = dbapi, settings = settings)
 				except AmbiguousPackageName as e:
-					raise ParserError, 'ambiguous package name, matching: %s' % e
+					raise ParserError('ambiguous package name, matching: %s' % e)
 				if atom.startswith('null/'):
-					raise ParserError, 'unable to determine the category (mistyped name?)'
+					raise ParserError('unable to determine the category (mistyped name?)')
 				actset.append(atom)
 			else:
 				actset.append(a)
 		except ParserError as e:
-			raise ParserError, 'At argv[%d]=\'%s\': %s' % (i, a, e)
+			raise ParserError('At argv[%d]=\'%s\': %s' % (i, a, e))
 
 	if actset:
 		out.append(actset)
