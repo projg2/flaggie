@@ -305,33 +305,37 @@ class Caches(object):
 class Action(object):
 	class _argopt(object):
 		def __init__(self, arg, key):
-			self.args = set()
-			self.append(arg)
+			self.args = set((arg,))
 
 		def clarify(self, pkgs, cache):
-			for arg in self.args:
-				if not arg:
-					pass
-				elif not pkgs:
-					wis = cache.glob_whatis(arg)
-					if len(wis) > 1:
+			if len(self.args) > 1:
+				raise AssertionError('clarify() needs to be called before actions are joined.')
+			arg = self.args.pop()
+			if not arg:
+				self.args.add(arg)
+				return
+
+			if not pkgs:
+				wis = cache.glob_whatis(arg)
+				if len(wis) > 1:
+					raise ParserError('Ambiguous argument: %s (matches %s).' % \
+							(arg, ', '.join(wis)))
+				if 'use' not in wis:
+					print('Warning: %s seems to be an incorrect global flag' % arg)
+			else:
+				for p in pkgs:
+					wis = cache.whatis(arg, p)
+					if not wis:
+						gwis = cache.glob_whatis(arg, p)
+					else:
+						gwis = wis
+
+					if len(gwis) > 1:
 						raise ParserError('Ambiguous argument: %s (matches %s).' % \
 								(arg, ', '.join(wis)))
 					if 'use' not in wis:
-						print('Warning: %s seems to be an incorrect global flag' % arg)
-				else:
-					for p in pkgs:
-						wis = cache.whatis(arg, p)
-						if not wis:
-							gwis = cache.glob_whatis(arg, p)
-						else:
-							gwis = wis
-
-						if len(gwis) > 1:
-							raise ParserError('Ambiguous argument: %s (matches %s).' % \
-									(arg, ', '.join(wis)))
-						if 'use' not in wis:
-							print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
+						print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
+			self.args.add(arg)
 
 		def append(self, arg):
 			if isinstance(arg, self.__class__):
