@@ -24,6 +24,11 @@ class Action(object):
 
 			splitarg = arg.split('::', 1)
 			if len(splitarg) > 1:
+				try:
+					cache.describe(splitarg[0])
+				except AssertionError:
+					raise ParserError('incorrect namespace in arg')
+
 				ns = set((splitarg[0],))
 				arg = splitarg[1]
 			else:
