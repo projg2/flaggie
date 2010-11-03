@@ -152,6 +152,7 @@ class Action(object):
 		'%': reset,
 		'?': output
 	}
+	order = (enable, disable, reset, output)
 
 	class NotAnAction(Exception):
 		pass
@@ -179,7 +180,7 @@ class ActionSet(list):
 					break
 			else:
 				list.append(self, item)
-				self.sort(key = lambda x: Action.mapping.values().index(x.__class__))
+				self.sort(key = lambda x: Action.order.index(x.__class__))
 		else:
 			self.pkgs.append(item)
 
