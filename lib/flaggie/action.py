@@ -16,8 +16,10 @@ class Action(object):
 			if len(self.args) > 1:
 				raise AssertionError('clarify() needs to be called before actions are joined.')
 			arg = self.args.pop()
+			# XXX: support '?' and '%' for non-use namespaces
 			if not arg:
 				self.args.add(arg)
+				self.ns = 'use'
 				return
 
 			splitarg = arg.split('::', 1)
