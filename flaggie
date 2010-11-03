@@ -496,6 +496,19 @@ class ActionSet(list):
 		else:
 			raise ValueError('Incorrect type passed to ActionSet.append()')
 
+	def __call__(self, puse, pkw):
+		if self.pkgs:
+			for a in self:
+				if a.ns == 'use':
+					f = puse
+				elif a.ns == 'kw':
+					f = pkw
+				else:
+					raise AssertionError('Unexpected ns %s in ActionSet.__call__()' % a.ns)
+				a(self.pkgs, f)
+		else:
+			raise NotImplementedError('Global actions are not supported yet')
+
 def parse_actions(args, dbapi):
 	out = []
 	cache = Caches(dbapi)
@@ -551,14 +564,12 @@ def main(argv):
 
 	# (only for testing, to be replaced by something more optimal)
 	puse = PackageFileSet('/etc/portage/package.use')
+	pkw = PackageFileSet('/etc/portage/package.keywords')
 
 	for actset in act:
-		if actset.pkgs:
-			for a in actset:
-				a(actset.pkgs, puse)
-		else:
-			raise NotImplementedError('Global actions are not supported yet')
+		actset(puse, pkw)
 
+	pkw.write()
 	puse.write()
 
 	return 0
