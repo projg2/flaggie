@@ -287,7 +287,7 @@ class Caches(object):
 		if arg in self.flags.glob:
 			ret.add('use')
 		if arg in self.keywords.glob:
-			ret.add('keyword')
+			ret.add('kw')
 		return ret
 
 	def whatis(self, arg, pkg):
@@ -295,7 +295,7 @@ class Caches(object):
 		if arg in self.flags[pkg]:
 			ret.add('use')
 		if arg in self.keywords[pkg]:
-			ret.add('keyword')
+			ret.add('kw')
 		return ret
 
 class Action(object):
