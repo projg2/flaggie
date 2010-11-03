@@ -302,6 +302,14 @@ class Caches(object):
 			ret.add('kw')
 		return ret
 
+	def describe(self, ns):
+		if ns == 'use':
+			return 'flag'
+		elif ns == 'kw':
+			return 'keyword'
+		else:
+			raise AssertionError('Unexpected ns %s' % ns)
+
 class Action(object):
 	class _argopt(object):
 		def __init__(self, arg, key):
@@ -316,26 +324,51 @@ class Action(object):
 				self.args.add(arg)
 				return
 
+			splitarg = arg.split('::', 1)
+			if len(splitarg) > 1:
+				ns = set((splitarg[0],))
+				arg = splitarg[1]
+			else:
+				ns = None
+
 			if not pkgs:
-				wis = cache.glob_whatis(arg)
+				wis = cache.glob_whatis(arg, restrict = ns)
 				if len(wis) > 1:
 					raise ParserError('Ambiguous argument: %s (matches %s).' % \
 							(arg, ', '.join(wis)))
-				if 'use' not in wis:
+				elif wis:
+					ns = wis.pop()
+				elif ns:
+					ns = ns.pop()
+					print('Warning: %s seems to be an incorrect global %s' % \
+							(arg, cache.describe(ns)))
+				else:
+					ns = 'use'
 					print('Warning: %s seems to be an incorrect global flag' % arg)
 			else:
 				for p in pkgs:
-					wis = cache.whatis(arg, p)
-					if not wis:
-						gwis = cache.glob_whatis(arg, p)
-					else:
+					wis = cache.whatis(arg, p, restrict = ns)
+					if wis:
 						gwis = wis
+					elif ns:
+						gwis = ns
+					else:
+						gwis = cache.glob_whatis(arg)
 
 					if len(gwis) > 1:
 						raise ParserError('Ambiguous argument: %s (matches %s).' % \
 								(arg, ', '.join(wis)))
-					if 'use' not in wis:
-						print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
+					elif wis:
+						ns = wis.pop()
+					else:
+						if gwis:
+							ns = gwis.pop()
+							print('Warning: %s seems to be an incorrect %s for %s' % \
+									(arg, cache.describe(ns), p))
+						else:
+							ns = 'use'
+							print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
+			self.ns = ns
 			self.args.add(arg)
 
 		def append(self, arg):
