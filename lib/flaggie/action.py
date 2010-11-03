@@ -180,10 +180,8 @@ class ActionSet(list):
 			else:
 				list.append(self, item)
 				self.sort(key = lambda x: Action.mapping.values().index(x.__class__))
-		elif isinstance(item, basestring):
-			self.pkgs.append(item)
 		else:
-			raise ValueError('Incorrect type passed to ActionSet.append()')
+			self.pkgs.append(item)
 
 	def __call__(self, puse, pkw):
 		if self.pkgs:
