@@ -56,10 +56,10 @@ class PackageFileSet:
 			def modified(self, newval):
 				pass
 
-		class InvalidPackageEntry(Exception):
-			pass
-
 		class PackageEntry:
+			class InvalidPackageEntry(Exception):
+				pass
+
 			class PackageFlag:
 				def __init__(self, s):
 					if s[0] in ('-', '+'):
@@ -130,7 +130,7 @@ class PackageFileSet:
 			for l in f:
 				try:
 					e = self.PackageEntry(l)
-				except self.InvalidPackageEntry:
+				except self.PackageEntry.InvalidPackageEntry:
 					e = self.Whitespace(l)
 				self.append(e)
 			f.close()
