@@ -51,7 +51,7 @@ def parse_actions(args, dbapi, settings):
 			continue
 		try:
 			try:
-				a = Action(a)
+				act = Action(a)
 			except Action.NotAnAction:
 				if actset:
 					out.append(actset)
@@ -64,7 +64,7 @@ def parse_actions(args, dbapi, settings):
 					raise ParserError('unable to determine the category (mistyped name?)')
 				actset.append(atom)
 			else:
-				actset.append(a)
+				actset.append(act)
 		except ParserError as e:
 			raise ParserError('At argv[%d]=\'%s\': %s' % (i, a, e))
 
