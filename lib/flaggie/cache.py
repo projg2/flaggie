@@ -19,16 +19,16 @@ class Caches(object):
 		def glob(self):
 			raise AssertionError('DBAPICache.glob() needs to be overriden.')
 
-		def _aux_clean(self, arg):
-			return arg
+		def _aux_parse(self, arg):
+			return arg.split()
 
 		def __getitem__(self, k):
 			if k not in self.cache:
 				flags = set()
 				# get widest match possible to make sure we do not complain without a reason
 				for p in self.dbapi.xmatch('match-all', k):
-					flags |= set([self._aux_clean(x) for x in \
-							self.dbapi.aux_get(p, (self.aux_key,))[0].split()])
+					flags.update(self._aux_parse(self.dbapi.aux_get(p, \
+							(self.aux_key,))[0]))
 				self.cache[k] = flags
 			return self.cache[k]
 
@@ -54,8 +54,8 @@ class Caches(object):
 
 			return self.cache[None]
 
-		def _aux_clean(self, arg):
-			return arg.lstrip('+-')
+		def _aux_parse(self, arg):
+			return [x.lstrip('+-') for x in arg.split()]
 
 	class KeywordCache(DBAPICache):
 		aux_key = 'KEYWORDS'
