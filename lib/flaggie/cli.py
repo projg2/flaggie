@@ -101,10 +101,12 @@ def main(argv):
 	# (only for testing, to be replaced by something more optimal)
 	puse = PackageFileSet('/etc/portage/package.use')
 	pkw = PackageFileSet('/etc/portage/package.keywords')
+	plic = PackageFileSet('/etc/portage/package.license')
 
 	for actset in act:
-		actset(puse, pkw)
+		actset(puse, pkw, plic)
 
+	plic.write()
 	pkw.write()
 	puse.write()
 

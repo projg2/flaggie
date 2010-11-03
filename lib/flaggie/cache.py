@@ -5,6 +5,8 @@
 
 import os.path
 
+from portage.dep import use_reduce
+
 class Caches(object):
 	class DBAPICache(object):
 		aux_key = None
@@ -89,28 +91,51 @@ class Caches(object):
 			ret.add('**')
 			return ret
 
+	class LicenseCache(DBAPICache):
+		aux_key = 'LICENSE'
+
+		@property
+		def glob(self):
+			if None not in self.cache:
+				lic = set()
+				# XXX: actually implement this
+				self.cache[None] = lic
+
+			return self.cache[None]
+
+		def _aux_parse(self, arg):
+			lic = use_reduce(arg, matchall = True, flat = True)
+			if '||' in lic:
+				lic.remove('||')
+			return lic
+
 	def __init__(self, dbapi):
 		self.flags = self.FlagCache(dbapi)
 		self.keywords = self.KeywordCache(dbapi)
+		self.licenses = self.LicenseCache(dbapi)
 
 	def glob_whatis(self, arg, restrict = None):
 		if not restrict:
-			restrict = ('use', 'kw')
+			restrict = ('use', 'kw', 'lic')
 		ret = set()
 		if 'use' in restrict and arg in self.flags.glob:
 			ret.add('use')
 		if 'kw' in restrict and arg in self.keywords.glob:
 			ret.add('kw')
+		if 'lic' in restrict and arg in self.licenses.glob:
+			ret.add('lic')
 		return ret
 
 	def whatis(self, arg, pkg, restrict = None):
 		if not restrict:
-			restrict = ('use', 'kw')
+			restrict = ('use', 'kw', 'lic')
 		ret = set()
 		if 'use' in restrict and arg in self.flags[pkg]:
 			ret.add('use')
 		if 'kw' in restrict and arg in self.keywords[pkg]:
 			ret.add('kw')
+		if 'lic' in restrict and arg in self.licenses[pkg]:
+			ret.add('lic')
 		return ret
 
 	def describe(self, ns):
@@ -118,5 +143,7 @@ class Caches(object):
 			return 'flag'
 		elif ns == 'kw':
 			return 'keyword'
+		elif ns == 'lic':
+			return 'license'
 		else:
 			raise AssertionError('Unexpected ns %s' % ns)

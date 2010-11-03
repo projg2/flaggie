@@ -192,13 +192,15 @@ class ActionSet(list):
 		else:
 			self.pkgs.append(item)
 
-	def __call__(self, puse, pkw):
+	def __call__(self, puse, pkw, plic):
 		if self.pkgs:
 			for a in self:
 				if a.ns == 'use':
 					f = puse
 				elif a.ns == 'kw':
 					f = pkw
+				elif a.ns == 'lic':
+					f = plic
 				else:
 					raise AssertionError('Unexpected ns %s in ActionSet.__call__()' % a.ns)
 				a(self.pkgs, f)
