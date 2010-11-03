@@ -282,19 +282,23 @@ class Caches(object):
 		self.flags = FlagCache(dbapi)
 		self.keywords = KeywordCache(dbapi)
 
-	def glob_whatis(self, arg):
+	def glob_whatis(self, arg, restrict = None):
+		if not restrict:
+			restrict = ('use', 'kw')
 		ret = set()
-		if arg in self.flags.glob:
+		if 'use' in restrict and arg in self.flags.glob:
 			ret.add('use')
-		if arg in self.keywords.glob:
+		if 'kw' in restrict and arg in self.keywords.glob:
 			ret.add('kw')
 		return ret
 
-	def whatis(self, arg, pkg):
+	def whatis(self, arg, pkg, restrict = None):
+		if not restrict:
+			restrict = ('use', 'kw')
 		ret = set()
-		if arg in self.flags[pkg]:
+		if 'use' in restrict and arg in self.flags[pkg]:
 			ret.add('use')
-		if arg in self.keywords[pkg]:
+		if 'kw' in restrict and arg in self.keywords[pkg]:
 			ret.add('kw')
 		return ret
 
