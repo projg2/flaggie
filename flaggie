@@ -314,11 +314,22 @@ class Action(object):
 					pass
 				elif not pkgs:
 					wis = cache.glob_whatis(arg)
+					if len(wis) > 1:
+						raise ParserError('Ambiguous argument: %s (matches %s).' % \
+								(arg, ', '.join(wis)))
 					if 'use' not in wis:
 						print('Warning: %s seems to be an incorrect global flag' % arg)
 				else:
 					for p in pkgs:
 						wis = cache.whatis(arg, p)
+						if not wis:
+							gwis = cache.glob_whatis(arg, p)
+						else:
+							gwis = wis
+
+						if len(gwis) > 1:
+							raise ParserError('Ambiguous argument: %s (matches %s).' % \
+									(arg, ', '.join(wis)))
 						if 'use' not in wis:
 							print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
 
