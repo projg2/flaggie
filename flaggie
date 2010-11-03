@@ -306,6 +306,7 @@ class Action(object):
 	class _argopt(object):
 		def __init__(self, arg, key):
 			self.args = set((arg,))
+			self.ns = None
 
 		def clarify(self, pkgs, cache):
 			if len(self.args) > 1:
@@ -451,7 +452,7 @@ class ActionSet(list):
 		if isinstance(item, Action._argopt):
 			item.clarify(self.pkgs, self._cache)
 			for a in self:
-				if isinstance(item, a.__class__):
+				if isinstance(item, a.__class__) and item.ns == a.ns:
 					a.append(item)
 					break
 			else:
