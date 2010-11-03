@@ -3,10 +3,12 @@
 # (C) 2010 Michał Górny <gentoo@mgorny.alt.pl>
 # Released under the terms of the 3-clause BSD license.
 
-import sys
+import os, sys
 from optparse import OptionParser
-import portage
+
+from portage import create_trees
 from portage.dbapi.dep_expand import dep_expand
+from portage.exception import AmbiguousPackageName
 
 from flaggie import PV
 from flaggie.action import Action, ActionSet, ParserError
@@ -39,14 +41,7 @@ Actions:''')
 	parser.formatter.dedent()
 	sys.exit(0)
 
-def get_dbapi():
-	ptrees = portage.create_trees()
-	# XXX: support ${ROOT}
-	dbapi = ptrees['/']['porttree'].dbapi
-
-	return dbapi
-
-def parse_actions(args, dbapi):
+def parse_actions(args, dbapi, settings):
 	out = []
 	cache = Caches(dbapi)
 	actset = ActionSet(cache = cache)
@@ -62,8 +57,8 @@ def parse_actions(args, dbapi):
 					out.append(actset)
 					actset = ActionSet(cache = cache)
 				try:
-					atom = dep_expand(a, mydb = dbapi, settings = portage.settings)
-				except portage.exception.AmbiguousPackageName as e:
+					atom = dep_expand(a, mydb = dbapi, settings = settings)
+				except AmbiguousPackageName as e:
 					raise ParserError, 'ambiguous package name, matching: %s' % e
 				if atom.startswith('null/'):
 					raise ParserError, 'unable to determine the category (mistyped name?)'
@@ -89,9 +84,13 @@ def main(argv):
 			help = 'print help message and exit')
 	(opts, args) = opt.parse_args(argv[1:])
 
-	dbapi = get_dbapi()
+	trees = create_trees(
+			config_root = os.environ.get('PORTAGE_CONFIGROOT'),
+			target_root = os.environ.get('ROOT'))
+	porttree = trees[max(trees)]['porttree']
+
 	try:
-		act = parse_actions(args, dbapi)
+		act = parse_actions(args, porttree.dbapi, porttree.settings)
 	except ParserError as e:
 		print(e)
 		return 1
