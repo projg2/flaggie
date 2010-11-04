@@ -3,7 +3,7 @@
 # (C) 2010 Michał Górny <gentoo@mgorny.alt.pl>
 # Released under the terms of the 3-clause BSD license.
 
-import os.path
+import os, os.path
 
 from portage.dep import use_reduce
 
@@ -98,7 +98,11 @@ class Caches(object):
 		def glob(self):
 			if None not in self.cache:
 				lic = set()
-				# XXX: actually implement this
+				for r in self.dbapi.porttrees:
+					try:
+						lic.update(os.listdir(os.path.join(r, 'licenses')))
+					except OSError:
+						pass
 				self.cache[None] = lic
 
 			return self.cache[None]
