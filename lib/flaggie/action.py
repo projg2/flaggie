@@ -19,13 +19,19 @@ class Action(object):
 
 			splitarg = arg.split('::', 1)
 			if len(splitarg) > 1:
-				try:
-					cache.describe(splitarg[0])
-				except AssertionError:
-					raise ParserError('incorrect namespace in arg')
-
-				ns = set((splitarg[0],))
 				arg = splitarg[1]
+
+				if splitarg[0] == '*':
+					ns = None
+					# special case: ?*:: or %*::
+					if not arg:
+						raise NotImplementedError('*:: namespace support not implemented yet.')
+				else:
+					try:
+						cache.describe(splitarg[0])
+					except AssertionError:
+						raise ParserError('incorrect namespace in arg')
+					ns = set((splitarg[0],))
 			else:
 				ns = None
 
