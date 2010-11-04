@@ -99,15 +99,16 @@ def main(argv):
 		print_help(None, '', '', opt)
 
 	# (only for testing, to be replaced by something more optimal)
-	puse = PackageFileSet('/etc/portage/package.use')
-	pkw = PackageFileSet('/etc/portage/package.keywords')
-	plic = PackageFileSet('/etc/portage/package.license')
+	pfiles = {
+		'use': PackageFileSet('/etc/portage/package.use'),
+		'kw': PackageFileSet('/etc/portage/package.keywords'),
+		'lic': PackageFileSet('/etc/portage/package.license')
+	}
 
 	for actset in act:
-		actset(puse, pkw, plic)
+		actset(pfiles)
 
-	plic.write()
-	pkw.write()
-	puse.write()
+	for f in pfiles.values():
+		f.write()
 
 	return 0

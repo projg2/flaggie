@@ -192,17 +192,11 @@ class ActionSet(list):
 		else:
 			self.pkgs.append(item)
 
-	def __call__(self, puse, pkw, plic):
+	def __call__(self, pfiles):
 		if self.pkgs:
 			for a in self:
-				if a.ns == 'use':
-					f = puse
-				elif a.ns == 'kw':
-					f = pkw
-				elif a.ns == 'lic':
-					f = plic
-				else:
+				if a.ns not in pfiles:
 					raise AssertionError('Unexpected ns %s in ActionSet.__call__()' % a.ns)
-				a(self.pkgs, f)
+				a(self.pkgs, pfiles[a.ns])
 		else:
 			raise NotImplementedError('Global actions are not supported yet')
