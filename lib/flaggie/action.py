@@ -145,6 +145,8 @@ class Action(object):
 						for f in pe:
 							if f.name not in flags:
 								flags[f.name] = f
+					if not flags:
+						return
 					for fn in sorted(flags):
 						l.append(flags[fn].toString())
 				else:
