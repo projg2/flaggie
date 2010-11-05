@@ -114,32 +114,28 @@ class Caches(object):
 			return lic
 
 	def __init__(self, dbapi):
-		self.flags = self.FlagCache(dbapi)
-		self.keywords = self.KeywordCache(dbapi)
-		self.licenses = self.LicenseCache(dbapi)
+		self.caches = {
+			'use': self.FlagCache(dbapi),
+			'kw': self.KeywordCache(dbapi),
+			'lic': self.LicenseCache(dbapi)
+		}
 
 	def glob_whatis(self, arg, restrict = None):
 		if not restrict:
-			restrict = ('use', 'kw', 'lic')
+			restrict = frozenset(self.caches)
 		ret = set()
-		if 'use' in restrict and arg in self.flags.glob:
-			ret.add('use')
-		if 'kw' in restrict and arg in self.keywords.glob:
-			ret.add('kw')
-		if 'lic' in restrict and arg in self.licenses.glob:
-			ret.add('lic')
+		for k in self.caches:
+			if k in restrict and arg in self.caches[k].glob:
+				ret.add(k)
 		return ret
 
 	def whatis(self, arg, pkg, restrict = None):
 		if not restrict:
-			restrict = ('use', 'kw', 'lic')
+			restrict = frozenset(self.caches)
 		ret = set()
-		if 'use' in restrict and arg in self.flags[pkg]:
-			ret.add('use')
-		if 'kw' in restrict and arg in self.keywords[pkg]:
-			ret.add('kw')
-		if 'lic' in restrict and arg in self.licenses[pkg]:
-			ret.add('lic')
+		for k in self.caches:
+			if k in restrict and arg in self.caches[k][pkg]:
+				ret.add(k)
 		return ret
 
 	def describe(self, ns):
