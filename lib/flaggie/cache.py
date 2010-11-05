@@ -120,7 +120,13 @@ class Caches(object):
 			return self.cache[None]
 
 		def _aux_parse(self, arg):
-			lic = use_reduce(arg, matchall = True, flat = True)
+			try:
+				lic = use_reduce(arg, matchall = True, flat = True)
+			except TypeError: # portage-2.1.8 compat
+				from portage.dep import paren_reduce
+				lic = use_reduce(paren_reduce(arg, tokenize = True),
+						matchall = True)
+
 			if '||' in lic:
 				lic.remove('||')
 			return lic
