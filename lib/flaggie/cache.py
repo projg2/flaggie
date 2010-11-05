@@ -166,5 +166,8 @@ class Caches(object):
 		else:
 			raise AssertionError('Unexpected ns %s' % ns)
 
+	def __iter__(self):
+		return iter(self.caches)
+
 	def __getitem__(self, k):
 		return self.caches[k]
