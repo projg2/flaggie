@@ -74,14 +74,14 @@ class PackageFileSet:
 				""" Iterate over occurences of flag in the entry,
 					returning them in the order of occurence. """
 				for f in self:
-					if f.name == flag:
+					if flag == f.name:
 						yield f
 
 			def __delitem__(self, flag):
 				""" Remove all occurences of a flag. """
 				flags = []
 				for f in self.flags:
-					if f.name == flag:
+					if flag == f.name:
 						flags.append(f)
 				for f in flags:
 					self.flags.remove(f)
@@ -191,7 +191,7 @@ class PackageFileSet:
 			(the last declarations in the file are effective, and those
 			will be returned first). """
 		for e in self:
-			if e.package == pkg:
+			if pkg == e.package:
 				yield e
 
 	def __delitem__(self, pkg):
@@ -199,7 +199,7 @@ class PackageFileSet:
 		for f in self.files:
 			entries = []
 			for e in f:
-				if e.package == pkg:
+				if pkg == e.package:
 					entries.append(e)
 			for e in entries:
 				f.remove(e)
