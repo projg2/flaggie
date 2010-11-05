@@ -35,11 +35,16 @@ class Action(object):
 			else:
 				ns = None
 
-			# argument-less calls (i.e. '?', '%')
 			if not arg:
-				self.args.add(arg)
-				self.ns = ns.pop() if ns else 'use'
-				return
+				arg = '*'
+			# Check whether the argument looks like a pattern
+			for schr in ('*', '?', '['):
+				if schr in arg:
+					if not ns:
+						ns = set(('use',))
+					self.ns = ns.pop()
+					self.args.add(arg)
+					return
 
 			if not pkgs:
 				wis = cache.glob_whatis(arg, restrict = ns)
