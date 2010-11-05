@@ -7,7 +7,7 @@ class ParserError(Exception):
 	pass
 
 class Action(object):
-	class _argopt(object):
+	class BaseAction(object):
 		def __init__(self, arg, key):
 			self.args = set((arg,))
 			self.ns = None
@@ -87,13 +87,13 @@ class Action(object):
 			else:
 				self.args.add(arg)
 
-	class _argreq(_argopt):
+	class _argreq(BaseAction):
 		def __init__(self, arg, key, *args, **kwargs):
 			if not arg:
 				raise ParserError('%s action requires an argument!' % key)
 
 			newargs = (self, arg, key) + args
-			Action._argopt.__init__(*newargs, **kwargs)
+			Action.BaseAction.__init__(*newargs, **kwargs)
 
 	class EffectiveEntryOp(object):
 		def grab_effective_entry(self, p, arg, f, rw = False):
@@ -129,7 +129,7 @@ class Action(object):
 					f = self.grab_effective_entry(p, arg, pfiles[self.ns], rw = True)
 					f.modifier = '-'
 
-	class reset(_argopt):
+	class reset(BaseAction):
 		def __call__(self, pkgs, pfiles):
 			puse = pfiles[self.ns]
 			for p in pkgs:
@@ -142,7 +142,7 @@ class Action(object):
 						if not pe:
 							puse.remove(pe)
 
-	class output(_argopt, EffectiveEntryOp):
+	class output(BaseAction, EffectiveEntryOp):
 		def __call__(self, pkgs, pfiles):
 			puse = pfiles[self.ns]
 			for p in pkgs:
@@ -190,7 +190,7 @@ class ActionSet(list):
 		self.pkgs = []
 
 	def append(self, item):
-		if isinstance(item, Action._argopt):
+		if isinstance(item, Action.BaseAction):
 			item.clarify(self.pkgs, self._cache)
 			for a in self:
 				if isinstance(item, a.__class__) and item.ns == a.ns:
