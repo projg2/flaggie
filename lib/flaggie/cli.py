@@ -4,7 +4,6 @@
 # Released under the terms of the 3-clause BSD license.
 
 import os, sys
-from optparse import OptionParser
 
 from portage import create_trees
 from portage.dbapi.dep_expand import dep_expand
@@ -14,32 +13,6 @@ from flaggie import PV
 from flaggie.action import Action, ActionSet, ParserError
 from flaggie.cache import Caches
 from flaggie.packagefile import PackageFileSet
-
-def print_help(option, arg, val, parser):
-	class PseudoOption:
-		def __init__(self, opt, help):
-			parser.formatter.option_strings[self] = opt
-			self.help = help
-			self.dest = ''
-
-	parser.print_help()
-	print('''
-Actions:''')
-
-	actions = [
-		('+flag', 'explicitly enable flag'),
-		('-flag', 'explicitly disable flag'),
-		('%flag', 'reset flag to the default state (remove it completely)'),
-		('%', 'reset all package flags to the default state (drop the package from package.use)'),
-		('?flag', 'print the status of a particular flag'),
-		('?', 'print package flags')
-	]
-
-	parser.formatter.indent()
-	for a,b in actions:
-		sys.stdout.write(parser.formatter.format_option(PseudoOption(a, b)))
-	parser.formatter.dedent()
-	sys.exit(0)
 
 def parse_actions(args, dbapi, settings):
 	out = []
@@ -73,16 +46,33 @@ def parse_actions(args, dbapi, settings):
 	return out
 
 def main(argv):
-	opt = OptionParser(
-			usage='%prog [options] [<global-use-actions>] [<package> <actions>] [...]',
-			version='%%prog %s' % PV,
-			description='Easily manipulate USE flags in make.conf and package.use.',
-			add_help_option=False
-	)
-	opt.disable_interspersed_args()
-	opt.add_option('-h', '--help', action='callback', callback=print_help,
-			help = 'print help message and exit')
-	(opts, args) = opt.parse_args(argv[1:])
+	for a in argv[1:]:
+		if a == '--version':
+			print('flaggie %s' % PV)
+			return 0
+		elif a == '--help':
+			print('''Synopsis: %s [<global-actions>] [<packages> <actions>] [...]
+	
+Global actions are applied to the make.conf file. Actions are applied to
+the package.* files, for the packages preceding them.
+
+An action can be one of:
+	+arg	explicitly enable arg
+	-arg	explicitly disable arg
+	%arg	reset arg to the default state (remove it from the file)
+	?arg	print the effective status of arg (due to the file)
+
+The action argument must be either a USE flag, a keyword or a license
+name. For the '%' and '?' actions, it can be also one of 'use::', 'kw::'
+or 'lic::' in order to apply the action to all of the flags, keywords
+or licenses respectively.
+
+A package specification can be any atom acceptable for Portage
+(in the same format as taken by emerge).''')
+			return 0
+		elif a.startswith('--'):
+			print('Error: unknown option: %s' % a)
+			return 1
 
 	trees = create_trees(
 			config_root = os.environ.get('PORTAGE_CONFIGROOT'),
@@ -90,7 +80,7 @@ def main(argv):
 	porttree = trees[max(trees)]['porttree']
 
 	try:
-		act = parse_actions(args, porttree.dbapi, porttree.settings)
+		act = parse_actions(argv[1:], porttree.dbapi, porttree.settings)
 	except ParserError as e:
 		print(e)
 		return 1
