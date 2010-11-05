@@ -126,7 +126,9 @@ class Action(object):
 			out = []
 			for a in args:
 				if isinstance(a, self.Pattern):
-					raise NotImplementedError('Pattern expansion not yet implemented.')
+					for f in self._cache[self.ns][pkg]:
+						if a == f:
+							out.append(f)
 				else:
 					out.append(a)
 			return out

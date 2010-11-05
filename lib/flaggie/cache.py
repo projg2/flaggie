@@ -147,3 +147,6 @@ class Caches(object):
 			return 'license'
 		else:
 			raise AssertionError('Unexpected ns %s' % ns)
+
+	def __getitem__(self, k):
+		return self.caches[k]
