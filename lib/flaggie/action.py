@@ -3,11 +3,20 @@
 # (C) 2010 Michał Górny <gentoo@mgorny.alt.pl>
 # Released under the terms of the 3-clause BSD license.
 
+import fnmatch
+
 class ParserError(Exception):
 	pass
 
 class Action(object):
 	class BaseAction(object):
+		class Pattern(object):
+			def __init__(self, s):
+				self.pattern = s
+
+			def __eq__(self, s):
+				return fnmatch.fnmatchcase(s, self.pattern)
+
 		def __init__(self, arg, key):
 			self.args = set((arg,))
 			self.ns = None
@@ -43,7 +52,7 @@ class Action(object):
 					if not ns:
 						ns = set(('use',))
 					self.ns = ns.pop()
-					self.args.add(arg)
+					self.args.add(self.Pattern(arg))
 					return
 
 			if not pkgs:
@@ -130,14 +139,11 @@ class Action(object):
 		def __call__(self, pkgs, pfiles):
 			puse = pfiles[self.ns]
 			for p in pkgs:
-				if '' in self.args:
-					del puse[p]
-				else:
-					for pe in puse[p]:
-						for f in self.args:
-							del pe[f]
-						if not pe:
-							puse.remove(pe)
+				for pe in puse[p]:
+					for f in self.args:
+						del pe[f]
+					if not pe:
+						puse.remove(pe)
 
 	class output(EffectiveEntryOp):
 		def __call__(self, pkgs, pfiles):
