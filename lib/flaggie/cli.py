@@ -59,16 +59,16 @@ the package.* files, for the packages preceding them.
 An action can be one of:
 	+arg	explicitly enable arg
 	-arg	explicitly disable arg
-	%arg	reset arg to the default state (remove it from the file)
+	%%arg	reset arg to the default state (remove it from the file)
 	?arg	print the effective status of arg (due to the file)
 
 The action argument must be either a USE flag, a keyword or a license
-name. For the '%' and '?' actions, it can be also one of 'use::', 'kw::'
+name. For the '%%' and '?' actions, it can be also one of 'use::', 'kw::'
 or 'lic::' in order to apply the action to all of the flags, keywords
 or licenses respectively.
 
 A package specification can be any atom acceptable for Portage
-(in the same format as taken by emerge).''')
+(in the same format as taken by emerge).''' % argv[0])
 			return 0
 		elif a.startswith('--'):
 			print('Error: unknown option: %s' % a)
