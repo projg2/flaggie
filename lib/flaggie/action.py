@@ -46,8 +46,8 @@ class Action(object):
 			for schr in ('*', '?', '['):
 				if schr in arg:
 					if not ns:
-						ns = set(('use',))
-					self.ns = ns.pop()
+						ns = frozenset(('use',))
+					self.ns = ns
 					self.args.add(self.Pattern(arg))
 					return
 
@@ -88,7 +88,7 @@ class Action(object):
 						else:
 							ns = 'use'
 							print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
-			self.ns = ns
+			self.ns = frozenset((ns,))
 			self.args.add(arg)
 
 		def append(self, arg):
@@ -120,58 +120,61 @@ class Action(object):
 		def expand_patterns(self, args, pkg):
 			out = []
 			for a in args:
-				if isinstance(a, self.Pattern):
-					for f in self._cache[self.ns].get_effective(pkg):
-						if a == f:
-							out.append(f)
-				else:
-					out.append(a)
+				for ns in self.ns:
+					if isinstance(a, self.Pattern):
+						for f in self._cache[ns].get_effective(pkg):
+							if a == f:
+								out.append((ns, f))
+					else:
+						out.append((ns, a))
 			return out
 
 	class enable(EffectiveEntryOp):
 		def __call__(self, pkgs, pfiles):
 			for p in pkgs:
-				for arg in self.expand_patterns(self.args, p):
-					f = self.grab_effective_entry(p, arg, pfiles[self.ns], rw = True)
+				for ns, arg in self.expand_patterns(self.args, p):
+					f = self.grab_effective_entry(p, arg, pfiles[ns], rw = True)
 					f.modifier = ''
 
 	class disable(EffectiveEntryOp):
 		def __call__(self, pkgs, pfiles):
 			for p in pkgs:
-				for arg in self.expand_patterns(self.args, p):
-					f = self.grab_effective_entry(p, arg, pfiles[self.ns], rw = True)
+				for ns, arg in self.expand_patterns(self.args, p):
+					f = self.grab_effective_entry(p, arg, pfiles[ns], rw = True)
 					f.modifier = '-'
 
 	class reset(BaseAction):
 		def __call__(self, pkgs, pfiles):
-			puse = pfiles[self.ns]
-			for p in pkgs:
-				for pe in puse[p]:
-					for f in self.args:
-						del pe[f]
-					if not pe:
-						puse.remove(pe)
+			for ns in self.ns:
+				puse = pfiles[ns]
+				for p in pkgs:
+					for pe in puse[p]:
+						for f in self.args:
+							del pe[f]
+						if not pe:
+							puse.remove(pe)
 
 	class output(BaseAction):
 		def __call__(self, pkgs, pfiles):
-			puse = pfiles[self.ns]
-			for p in pkgs:
-				l = [p]
-				flags = {}
-				for pe in puse[p]:
+			for ns in self.ns:
+				puse = pfiles[ns]
+				for p in pkgs:
+					l = [p]
+					flags = {}
+					for pe in puse[p]:
+						for arg in self.args:
+							for f in pe[arg]:
+								if f.name not in flags:
+									flags[f.name] = f
 					for arg in self.args:
-						for f in pe[arg]:
-							if f.name not in flags:
-								flags[f.name] = f
-				for arg in self.args:
-					if arg not in flags and not isinstance(arg, self.Pattern):
-						flags[arg] = None
-				if not flags:
-					continue
-				for fn in sorted(flags):
-					l.append(flags[fn].toString() if flags[fn] is not None else '?%s' % fn)
+						if arg not in flags and not isinstance(arg, self.Pattern):
+							flags[arg] = None
+					if not flags:
+						continue
+					for fn in sorted(flags):
+						l.append(flags[fn].toString() if flags[fn] is not None else '?%s' % fn)
 
-				print(' '.join(l))
+					print(' '.join(l))
 
 	mapping = {
 		'+': enable,
@@ -214,8 +217,9 @@ class ActionSet(list):
 	def __call__(self, pfiles):
 		if self.pkgs:
 			for a in self:
-				if a.ns not in pfiles:
-					raise AssertionError('Unexpected ns %s in ActionSet.__call__()' % a.ns)
+				for ns in a.ns:
+					if ns not in pfiles:
+						raise AssertionError('Unexpected ns %s in ActionSet.__call__()' % a.ns)
 				a(self.pkgs, pfiles)
 		else:
 			raise NotImplementedError('Global actions are not supported yet')
