@@ -3,7 +3,7 @@
 # (C) 2010 Michał Górny <gentoo@mgorny.alt.pl>
 # Released under the terms of the 3-clause BSD license.
 
-import os, sys
+import os
 
 from portage import create_trees
 from portage.dbapi.dep_expand import dep_expand
@@ -86,7 +86,8 @@ A package specification can be any atom acceptable for Portage
 		return 1
 
 	if not act:
-		print_help(None, '', '', opt)
+		main([argv[0], '--help'])
+		return 0
 
 	# (only for testing, to be replaced by something more optimal)
 	pfiles = {
