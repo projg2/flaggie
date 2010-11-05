@@ -35,6 +35,9 @@ class PackageFileSet:
 						self.modifier = ''
 						self.name = s
 
+				def __lt__(self, other):
+					return self.name < other.name
+
 				def toString(self):
 					return '%s%s' % (self.modifier, self.name)
 
@@ -61,6 +64,9 @@ class PackageFileSet:
 				self.flags.append(flag)
 				self.modified = True
 				return flag
+
+			def __lt__(self, other):
+				return self.package < other.package
 
 			def __iter__(self):
 				""" Iterate over all flags in the entry. """
