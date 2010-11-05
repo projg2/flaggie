@@ -97,6 +97,10 @@ class Action(object):
 			else:
 				self.args.add(arg)
 
+		def __lt__(self, other):
+			idx = [Action.order.index(x.__class__) for x in (self, other)]
+			return idx[0] < idx[1]
+
 	class EffectiveEntryOp(BaseAction):
 		def grab_effective_entry(self, p, arg, f, rw = False):
 			entries = f[p]
@@ -210,11 +214,11 @@ class ActionSet(list):
 					break
 			else:
 				list.append(self, item)
-				self.sort(key = lambda x: Action.order.index(x.__class__))
 		else:
 			self.pkgs.append(item)
 
 	def __call__(self, pfiles):
+		self.sort()
 		if self.pkgs:
 			for a in self:
 				for ns in a.ns:
