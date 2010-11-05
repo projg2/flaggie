@@ -128,18 +128,35 @@ class PackageFileSet:
 			self.modified = False
 
 	def __init__(self, path):
-		self.files = []
-		if os.path.isdir(path):
-			files = sorted(glob.glob(os.path.join(path, '*')))
+		self._path = path
+		self._files = []
+
+	@property
+	def files(self):
+		if not self._files:
+			self.read()
+		return self._files
+
+	def read(self):
+		if self._files:
+			return
+
+		if os.path.isdir(self._path):
+			files = sorted(glob.glob(os.path.join(self._path, '*')))
 		else:
-			files = [path]
+			files = [self._path]
 
 		for path in files:
-			self.files.append(self.PackageFile(path))
+			self._files.append(self.PackageFile(path))
 
 	def write(self):
-		for f in self.files:
+		if not self._files:
+			return
+
+		for f in self._files:
 			f.write()
+			del f
+		self._files = []
 
 	def append(self, pkg):
 		f = self.files[-1]
