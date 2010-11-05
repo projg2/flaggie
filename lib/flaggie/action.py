@@ -167,7 +167,7 @@ class Action(object):
 					if arg not in flags and not isinstance(arg, self.Pattern):
 						flags[arg] = None
 				if not flags:
-					return
+					continue
 				for fn in sorted(flags):
 					l.append(flags[fn].toString() if flags[fn] is not None else '?%s' % fn)
 
