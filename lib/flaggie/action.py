@@ -87,15 +87,7 @@ class Action(object):
 			else:
 				self.args.add(arg)
 
-	class _argreq(BaseAction):
-		def __init__(self, arg, key, *args, **kwargs):
-			if not arg:
-				raise ParserError('%s action requires an argument!' % key)
-
-			newargs = (self, arg, key) + args
-			Action.BaseAction.__init__(*newargs, **kwargs)
-
-	class EffectiveEntryOp(object):
+	class EffectiveEntryOp(BaseAction):
 		def grab_effective_entry(self, p, arg, f, rw = False):
 			entries = f[p]
 			for pe in entries:
@@ -115,14 +107,14 @@ class Action(object):
 				else:
 					return f.append(p).append(arg)
 
-	class enable(_argreq, EffectiveEntryOp):
+	class enable(EffectiveEntryOp):
 		def __call__(self, pkgs, pfiles):
 			for p in pkgs:
 				for arg in self.args:
 					f = self.grab_effective_entry(p, arg, pfiles[self.ns], rw = True)
 					f.modifier = ''
 
-	class disable(_argreq, EffectiveEntryOp):
+	class disable(EffectiveEntryOp):
 		def __call__(self, pkgs, pfiles):
 			for p in pkgs:
 				for arg in self.args:
@@ -142,7 +134,7 @@ class Action(object):
 						if not pe:
 							puse.remove(pe)
 
-	class output(BaseAction, EffectiveEntryOp):
+	class output(EffectiveEntryOp):
 		def __call__(self, pkgs, pfiles):
 			puse = pfiles[self.ns]
 			for p in pkgs:
