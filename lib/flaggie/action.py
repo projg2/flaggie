@@ -145,25 +145,24 @@ class Action(object):
 					if not pe:
 						puse.remove(pe)
 
-	class output(EffectiveEntryOp):
+	class output(BaseAction):
 		def __call__(self, pkgs, pfiles):
 			puse = pfiles[self.ns]
 			for p in pkgs:
 				l = [p]
-				if '' in self.args:
-					flags = {}
-					for pe in puse[p]:
-						for f in pe:
+				flags = {}
+				for pe in puse[p]:
+					for arg in self.args:
+						for f in pe[arg]:
 							if f.name not in flags:
 								flags[f.name] = f
-					if not flags:
-						return
-					for fn in sorted(flags):
-						l.append(flags[fn].toString())
-				else:
-					for arg in sorted(self.args):
-						f = self.grab_effective_entry(p, arg, puse)
-						l.append(f.toString() if f else '?%s' % arg)
+				for arg in self.args:
+					if arg not in flags and not isinstance(arg, self.Pattern):
+						flags[arg] = None
+				if not flags:
+					return
+				for fn in sorted(flags):
+					l.append(flags[fn].toString() if flags[fn] is not None else '?%s' % fn)
 
 				print(' '.join(l))
 
