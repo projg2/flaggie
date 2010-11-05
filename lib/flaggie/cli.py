@@ -46,7 +46,7 @@ def parse_actions(args, dbapi, settings):
 	return out
 
 def main(argv):
-	for a in argv[1:]:
+	for a in list(argv[1:]):
 		if a == '--version':
 			print('flaggie %s' % PV)
 			return 0
@@ -70,6 +70,9 @@ or licenses respectively.
 A package specification can be any atom acceptable for Portage
 (in the same format as taken by emerge).''' % argv[0])
 			return 0
+		elif a == '--':
+			argv.remove(a)
+			break
 		elif a.startswith('--'):
 			print('Error: unknown option: %s' % a)
 			return 1
