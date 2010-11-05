@@ -116,21 +116,22 @@ class Action(object):
 					return f.append(p).append(arg)
 
 	class enable(_argreq, EffectiveEntryOp):
-		def __call__(self, pkgs, puse):
+		def __call__(self, pkgs, pfiles):
 			for p in pkgs:
 				for arg in self.args:
-					f = self.grab_effective_entry(p, arg, puse, rw = True)
+					f = self.grab_effective_entry(p, arg, pfiles[self.ns], rw = True)
 					f.modifier = ''
 
 	class disable(_argreq, EffectiveEntryOp):
-		def __call__(self, pkgs, puse):
+		def __call__(self, pkgs, pfiles):
 			for p in pkgs:
 				for arg in self.args:
-					f = self.grab_effective_entry(p, arg, puse, rw = True)
+					f = self.grab_effective_entry(p, arg, pfiles[self.ns], rw = True)
 					f.modifier = '-'
 
 	class reset(_argopt):
-		def __call__(self, pkgs, puse):
+		def __call__(self, pkgs, pfiles):
+			puse = pfiles[self.ns]
 			for p in pkgs:
 				if '' in self.args:
 					del puse[p]
@@ -142,7 +143,8 @@ class Action(object):
 							puse.remove(pe)
 
 	class output(_argopt, EffectiveEntryOp):
-		def __call__(self, pkgs, puse):
+		def __call__(self, pkgs, pfiles):
+			puse = pfiles[self.ns]
 			for p in pkgs:
 				l = [p]
 				if '' in self.args:
@@ -205,6 +207,6 @@ class ActionSet(list):
 			for a in self:
 				if a.ns not in pfiles:
 					raise AssertionError('Unexpected ns %s in ActionSet.__call__()' % a.ns)
-				a(self.pkgs, pfiles[a.ns])
+				a(self.pkgs, pfiles)
 		else:
 			raise NotImplementedError('Global actions are not supported yet')
