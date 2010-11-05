@@ -110,7 +110,7 @@ class Action(object):
 				# No matching flag found. Try to append to the last
 				# package entry if there's one. Otherwise, append
 				# a new entry.
-				for pe in entries:
+				for pe in f[p]:
 					return pe.append(arg)
 				else:
 					return f.append(p).append(arg)
