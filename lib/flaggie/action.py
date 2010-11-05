@@ -24,6 +24,7 @@ class Action(object):
 		def clarify(self, pkgs, cache):
 			if len(self.args) > 1:
 				raise AssertionError('clarify() needs to be called before actions are joined.')
+			self._cache = cache
 			arg = self.args.pop()
 
 			splitarg = arg.split('::', 1)
@@ -121,17 +122,26 @@ class Action(object):
 				else:
 					return f.append(p).append(arg)
 
+		def expand_patterns(self, args, pkg):
+			out = []
+			for a in args:
+				if isinstance(a, self.Pattern):
+					raise NotImplementedError('Pattern expansion not yet implemented.')
+				else:
+					out.append(a)
+			return out
+
 	class enable(EffectiveEntryOp):
 		def __call__(self, pkgs, pfiles):
 			for p in pkgs:
-				for arg in self.args:
+				for arg in self.expand_patterns(self.args, p):
 					f = self.grab_effective_entry(p, arg, pfiles[self.ns], rw = True)
 					f.modifier = ''
 
 	class disable(EffectiveEntryOp):
 		def __call__(self, pkgs, pfiles):
 			for p in pkgs:
-				for arg in self.args:
+				for arg in self.expand_patterns(self.args, p):
 					f = self.grab_effective_entry(p, arg, pfiles[self.ns], rw = True)
 					f.modifier = '-'
 
