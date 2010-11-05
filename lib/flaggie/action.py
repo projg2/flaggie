@@ -126,7 +126,7 @@ class Action(object):
 			out = []
 			for a in args:
 				if isinstance(a, self.Pattern):
-					for f in self._cache[self.ns][pkg]:
+					for f in self._cache[self.ns].get_effective(pkg):
 						if a == f:
 							out.append(f)
 				else:

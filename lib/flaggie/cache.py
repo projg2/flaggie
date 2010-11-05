@@ -6,6 +6,7 @@
 import os, os.path
 
 from portage.dep import use_reduce
+from portage.versions import best
 
 class Caches(object):
 	class DBAPICache(object):
@@ -16,6 +17,7 @@ class Caches(object):
 				raise AssertionError('DBAPICache.aux_key needs to be overriden.')
 			self.dbapi = dbapi
 			self.cache = {}
+			self.effective_cache = {}
 
 		@property
 		def glob(self):
@@ -33,6 +35,16 @@ class Caches(object):
 							(self.aux_key,))[0]))
 				self.cache[k] = flags
 			return self.cache[k]
+
+		def get_effective(self, k):
+			if k not in self.effective_cache:
+				flags = set()
+				pkgs = self.dbapi.xmatch('match-all', k)
+				if pkgs:
+					flags.update(self._aux_parse(self.dbapi.aux_get( \
+							best(pkgs), (self.aux_key,))[0]))
+				self.effective_cache[k] = flags
+			return self.effective_cache[k]
 
 	class FlagCache(DBAPICache):
 		aux_key = 'IUSE'
