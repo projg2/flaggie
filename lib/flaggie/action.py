@@ -217,11 +217,11 @@ class ActionSet(list):
 
 	def append(self, item):
 		if isinstance(item, Action.BaseAction):
-			reraising = False
+			exc = None
 			try:
 				item.clarify(self.pkgs, self._cache)
-			except ParserWarning:
-				reraising = True
+			except ParserWarning as e:
+				exc = e
 
 			for a in self:
 				if isinstance(item, a.__class__) and item.ns == a.ns:
@@ -230,8 +230,8 @@ class ActionSet(list):
 			else:
 				list.append(self, item)
 
-			if reraising:
-				raise
+			if exc is not None:
+				raise exc
 		else:
 			self.pkgs.append(item)
 
