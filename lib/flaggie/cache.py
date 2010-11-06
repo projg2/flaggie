@@ -98,10 +98,10 @@ class Caches(object):
 
 			return self.cache[None]
 
-		def __getitem__(self, k):
-			ret = Caches.DBAPICache.__getitem__(self, k)
-			ret.add('**')
-			return ret
+		def _aux_parse(self, arg):
+			kw = [x for x in arg.split() if not x.startswith('-')]
+			kw.append('**')
+			return kw
 
 	class LicenseCache(DBAPICache):
 		aux_key = 'LICENSE'
