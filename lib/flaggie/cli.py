@@ -15,7 +15,7 @@ from flaggie.cache import Caches
 from flaggie.cleanup import DropIneffective, SortEntries, SortFlags
 from flaggie.packagefile import PackageFiles
 
-def parse_actions(args, dbapi, settings, strict = False):
+def parse_actions(args, dbapi, settings, quiet = False, strict = False):
 	out = []
 	cache = Caches(dbapi)
 	actset = ActionSet(cache = cache)
@@ -50,9 +50,11 @@ def parse_actions(args, dbapi, settings, strict = False):
 			else:
 				actset.append(act)
 		except (ParserError, ParserWarning) as e:
-			print('At argv[%d]=\'%s\': %s' % (i + 1, a, e))
+			if not quiet or strict:
+				print('At argv[%d]=\'%s\': %s' % (i + 1, a, e))
 			if strict:
-				print('Strict mode, aborting.')
+				if not quiet:
+					print('Strict mode, aborting.')
 				return None
 
 	if actset and (actset.pkgs or not had_pkgs):
@@ -61,6 +63,7 @@ def parse_actions(args, dbapi, settings, strict = False):
 
 def main(argv):
 	cleanup_actions = set()
+	quiet = False
 	strict = False
 
 	for a in list(argv[1:]):
@@ -73,6 +76,7 @@ def main(argv):
 %s [<options>] [<global-actions>] [<packages> <actions>] [...]
 
 Options:
+	--quiet			Silence argument errors and warnings
 	--strict		Abort if at least a single flag is invalid
 
 	--drop-ineffective	Drop ineffective flags (those which are
@@ -100,6 +104,8 @@ respectively.
 A package specification can be any atom acceptable for Portage (in the same
 format as taken by emerge).''' % os.path.basename(argv[0]))
 				return 0
+			elif a == '--quiet':
+				quiet = True
 			elif a == '--strict':
 				strict = True
 			elif a == '--drop-ineffective':
@@ -128,7 +134,8 @@ format as taken by emerge).''' % os.path.basename(argv[0]))
 			target_root = os.environ.get('ROOT'))
 	porttree = trees[max(trees)]['porttree']
 
-	act = parse_actions(argv[1:], porttree.dbapi, porttree.settings, strict = strict)
+	act = parse_actions(argv[1:], porttree.dbapi, porttree.settings, \
+			quiet = quiet, strict = strict)
 	if act is None:
 		return 1
 	if not act and not cleanup_actions:
