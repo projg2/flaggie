@@ -39,7 +39,7 @@ def parse_actions(args, dbapi, settings):
 			else:
 				actset.append(act)
 		except ParserError as e:
-			raise ParserError('At argv[%d]=\'%s\': %s' % (i, a, e))
+			print('At argv[%d]=\'%s\': %s' % (i + 1, a, e))
 
 	if actset:
 		out.append(actset)
