@@ -18,6 +18,7 @@ def parse_actions(args, dbapi, settings):
 	out = []
 	cache = Caches(dbapi)
 	actset = ActionSet(cache = cache)
+	had_pkgs = False
 
 	for i, a in enumerate(args):
 		if not a:
@@ -27,8 +28,12 @@ def parse_actions(args, dbapi, settings):
 				act = Action(a)
 			except Action.NotAnAction:
 				if actset:
-					out.append(actset)
+					# Avoid transforming actset with all atoms being
+					# incorrect into global actions.
+					if actset.pkgs or not had_pkgs:
+						out.append(actset)
 					actset = ActionSet(cache = cache)
+				had_pkgs = True
 				try:
 					atom = dep_expand(a, mydb = dbapi, settings = settings)
 				except AmbiguousPackageName as e:
@@ -41,7 +46,7 @@ def parse_actions(args, dbapi, settings):
 		except ParserError as e:
 			print('At argv[%d]=\'%s\': %s' % (i + 1, a, e))
 
-	if actset:
+	if actset and (actset.pkgs or not had_pkgs):
 		out.append(actset)
 	return out
 
