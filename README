@@ -6,7 +6,7 @@ Quick introduction
 ------------------
 
 flaggie is just another handy, CLI-based mangler for `package.*` files.
-Although it is originally based on flagedit by Damien Krotkine [1], it
+Although it is originally based on [flagedit][1] by Damien Krotkine, it
 aims at being nicer to use and more powerful than flagedit.
 
 Key features:
@@ -19,7 +19,7 @@ Key features:
 - smart recognition of action arguments -- flaggie knows whether you're
 	passing a USE flag or a keyword.
 
-[1] http://damien.krotkine.com/the-player-of-games/flagedit.html
+[1]: http://damien.krotkine.com/the-player-of-games/flagedit.html
 
 
 Synopsis
@@ -84,22 +84,22 @@ Examples
 
 1. Enabling `USE=doc` for `x11-libs/gtk+:2`:
 
-	flaggie gtk+:2 +doc
+		flaggie gtk+:2 +doc
 
 2. Keyword-unmasking `sys-apps/portage-2.2` (omitting the live version):
 
-	flaggie '<portage-9999' '+**'
+		flaggie '<portage-9999' '+**'
 
 3. Resetting all USEflags of `net-im/ekg2` to their default values:
 
-	flaggie ekg2 %
+		flaggie ekg2 %
 
 4. Easy license-unmasking `www-plugins/adobe-flash`:
 
-	flaggie adobe-flash +lic::
+		flaggie adobe-flash +lic::
 
 5. Performing a cleanup of `package.*` files:
 
-	flaggie --cleanup
+		flaggie --cleanup
 
 <!-- vim:se syn=markdown : -->
