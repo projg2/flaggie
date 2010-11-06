@@ -114,7 +114,7 @@ A package specification can be any atom acceptable for Portage
 		print(e)
 		return 1
 
-	if not act:
+	if not act and not cleanup_actions:
 		main([argv[0], '--help'])
 		return 0
 
