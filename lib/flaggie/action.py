@@ -17,6 +17,9 @@ class Action(object):
 			def __eq__(self, s):
 				return fnmatch.fnmatchcase(s, self.pattern)
 
+			def __hash__(self):
+				return hash(self.pattern)
+
 		def __init__(self, arg, key):
 			self.args = set((arg,))
 			self.ns = None
