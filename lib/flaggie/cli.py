@@ -12,6 +12,7 @@ from portage.exception import AmbiguousPackageName, InvalidAtom
 from flaggie import PV
 from flaggie.action import Action, ActionSet, ParserError
 from flaggie.cache import Caches
+from flaggie.cleanup import SortEntries, SortFlags
 from flaggie.packagefile import PackageFiles
 
 def parse_actions(args, dbapi, settings):
@@ -126,12 +127,9 @@ A package specification can be any atom acceptable for Portage
 			print('Warning: %s' % e)
 
 	if sort_flags:
-		for f in pfiles:
-			for pe in f:
-				pe.sort()
+		SortFlags(pfiles)
 	if sort_entries:
-		for f in pfiles:
-			f.sort()
+		SortEntries(pfiles)
 
 	pfiles.write()
 
