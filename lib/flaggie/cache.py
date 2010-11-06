@@ -114,6 +114,7 @@ class Caches(object):
 						lic.update(os.listdir(os.path.join(r, 'licenses')))
 					except OSError:
 						pass
+				lic.discard('CVS')
 				self.cache[None] = frozenset(lic)
 
 			return self.cache[None]
