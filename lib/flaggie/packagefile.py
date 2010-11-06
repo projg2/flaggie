@@ -5,7 +5,7 @@
 
 import codecs, glob, os.path
 
-class PackageFileSet:
+class PackageFileSet(object):
 	class PackageFile(list):
 		class Whitespace(object):
 			def __init__(self, l):
@@ -22,11 +22,11 @@ class PackageFileSet:
 			def modified(self, newval):
 				pass
 
-		class PackageEntry:
+		class PackageEntry(object):
 			class InvalidPackageEntry(Exception):
 				pass
 
-			class PackageFlag:
+			class PackageFlag(object):
 				def __init__(self, s):
 					if s[0] in ('-', '+'):
 						self.modifier = s[0]
