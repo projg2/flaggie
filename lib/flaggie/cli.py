@@ -108,12 +108,7 @@ A package specification can be any atom acceptable for Portage
 			target_root = os.environ.get('ROOT'))
 	porttree = trees[max(trees)]['porttree']
 
-	try:
-		act = parse_actions(argv[1:], porttree.dbapi, porttree.settings)
-	except ParserError as e:
-		print(e)
-		return 1
-
+	act = parse_actions(argv[1:], porttree.dbapi, porttree.settings)
 	if not act and not cleanup_actions:
 		main([argv[0], '--help'])
 		return 0
