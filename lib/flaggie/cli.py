@@ -12,7 +12,7 @@ from portage.exception import AmbiguousPackageName
 from flaggie import PV
 from flaggie.action import Action, ActionSet, ParserError
 from flaggie.cache import Caches
-from flaggie.packagefile import PackageFileSet
+from flaggie.packagefile import PackageFiles
 
 def parse_actions(args, dbapi, settings):
 	out = []
@@ -92,17 +92,9 @@ A package specification can be any atom acceptable for Portage
 		main([argv[0], '--help'])
 		return 0
 
-	# (only for testing, to be replaced by something more optimal)
-	pfiles = {
-		'use': PackageFileSet('/etc/portage/package.use'),
-		'kw': PackageFileSet('/etc/portage/package.keywords'),
-		'lic': PackageFileSet('/etc/portage/package.license')
-	}
-
+	pfiles = PackageFiles()
 	for actset in act:
 		actset(pfiles)
-
-	for f in pfiles.values():
-		f.write()
+	pfiles.write()
 
 	return 0

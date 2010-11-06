@@ -210,3 +210,15 @@ class PackageFileSet:
 			for e in entries:
 				f.remove(e)
 			f.modified = True
+
+class PackageFiles(dict):
+	def __init__(self):
+		dict.__init__(self, {
+			'use': PackageFileSet('/etc/portage/package.use'),
+			'kw': PackageFileSet('/etc/portage/package.keywords'),
+			'lic': PackageFileSet('/etc/portage/package.license')
+		})
+
+	def write(self):
+		for f in self.values():
+			f.write()
