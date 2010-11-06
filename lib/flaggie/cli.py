@@ -47,35 +47,37 @@ def parse_actions(args, dbapi, settings):
 
 def main(argv):
 	for a in list(argv[1:]):
-		if a == '--version':
-			print('flaggie %s' % PV)
-			return 0
-		elif a == '--help':
-			print('''Synopsis: %s [<global-actions>] [<packages> <actions>] [...]
-	
-Global actions are applied to the make.conf file. Actions are applied to
-the package.* files, for the packages preceding them.
+		if a.startswith('--'):
+			if a == '--version':
+				print('flaggie %s' % PV)
+				return 0
+			elif a == '--help':
+				print('''Synopsis: %s [<global-actions>] [<packages> <actions>] [...]
+		
+	Global actions are applied to the make.conf file. Actions are applied to
+	the package.* files, for the packages preceding them.
 
-An action can be one of:
-	+arg	explicitly enable arg
-	-arg	explicitly disable arg
-	%%arg	reset arg to the default state (remove it from the file)
-	?arg	print the effective status of arg (due to the file)
+	An action can be one of:
+		+arg	explicitly enable arg
+		-arg	explicitly disable arg
+		%%arg	reset arg to the default state (remove it from the file)
+		?arg	print the effective status of arg (due to the file)
 
-The action argument must be either a USE flag, a keyword or a license
-name. For the '%%' and '?' actions, it can be also one of 'use::', 'kw::'
-or 'lic::' in order to apply the action to all of the flags, keywords
-or licenses respectively.
+	The action argument must be either a USE flag, a keyword or a license
+	name. For the '%%' and '?' actions, it can be also one of 'use::', 'kw::'
+	or 'lic::' in order to apply the action to all of the flags, keywords
+	or licenses respectively.
 
-A package specification can be any atom acceptable for Portage
-(in the same format as taken by emerge).''' % argv[0])
-			return 0
-		elif a == '--':
+	A package specification can be any atom acceptable for Portage
+	(in the same format as taken by emerge).''' % argv[0])
+				return 0
+			elif a == '--':
+				argv.remove(a)
+				break
+			else:
+				print('Error: unknown option: %s' % a)
+				return 1
 			argv.remove(a)
-			break
-		elif a.startswith('--'):
-			print('Error: unknown option: %s' % a)
-			return 1
 
 	trees = create_trees(
 			config_root = os.environ.get('PORTAGE_CONFIGROOT'),
