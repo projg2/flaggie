@@ -152,7 +152,7 @@ class Action(object):
 			for ns in self.ns:
 				puse = pfiles[ns]
 				for p in pkgs:
-					for pe in puse[p]:
+					for pe in list(puse[p]):
 						for f in self.args:
 							del pe[f]
 						if not pe:
