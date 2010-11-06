@@ -198,7 +198,7 @@ class Action(object):
 			return cls.mapping[a[0]](*newargs, **kwargs)
 		else:
 			raise cls.NotAnAction
-		
+
 class ActionSet(list):
 	def __init__(self, cache = None):
 		list.__init__(self)
