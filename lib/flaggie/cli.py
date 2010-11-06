@@ -7,7 +7,7 @@ import os, os.path
 
 from portage import create_trees
 from portage.dbapi.dep_expand import dep_expand
-from portage.exception import AmbiguousPackageName
+from portage.exception import AmbiguousPackageName, InvalidAtom
 
 from flaggie import PV
 from flaggie.action import Action, ActionSet, ParserError
@@ -38,6 +38,8 @@ def parse_actions(args, dbapi, settings):
 					atom = dep_expand(a, mydb = dbapi, settings = settings)
 				except AmbiguousPackageName as e:
 					raise ParserError('ambiguous package name, matching: %s' % e)
+				except InvalidAtom as e:
+					raise ParserError('invalid package atom: %s' % e)
 				if atom.startswith('null/'):
 					raise ParserError('unable to determine the category (mistyped name?)')
 				actset.append(atom)
