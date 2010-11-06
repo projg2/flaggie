@@ -72,6 +72,7 @@ Options:
 				(please note this will drop comments)
 	--sort-flags		Sort package.* flags by name
 	--sort			Shorthand for --sort-entries and --sort-flags
+	--cleanup		Shorthand for --drop-ineffective and --sort
 		
 Global actions are applied to the make.conf file. Actions are applied to
 the package.* files, for the packages preceding them.
@@ -97,6 +98,10 @@ format as taken by emerge).''' % os.path.basename(argv[0]))
 			elif a == '--sort-flags':
 				cleanup_actions.add(SortFlags)
 			elif a == '--sort':
+				cleanup_actions.add(SortEntries)
+				cleanup_actions.add(SortFlags)
+			elif a == '--cleanup':
+				cleanup_actions.add(DropIneffective)
 				cleanup_actions.add(SortEntries)
 				cleanup_actions.add(SortFlags)
 			elif a == '--':
