@@ -33,17 +33,18 @@ class Caches(object):
 				for p in self.dbapi.xmatch('match-all', k):
 					flags.update(self._aux_parse(self.dbapi.aux_get(p, \
 							(self.aux_key,))[0]))
-				self.cache[k] = flags
+				self.cache[k] = frozenset(flags)
 			return self.cache[k]
 
 		def get_effective(self, k):
 			if k not in self.effective_cache:
-				flags = set()
 				pkgs = self.dbapi.xmatch('match-all', k)
 				if pkgs:
-					flags.update(self._aux_parse(self.dbapi.aux_get( \
-							best(pkgs), (self.aux_key,))[0]))
-				self.effective_cache[k] = flags
+					flags = self._aux_parse(self.dbapi.aux_get( \
+							best(pkgs), (self.aux_key,))[0])
+				else:
+					flags = ()
+				self.effective_cache[k] = frozenset(flags)
 			return self.effective_cache[k]
 
 	class FlagCache(DBAPICache):
@@ -64,7 +65,7 @@ class Caches(object):
 							if len(ll) > 1:
 								flags.add(ll[0])
 						f.close()
-				self.cache[None] = flags
+				self.cache[None] = frozenset(flags)
 
 			return self.cache[None]
 
@@ -85,16 +86,14 @@ class Caches(object):
 						pass
 					else:
 						for l in f:
-							if l.strip() and not l.startswith('#'):
-								kws.add(l.strip())
+							kw = l.strip()
+							if kw and not kw.startswith('#'):
+								kws.update((kw, '~' + kw))
 						f.close()
 
-				# testing keywords
-				for k in kws.copy():
-					kws.add('~%s' % k)
 				# and the ** special keyword
 				kws.add('**')
-				self.cache[None] = kws
+				self.cache[None] = frozenset(kws)
 
 			return self.cache[None]
 
@@ -115,7 +114,7 @@ class Caches(object):
 						lic.update(os.listdir(os.path.join(r, 'licenses')))
 					except OSError:
 						pass
-				self.cache[None] = lic
+				self.cache[None] = frozenset(lic)
 
 			return self.cache[None]
 
