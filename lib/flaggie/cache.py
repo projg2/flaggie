@@ -127,8 +127,8 @@ class Caches(object):
 				lic = use_reduce(paren_reduce(arg, tokenize = True),
 						matchall = True)
 
-			if '||' in lic:
-				lic.remove('||')
+			lic = set(lic)
+			lic.discard('||')
 			return lic
 
 	def __init__(self, dbapi):
