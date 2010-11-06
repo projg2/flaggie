@@ -65,6 +65,10 @@ class PackageFileSet:
 				self.modified = True
 				return flag
 
+			def remove(self, flag):
+				self.flags.remove(flag)
+				self.modified = True
+
 			def sort(self):
 				self.flags.sort()
 				self.modified = True

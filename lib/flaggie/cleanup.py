@@ -12,6 +12,21 @@ class BaseCleanupAction(object):
 		for f in pfiles:
 			self._perform(f)
 
+class DropIneffective(BaseCleanupAction):
+	def _perform(self, f):
+		cache = {}
+
+		for pe in list(f):
+			if pe.package not in cache:
+				cache[pe.package] = set()
+			for f in pe:
+				if f.name not in cache[pe.package]:
+					cache[pe.package].add(f.name)
+				else:
+					pe.remove(f)
+			if not pe:
+				f.remove(pe)
+
 class SortEntries(BaseCleanupAction):
 	def _perform(self, f):
 		f.sort()

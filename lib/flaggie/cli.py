@@ -12,7 +12,7 @@ from portage.exception import AmbiguousPackageName, InvalidAtom
 from flaggie import PV
 from flaggie.action import Action, ActionSet, ParserError
 from flaggie.cache import Caches
-from flaggie.cleanup import SortEntries, SortFlags
+from flaggie.cleanup import DropIneffective, SortEntries, SortFlags
 from flaggie.packagefile import PackageFiles
 
 def parse_actions(args, dbapi, settings):
@@ -66,10 +66,12 @@ def main(argv):
 %s [<options>] [<global-actions>] [<packages> <actions>] [...]
 
 Options:
-	--sort-entries	Sort package.* file entries by package
-			(please note this will drop comments)
-	--sort-flags	Sort package.* flags by name
-	--sort		Shorthand for --sort-entries and --sort-flags
+	--drop-ineffective	Drop ineffective flags (those which are
+				overriden by later declarations)
+	--sort-entries		Sort package.* file entries by package
+				(please note this will drop comments)
+	--sort-flags		Sort package.* flags by name
+	--sort			Shorthand for --sort-entries and --sort-flags
 		
 Global actions are applied to the make.conf file. Actions are applied to
 the package.* files, for the packages preceding them.
@@ -80,14 +82,16 @@ An action can be one of:
 	%%arg	reset arg to the default state (remove it from the file)
 	?arg	print the effective status of arg (due to the file)
 
-The action argument must be either a USE flag, a keyword or a license
-name. For the '%%' and '?' actions, it can be also one of 'use::', 'kw::'
-or 'lic::' in order to apply the action to all of the flags, keywords
-or licenses respectively.
+The action argument must be either a USE flag, a keyword or a license name.
+For the '%%' and '?' actions, it can be also one of 'use::', 'kw::' or 'lic::'
+in order to apply the action to all of the flags, keywords or licenses
+respectively.
 
-A package specification can be any atom acceptable for Portage
-(in the same format as taken by emerge).''' % os.path.basename(argv[0]))
+A package specification can be any atom acceptable for Portage (in the same
+format as taken by emerge).''' % os.path.basename(argv[0]))
 				return 0
+			elif a == '--drop-ineffective':
+				cleanup_actions.add(DropIneffective)
 			elif a == '--sort-entries':
 				cleanup_actions.add(SortEntries)
 			elif a == '--sort-flags':
