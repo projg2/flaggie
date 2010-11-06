@@ -3,7 +3,7 @@
 # (C) 2010 Michał Górny <gentoo@mgorny.alt.pl>
 # Released under the terms of the 3-clause BSD license.
 
-import os
+import os, os.path
 
 from portage import create_trees
 from portage.dbapi.dep_expand import dep_expand
@@ -55,24 +55,31 @@ def main(argv):
 				print('flaggie %s' % PV)
 				return 0
 			elif a == '--help':
-				print('''Synopsis: %s [<global-actions>] [<packages> <actions>] [...]
+				print('''Synopsis:
+%s [<options>] [<global-actions>] [<packages> <actions>] [...]
+
+Options:
+	--sort-entries	Sort package.* file entries by package
+			(please note this will drop comments)
+	--sort-flags	Sort package.* flags by name
+	--sort		Shorthand for --sort-entries and --sort-flags
 		
-	Global actions are applied to the make.conf file. Actions are applied to
-	the package.* files, for the packages preceding them.
+Global actions are applied to the make.conf file. Actions are applied to
+the package.* files, for the packages preceding them.
 
-	An action can be one of:
-		+arg	explicitly enable arg
-		-arg	explicitly disable arg
-		%%arg	reset arg to the default state (remove it from the file)
-		?arg	print the effective status of arg (due to the file)
+An action can be one of:
+	+arg	explicitly enable arg
+	-arg	explicitly disable arg
+	%%arg	reset arg to the default state (remove it from the file)
+	?arg	print the effective status of arg (due to the file)
 
-	The action argument must be either a USE flag, a keyword or a license
-	name. For the '%%' and '?' actions, it can be also one of 'use::', 'kw::'
-	or 'lic::' in order to apply the action to all of the flags, keywords
-	or licenses respectively.
+The action argument must be either a USE flag, a keyword or a license
+name. For the '%%' and '?' actions, it can be also one of 'use::', 'kw::'
+or 'lic::' in order to apply the action to all of the flags, keywords
+or licenses respectively.
 
-	A package specification can be any atom acceptable for Portage
-	(in the same format as taken by emerge).''' % argv[0])
+A package specification can be any atom acceptable for Portage
+(in the same format as taken by emerge).''' % os.path.basename(argv[0]))
 				return 0
 			elif a == '--sort-entries':
 				sort_entries = True
