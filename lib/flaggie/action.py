@@ -221,9 +221,6 @@ class ActionSet(list):
 		self.sort()
 		if self.pkgs:
 			for a in self:
-				for ns in a.ns:
-					if ns not in pfiles:
-						raise AssertionError('Unexpected ns %s in ActionSet.__call__()' % a.ns)
 				a(self.pkgs, pfiles)
 		else:
 			raise NotImplementedError('Global actions are not supported yet, they will be ignored.')
