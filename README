@@ -27,7 +27,7 @@ Synopsis
 
 Symbolically, the flaggie synopsis could be written as:
 
-	flaggie [<packages>] <actions> [<packages>] [<actions>] [...]
+	flaggie [<options>] [<global-actions>] [<packages> <actions>] [...]
 
 In other words, the basic arguments to `flaggie` consist of package
 specifications and action specifications grouped together. Each group
@@ -50,9 +50,33 @@ obligatory argument (flag). The action symbols are:
 	from the files),
 - `?` to print the effective flag declaration from the files.
 
-The former two actions require an argument, while the latter can be
-specified without an argument (then they'll apply to all the flags).
-The argument can be either a flag name, a keyword or a license string.
+Each of the actions should be followed by an argument. It could be
+a flag name, a keyword or a license string. Arguments can be shell
+patterns (same as in filename matching). If no argument is passed,
+flaggie assumes `*`.
+
+With `+` and `-` actions, pattern matching is performed against package
+`IUSE`, `KEYWORDS` or `LICENSE` variable. With `%` and `?`, it is done
+against values specified in `package.*` files.
+
+In addition to that, the argument can be preceded by a namespace
+specifier in the form `ns::`, where `ns` can be one of `use`, `kw` or
+`lic` (or a pattern).
+
+When no namespace is specified, the namespace is guessed from the actual
+argument if it is not a pattern; `use` is assumed otherwise.
+
+
+Cleanup actions
+---------------
+
+Except for the specific actions, flaggie can be perform a set of cleanup
+actions which are done on whole `package.*` files. These are enabled
+using long options.
+
+For help on long options, please see:
+
+	flaggie --help
 
 
 Examples
@@ -69,5 +93,13 @@ Examples
 3. Resetting all USEflags of `net-im/ekg2` to their default values:
 
 	flaggie ekg2 %
+
+4. Easy license-unmasking `www-plugins/adobe-flash`:
+
+	flaggie adobe-flash +lic::
+
+5. Performing a cleanup of `package.*` files:
+
+	flaggie --cleanup
 
 <!-- vim:se syn=markdown : -->
