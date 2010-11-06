@@ -228,14 +228,20 @@ class PackageFileSet:
 				f.remove(e)
 			f.modified = True
 
-class PackageFiles(dict):
+class PackageFiles(object):
 	def __init__(self):
-		dict.__init__(self, {
+		self.files = {
 			'use': PackageFileSet('/etc/portage/package.use'),
 			'kw': PackageFileSet('/etc/portage/package.keywords'),
 			'lic': PackageFileSet('/etc/portage/package.license')
-		})
+		}
+
+	def __getitem__(self, k):
+		return self.files[k]
+
+	def __iter__(self):
+		return iter(self.files.values())
 
 	def write(self):
-		for f in self.values():
+		for f in self:
 			f.write()

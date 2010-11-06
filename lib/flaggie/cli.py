@@ -119,11 +119,11 @@ A package specification can be any atom acceptable for Portage
 			print('Warning: %s' % e)
 
 	if sort_flags:
-		for f in pfiles.values():
+		for f in pfiles:
 			for pe in f:
 				pe.sort()
 	if sort_entries:
-		for f in pfiles.values():
+		for f in pfiles:
 			f.sort()
 
 	pfiles.write()
