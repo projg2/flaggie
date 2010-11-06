@@ -74,10 +74,26 @@ Except for the specific actions, flaggie can be perform a set of cleanup
 actions which are done on whole `package.*` files. These are enabled
 using long options.
 
-For help on long options, please see:
+The following cleanup actions are supported:
 
-	flaggie --help
+- `--drop-ineffective` to drop all flag declarations which are
+	considered ineffective. In other words, those which are overriden
+	by the entries or flags following them.
 
+	In other words, the following example file:
+
+		app-misc/foo bar baz
+		app-misc/foo -bar bar
+
+	would be written as:
+
+		app-misc/foo baz
+		app-misc/foo bar
+
+- `--sort-entries` to sort all entries in the file by package name.
+
+- `--sort-flags` to sort all flags (keywords, licenses) in the entries
+	by their basename.
 
 Examples
 --------
