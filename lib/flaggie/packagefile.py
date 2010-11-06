@@ -65,6 +65,10 @@ class PackageFileSet:
 				self.modified = True
 				return flag
 
+			def sort(self):
+				self.flags.sort()
+				self.modified = True
+
 			def __lt__(self, other):
 				return self.package < other.package
 
@@ -106,6 +110,15 @@ class PackageFileSet:
 					e = self.Whitespace(l)
 				self.append(e)
 			f.close()
+
+		def sort(self):
+			# we have to drop all the whitespace before sorting
+			for e in list(self):
+				if isinstance(e, self.Whitespace):
+					self.remove(e)
+
+			list.sort(self)
+			self.modified = True
 
 		@property
 		def modified(self):
@@ -184,6 +197,10 @@ class PackageFileSet:
 				found = True
 		if not found:
 			raise ValueError('%s not found in package.* files.' % pkg)
+
+	def sort(self):
+		for f in self.files:
+			f.sort()
 
 	def __iter__(self):
 		""" Iterate over package entries. """

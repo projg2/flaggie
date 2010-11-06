@@ -46,6 +46,9 @@ def parse_actions(args, dbapi, settings):
 	return out
 
 def main(argv):
+	sort_entries = False
+	sort_flags = False
+
 	for a in list(argv[1:]):
 		if a.startswith('--'):
 			if a == '--version':
@@ -71,6 +74,13 @@ def main(argv):
 	A package specification can be any atom acceptable for Portage
 	(in the same format as taken by emerge).''' % argv[0])
 				return 0
+			elif a == '--sort-entries':
+				sort_entries = True
+			elif a == '--sort-flags':
+				sort_flags = True
+			elif a == '--sort':
+				sort_entries = True
+				sort_flags = True
 			elif a == '--':
 				argv.remove(a)
 				break
@@ -100,6 +110,15 @@ def main(argv):
 			actset(pfiles)
 		except NotImplementedError as e:
 			print('Warning: %s' % e)
+
+	if sort_flags:
+		for f in pfiles.values():
+			for pe in f:
+				pe.sort()
+	if sort_entries:
+		for f in pfiles.values():
+			f.sort()
+
 	pfiles.write()
 
 	return 0
