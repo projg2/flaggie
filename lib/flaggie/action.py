@@ -8,6 +8,9 @@ import fnmatch
 class ParserError(Exception):
 	pass
 
+class ParserWarning(Exception):
+	pass
+
 class Action(object):
 	class BaseAction(object):
 		class Pattern(object):
@@ -54,6 +57,7 @@ class Action(object):
 					self.args.add(self.Pattern(arg))
 					return
 
+			warn = None
 			if not pkgs:
 				wis = cache.glob_whatis(arg, restrict = ns)
 				if len(wis) > 1:
@@ -63,11 +67,11 @@ class Action(object):
 					ns = wis.pop()
 				elif ns:
 					ns = ns.pop()
-					print('Warning: %s seems to be an incorrect global %s' % \
-							(arg, cache.describe(ns)))
+					warn = '%s seems to be an incorrect global %s' % \
+							(arg, cache.describe(ns))
 				else:
 					ns = 'use'
-					print('Warning: %s seems to be an incorrect global flag' % arg)
+					warn = '%s seems to be an incorrect global flag' % arg
 			else:
 				for p in pkgs:
 					wis = cache.whatis(arg, p, restrict = ns)
@@ -86,13 +90,16 @@ class Action(object):
 					else:
 						if gwis:
 							ns = gwis.pop()
-							print('Warning: %s seems to be an incorrect %s for %s' % \
-									(arg, cache.describe(ns), p))
+							warn = '%s seems to be an incorrect %s for %s' % \
+									(arg, cache.describe(ns), p)
 						else:
 							ns = 'use'
-							print('Warning: %s seems to be an incorrect flag for %s' % (arg, p))
+							warn = '%s seems to be an incorrect flag for %s' % (arg, p)
+
 			self.ns = frozenset((ns,))
 			self.args.add(arg)
+			if warn:
+				raise ParserWarning(warn)
 
 		def append(self, arg):
 			if isinstance(arg, self.__class__):
@@ -210,13 +217,21 @@ class ActionSet(list):
 
 	def append(self, item):
 		if isinstance(item, Action.BaseAction):
-			item.clarify(self.pkgs, self._cache)
+			reraising = False
+			try:
+				item.clarify(self.pkgs, self._cache)
+			except ParserWarning:
+				reraising = True
+
 			for a in self:
 				if isinstance(item, a.__class__) and item.ns == a.ns:
 					a.append(item)
 					break
 			else:
 				list.append(self, item)
+
+			if reraising:
+				raise
 		else:
 			self.pkgs.append(item)
 

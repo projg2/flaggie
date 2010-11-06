@@ -10,12 +10,12 @@ from portage.dbapi.dep_expand import dep_expand
 from portage.exception import AmbiguousPackageName, InvalidAtom
 
 from flaggie import PV
-from flaggie.action import Action, ActionSet, ParserError
+from flaggie.action import Action, ActionSet, ParserError, ParserWarning
 from flaggie.cache import Caches
 from flaggie.cleanup import DropIneffective, SortEntries, SortFlags
 from flaggie.packagefile import PackageFiles
 
-def parse_actions(args, dbapi, settings):
+def parse_actions(args, dbapi, settings, strict = False):
 	out = []
 	cache = Caches(dbapi)
 	actset = ActionSet(cache = cache)
@@ -44,10 +44,16 @@ def parse_actions(args, dbapi, settings):
 				if atom.startswith('null/'):
 					raise ParserError('unable to determine the category (mistyped name?)')
 				actset.append(atom)
+			except ParserWarning as w:
+				actset.append(act)
+				raise
 			else:
 				actset.append(act)
-		except ParserError as e:
+		except (ParserError, ParserWarning) as e:
 			print('At argv[%d]=\'%s\': %s' % (i + 1, a, e))
+			if strict:
+				print('Strict mode, aborting.')
+				return None
 
 	if actset and (actset.pkgs or not had_pkgs):
 		out.append(actset)
@@ -55,6 +61,7 @@ def parse_actions(args, dbapi, settings):
 
 def main(argv):
 	cleanup_actions = set()
+	strict = False
 
 	for a in list(argv[1:]):
 		if a.startswith('--'):
@@ -66,6 +73,8 @@ def main(argv):
 %s [<options>] [<global-actions>] [<packages> <actions>] [...]
 
 Options:
+	--strict		Abort if at least a single flag is invalid
+
 	--drop-ineffective	Drop ineffective flags (those which are
 				overriden by later declarations)
 	--sort-entries		Sort package.* file entries by package
@@ -91,6 +100,8 @@ respectively.
 A package specification can be any atom acceptable for Portage (in the same
 format as taken by emerge).''' % os.path.basename(argv[0]))
 				return 0
+			elif a == '--strict':
+				strict = True
 			elif a == '--drop-ineffective':
 				cleanup_actions.add(DropIneffective)
 			elif a == '--sort-entries':
@@ -117,7 +128,9 @@ format as taken by emerge).''' % os.path.basename(argv[0]))
 			target_root = os.environ.get('ROOT'))
 	porttree = trees[max(trees)]['porttree']
 
-	act = parse_actions(argv[1:], porttree.dbapi, porttree.settings)
+	act = parse_actions(argv[1:], porttree.dbapi, porttree.settings, strict = strict)
+	if act is None:
+		return 1
 	if not act and not cleanup_actions:
 		main([argv[0], '--help'])
 		return 0
