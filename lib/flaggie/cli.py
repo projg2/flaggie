@@ -94,7 +94,10 @@ A package specification can be any atom acceptable for Portage
 
 	pfiles = PackageFiles()
 	for actset in act:
-		actset(pfiles)
+		try:
+			actset(pfiles)
+		except NotImplementedError as e:
+			print('Warning: %s' % e)
 	pfiles.write()
 
 	return 0

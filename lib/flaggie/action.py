@@ -226,4 +226,4 @@ class ActionSet(list):
 						raise AssertionError('Unexpected ns %s in ActionSet.__call__()' % a.ns)
 				a(self.pkgs, pfiles)
 		else:
-			raise NotImplementedError('Global actions are not supported yet')
+			raise NotImplementedError('Global actions are not supported yet, they will be ignored.')
