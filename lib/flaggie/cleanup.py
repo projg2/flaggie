@@ -19,11 +19,11 @@ class DropIneffective(BaseCleanupAction):
 		for pe in list(f):
 			if pe.package not in cache:
 				cache[pe.package] = set()
-			for f in pe:
-				if f.name not in cache[pe.package]:
-					cache[pe.package].add(f.name)
+			for flag in pe:
+				if flag.name not in cache[pe.package]:
+					cache[pe.package].add(flag.name)
 				else:
-					pe.remove(f)
+					pe.remove(flag)
 			if not pe:
 				f.remove(pe)
 
