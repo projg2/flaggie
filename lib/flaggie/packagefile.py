@@ -11,6 +11,9 @@ class PackageFileSet(object):
 			def __init__(self, l):
 				self.data = l
 
+			def __nonzero__(self):
+				return True
+
 			def toString(self):
 				return self.data
 
@@ -143,7 +146,8 @@ class PackageFileSet(object):
 
 			f = codecs.open(self.path, 'w', 'utf8')
 			for l in self:
-				f.write(l.toString())
+				if l:
+					f.write(l.toString())
 			f.close()
 
 			for e in self:

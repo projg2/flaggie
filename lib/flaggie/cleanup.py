@@ -24,8 +24,6 @@ class DropIneffective(BaseCleanupAction):
 					cache[pe.package].add(flag.name)
 				else:
 					pe.remove(flag)
-			if not pe:
-				f.remove(pe)
 
 class SortEntries(BaseCleanupAction):
 	def _perform(self, f):
