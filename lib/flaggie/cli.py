@@ -152,7 +152,7 @@ format as taken by emerge).''' % os.path.basename(argv[0]))
 			print('Warning: %s' % e)
 
 	for a in cleanup_actions:
-		a(pfiles)
+		a(pfiles, porttree.dbapi)
 
 	pfiles.write()
 

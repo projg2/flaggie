@@ -8,7 +8,8 @@ class BaseCleanupAction(object):
 		if args:
 			self(*args)
 
-	def __call__(self, pfiles):
+	def __call__(self, pfiles, dbapi):
+		self._dbapi = dbapi
 		for f in pfiles:
 			self._perform(f)
 
