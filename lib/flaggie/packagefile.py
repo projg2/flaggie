@@ -109,6 +109,8 @@ class PackageFileSet(object):
 			self.path = path
 			# _modified is for when items are removed
 			self._modified = False
+			if not os.path.exists(path):
+				return
 			f = codecs.open(path, 'r', 'utf8')
 			for l in f:
 				try:
