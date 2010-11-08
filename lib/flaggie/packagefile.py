@@ -172,6 +172,8 @@ class PackageFileSet(object):
 
 		if os.path.isdir(self._path):
 			files = sorted(glob.glob(os.path.join(self._path, '*')))
+			if not files:
+				files = [os.path.join(self._path, 'flaggie')]
 		else:
 			files = [self._path]
 
