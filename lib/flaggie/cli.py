@@ -13,7 +13,8 @@ from portage.exception import AmbiguousPackageName, InvalidAtom
 from flaggie import PV
 from flaggie.action import Action, ActionSet, ParserError, ParserWarning
 from flaggie.cache import Caches
-from flaggie.cleanup import DropIneffective, SortEntries, SortFlags
+from flaggie.cleanup import DropIneffective, DropUnmatchedPkgs, \
+		SortEntries, SortFlags
 from flaggie.packagefile import PackageFiles
 
 def parse_actions(args, dbapi, settings, quiet = False, strict = False):
@@ -87,6 +88,9 @@ Options:
 	--sort-flags		Sort package.* flags by name
 	--sort			Shorthand for --sort-entries and --sort-flags
 	--cleanup		Shorthand for --drop-ineffective and --sort
+
+	--drop-unmatched-pkgs	Drop packages which no longer are available
+				in portdb
 		
 Global actions are applied to the make.conf file. Actions are applied to
 the package.* files, for the packages preceding them.
@@ -122,6 +126,8 @@ format as taken by emerge).''' % os.path.basename(argv[0]))
 				cleanup_actions.add(DropIneffective)
 				cleanup_actions.add(SortEntries)
 				cleanup_actions.add(SortFlags)
+			elif a == '--drop-unmatched-pkgs':
+				cleanup_actions.add(DropUnmatchedPkgs)
 			elif a == '--':
 				argv.remove(a)
 				break
