@@ -6,6 +6,7 @@
 import os, os.path
 
 from portage import create_trees
+from portage.const import USER_CONFIG_PATH
 from portage.dbapi.dep_expand import dep_expand
 from portage.exception import AmbiguousPackageName, InvalidAtom
 
@@ -142,7 +143,8 @@ format as taken by emerge).''' % os.path.basename(argv[0]))
 		main([argv[0], '--help'])
 		return 0
 
-	pfiles = PackageFiles()
+	pfiles = PackageFiles(os.path.join( \
+		porttree.settings['PORTAGE_CONFIGROOT'], USER_CONFIG_PATH))
 	for actset in act:
 		try:
 			actset(pfiles)

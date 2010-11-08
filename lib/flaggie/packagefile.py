@@ -241,12 +241,16 @@ class PackageFileSet(object):
 			f.modified = True
 
 class PackageFiles(object):
-	def __init__(self):
-		self.files = {
-			'use': PackageFileSet('/etc/portage/package.use'),
-			'kw': PackageFileSet('/etc/portage/package.keywords'),
-			'lic': PackageFileSet('/etc/portage/package.license')
-		}
+	def __init__(self, basedir):
+		fmap = (
+			('use', 'package.use'),
+			('kw', 'package.keywords'),
+			('lic', 'package.license')
+		)
+
+		self.files = {}
+		for k, fn in fmap:
+			self.files[k] = PackageFileSet(os.path.join(basedir, fn))
 
 	def __getitem__(self, k):
 		return self.files[k]
