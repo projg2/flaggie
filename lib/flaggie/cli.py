@@ -17,7 +17,8 @@ from flaggie.cleanup import DropIneffective, DropUnmatchedPkgs, \
 		SortEntries, SortFlags
 from flaggie.packagefile import PackageFiles
 
-def parse_actions(args, dbapi, settings, quiet = False, strict = False):
+def parse_actions(args, dbapi, settings, quiet = False, strict = False, \
+		cleanupact = []):
 	out = []
 	cache = Caches(dbapi)
 	actset = ActionSet(cache = cache)
@@ -61,6 +62,13 @@ def parse_actions(args, dbapi, settings, quiet = False, strict = False):
 
 	if actset and (actset.pkgs or not had_pkgs):
 		out.append(actset)
+
+	if cleanupact:
+		actset = ActionSet(cache = cache)
+		for a in cleanupact:
+			actset.append(a(dbapi))
+		out.append(actset)
+
 	return out
 
 def main(argv):
@@ -142,23 +150,21 @@ format as taken by emerge).''' % os.path.basename(argv[0]))
 	porttree = trees[max(trees)]['porttree']
 
 	act = parse_actions(argv[1:], porttree.dbapi, porttree.settings, \
-			quiet = quiet, strict = strict)
+			quiet = quiet, strict = strict, cleanupact = cleanup_actions)
 	if act is None:
 		return 1
-	if not act and not cleanup_actions:
+	if not act:
 		main([argv[0], '--help'])
 		return 0
 
 	pfiles = PackageFiles(os.path.join( \
 		porttree.settings['PORTAGE_CONFIGROOT'], USER_CONFIG_PATH))
+
 	for actset in act:
 		try:
 			actset(pfiles)
 		except NotImplementedError as e:
 			print('Warning: %s' % e)
-
-	for a in cleanup_actions:
-		a(pfiles, porttree.dbapi)
 
 	pfiles.write()
 

@@ -5,13 +5,20 @@
 
 from portage.exception import AmbiguousPackageName, InvalidAtom
 
-class BaseCleanupAction(object):
-	def __init__(self, *args):
-		if args:
-			self(*args)
+from flaggie.action import Action
 
-	def __call__(self, pfiles, dbapi):
+class BaseCleanupAction(Action.BaseAction):
+	def __init__(self, dbapi):
 		self._dbapi = dbapi
+
+	def clarify(self, pkgs, cache):
+		if pkgs:
+			raise AssertionError('pkgs not empty in cleanup action')
+		self._cache = cache
+
+	def __call__(self, pkgs, pfiles):
+		if pkgs:
+			raise AssertionError('pkgs not empty in cleanup action')
 		for f in pfiles:
 			self._perform(f)
 
