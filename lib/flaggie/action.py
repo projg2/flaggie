@@ -149,6 +149,8 @@ class Action(object):
 				for ns, arg in self.expand_patterns(self.args, p):
 					f = self.grab_effective_entry(p, arg, pfiles[ns], rw = True)
 					f.modifier = ''
+			if not pkgs:
+				raise NotImplementedError('Global actions are not supported yet.')
 
 	class disable(EffectiveEntryOp):
 		def __call__(self, pkgs, pfiles):
@@ -156,6 +158,8 @@ class Action(object):
 				for ns, arg in self.expand_patterns(self.args, p):
 					f = self.grab_effective_entry(p, arg, pfiles[ns], rw = True)
 					f.modifier = '-'
+			if not pkgs:
+				raise NotImplementedError('Global actions are not supported yet.')
 
 	class reset(BaseAction):
 		def __call__(self, pkgs, pfiles):
@@ -165,6 +169,8 @@ class Action(object):
 					for pe in puse[p]:
 						for f in self.args:
 							del pe[f]
+				if not pkgs:
+					raise NotImplementedError('Global actions are not supported yet.')
 
 	class output(BaseAction):
 		def __call__(self, pkgs, pfiles):
@@ -187,6 +193,8 @@ class Action(object):
 						l.append(flags[fn].toString() if flags[fn] is not None else '?%s' % fn)
 
 					print(' '.join(l))
+				if not pkgs:
+					raise NotImplementedError('Global actions are not supported yet.')
 
 	mapping = {
 		'+': enable,
@@ -235,8 +243,5 @@ class ActionSet(list):
 
 	def __call__(self, pfiles):
 		self.sort()
-		if self.pkgs:
-			for a in self:
-				a(self.pkgs, pfiles)
-		else:
-			raise NotImplementedError('Global actions are not supported yet, they will be ignored.')
+		for a in self:
+			a(self.pkgs, pfiles)
