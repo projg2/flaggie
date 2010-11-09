@@ -108,7 +108,10 @@ class Action(object):
 				self.args.add(arg)
 
 		def __lt__(self, other):
-			idx = [Action.order.index(x.__class__) for x in (self, other)]
+			try:
+				idx = [Action.order.index(x.__class__) for x in (self, other)]
+			except ValueError: # an external class
+				return True
 			return idx[0] < idx[1]
 
 	class EffectiveEntryOp(BaseAction):
