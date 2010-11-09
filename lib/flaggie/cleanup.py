@@ -22,6 +22,13 @@ class BaseCleanupAction(Action.BaseAction):
 		for f in pfiles:
 			self._perform(f)
 
+	def __lt__(self, other):
+		try:
+			idx = [cleanupact_order.index(x.__class__) for x in (self, other)]
+		except ValueError: # cleanup actions always go to the end
+			return False
+		return idx[0] < idx[1]
+
 class DropIneffective(BaseCleanupAction):
 	def _perform(self, f):
 		cache = {}
@@ -64,3 +71,5 @@ class SortFlags(BaseCleanupAction):
 	def _perform(self, f):
 		for pe in f:
 			pe.sort()
+
+cleanupact_order = (DropUnmatchedPkgs, DropIneffective, SortEntries, SortFlags)
