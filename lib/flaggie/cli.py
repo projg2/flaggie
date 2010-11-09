@@ -14,7 +14,7 @@ from flaggie import PV
 from flaggie.action import Action, ActionSet, ParserError, ParserWarning
 from flaggie.cache import Caches
 from flaggie.cleanup import DropIneffective, DropUnmatchedPkgs, \
-		SortEntries, SortFlags
+		DropUnmatchedFlags, SortEntries, SortFlags
 from flaggie.packagefile import PackageFiles
 
 def parse_actions(args, dbapi, settings, quiet = False, strict = False, \
@@ -99,6 +99,8 @@ Options:
 
 	--drop-unmatched-pkgs	Drop packages which no longer are available
 				in portdb
+	--drop-unmatched-flags	Drop flags which are not found in package's
+				IUSE, KEYWORDS and/or LICENSE variables
 		
 Global actions are applied to the make.conf file. Actions are applied to
 the package.* files, for the packages preceding them.
@@ -136,6 +138,8 @@ format as taken by emerge).''' % os.path.basename(argv[0]))
 				cleanup_actions.add(SortFlags)
 			elif a == '--drop-unmatched-pkgs':
 				cleanup_actions.add(DropUnmatchedPkgs)
+			elif a == '--drop-unmatched-flags':
+				cleanup_actions.add(DropUnmatchedFlags)
 			elif a == '--':
 				argv.remove(a)
 				break

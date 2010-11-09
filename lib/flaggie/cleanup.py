@@ -42,6 +42,21 @@ class DropIneffective(BaseCleanupAction):
 				else:
 					pe.remove(flag)
 
+class DropUnmatchedFlags(BaseCleanupAction):
+	def __call__(self, pkgs, pfiles):
+		if pkgs:
+			raise AssertionError('pkgs not empty in cleanup action')
+		
+		for k, f in pfiles.files.items():
+			cache = self._cache[k]
+			for pe in f:
+				flags = cache[pe.package]
+				for flag in set([x.name for x in pe]):
+					if k == 'kw' and flag == '**':
+						pass
+					elif flag not in flags:
+						del pe[flag]
+
 class DropUnmatchedPkgs(BaseCleanupAction):
 	def _perform(self, f):
 		cache = {}
@@ -72,4 +87,5 @@ class SortFlags(BaseCleanupAction):
 		for pe in f:
 			pe.sort()
 
-cleanupact_order = (DropUnmatchedPkgs, DropIneffective, SortEntries, SortFlags)
+cleanupact_order = (DropUnmatchedPkgs, DropUnmatchedFlags, DropIneffective, \
+		SortEntries, SortFlags)
