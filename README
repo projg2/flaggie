@@ -141,6 +141,6 @@ Examples
 
 6. Enabling all devices for `app-misc/lirc` (e.g. for testing):
 
-		flaggedit app-misc/lirc '+lirc_devices_*'
+		flaggie app-misc/lirc '+lirc_devices_*'
 
 <!-- vim:se syn=markdown : -->
