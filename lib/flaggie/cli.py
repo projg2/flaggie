@@ -101,6 +101,7 @@ Options:
 				in portdb
 	--drop-unmatched-flags	Drop flags which are not found in package's
 				IUSE, KEYWORDS and/or LICENSE variables
+	--destructive-cleanup	Shorthand for all of the above
 		
 Global actions are applied to the make.conf file. Actions are applied to
 the package.* files, for the packages preceding them.
@@ -139,6 +140,12 @@ format as taken by emerge).''' % os.path.basename(argv[0]))
 			elif a == '--drop-unmatched-pkgs':
 				cleanup_actions.add(DropUnmatchedPkgs)
 			elif a == '--drop-unmatched-flags':
+				cleanup_actions.add(DropUnmatchedFlags)
+			elif a == '--destructive-cleanup':
+				cleanup_actions.add(DropIneffective)
+				cleanup_actions.add(SortEntries)
+				cleanup_actions.add(SortFlags)
+				# DropUnmatchedPkgs is implicit here
 				cleanup_actions.add(DropUnmatchedFlags)
 			elif a == '--':
 				argv.remove(a)
