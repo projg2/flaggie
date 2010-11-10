@@ -47,15 +47,24 @@ class DropUnmatchedFlags(BaseCleanupAction):
 		if pkgs:
 			raise AssertionError('pkgs not empty in cleanup action')
 		
+		dbcache = {}
+
 		for k, f in pfiles.files.items():
 			cache = self._cache[k]
 			for pe in f:
-				flags = cache[pe.package]
-				for flag in set([x.name for x in pe]):
-					if k == 'kw' and flag == '**':
-						pass
-					elif flag not in flags:
-						del pe[flag]
+				if pe.package not in dbcache:
+					try:
+						dbcache[pe.package] = bool(self._dbapi.xmatch('match-all', pe.package))
+					except (InvalidAtom, AmbiguousPackageName):
+						dbcache[pe.package] = False
+
+				if dbcache[pe.package]:
+					flags = cache[pe.package]
+					for flag in set([x.name for x in pe]):
+						if k == 'kw' and flag == '**':
+							pass
+						elif flag not in flags:
+							del pe[flag]
 
 class DropUnmatchedPkgs(BaseCleanupAction):
 	def _perform(self, f):

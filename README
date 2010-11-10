@@ -102,7 +102,9 @@ The following cleanup actions are supported:
 - `--drop-unmatched-flags` to remove all flags, keywords and licenses
 	which do not match the package metadata (`IUSE`, `KEYWORDS`
 	and `LICENSE` keys respectively). In other words, this should remove
-	outdated flags.
+	outdated flags. Please note that, in order to avoid mistakes, this
+	action won't remove flags for packages which do not have a match
+	in portdb (`--drop-unmatched-pkgs` is useful for that).
 
 In addition to the actual cleanup actions, a set of shorthand options is
 available too:

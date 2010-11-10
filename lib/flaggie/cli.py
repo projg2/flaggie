@@ -145,7 +145,7 @@ format as taken by emerge).''' % os.path.basename(argv[0]))
 				cleanup_actions.add(DropIneffective)
 				cleanup_actions.add(SortEntries)
 				cleanup_actions.add(SortFlags)
-				# DropUnmatchedPkgs is implicit here
+				cleanup_actions.add(DropUnmatchedPkgs)
 				cleanup_actions.add(DropUnmatchedFlags)
 			elif a == '--':
 				argv.remove(a)
