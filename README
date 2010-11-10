@@ -95,6 +95,25 @@ The following cleanup actions are supported:
 - `--sort-flags` to sort all flags (keywords, licenses) in the entries
 	by their basename.
 
+- `--drop-unmatched-pkgs` to remove all `package.*` file entries
+	referring to packages not having a match in portdb (thus, either
+	being a typo, outdated or coming from a removed repo).
+
+- `--drop-unmatched-flags` to remove all flags, keywords and licenses
+	which do not match the package metadata (`IUSE`, `KEYWORDS`
+	and `LICENSE` keys respectively). In other words, this should remove
+	outdated flags.
+
+In addition to the actual cleanup actions, a set of shorthand options is
+available too:
+
+- `--sort` to sort both the entries itself and their flags,
+- `--cleanup` to perform sorting and drop ineffective (redundant) flag
+	declarations,
+- `--destructive-cleanup` to perform all of the cleanup actions
+	listed above.
+
+
 Examples
 --------
 
