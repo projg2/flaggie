@@ -148,7 +148,7 @@ class PackageFileSet(object):
 
 			f = codecs.open(self.path, 'w', 'utf8')
 			for l in self:
-				if l:
+				if not l.modified or l:
 					f.write(l.toString())
 			f.close()
 
