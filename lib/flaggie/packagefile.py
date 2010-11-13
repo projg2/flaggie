@@ -244,9 +244,9 @@ class PackageKeywordsFileSet(PackageFileSet):
 	def __init__(self, path, dbapi):
 		PackageFileSet.__init__(self, path)
 
-		self._defkw = ['~' + x for x \
+		self._defkw = frozenset(['~' + x for x \
 				in dbapi.settings['ACCEPT_KEYWORDS'].split() \
-				if x[0] not in ('~', '-')]
+				if x[0] not in ('~', '-')])
 
 	def read(self, *args):
 		if self._files:
