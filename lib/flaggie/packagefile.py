@@ -261,6 +261,18 @@ class PackageKeywordsFileSet(PackageFileSet):
 					e.append(f)
 				e.modified = False
 
+	def write(self, *args):
+		if not self._files:
+			return
+
+		for e in self:
+			if set([x.toString() for x in e.flags]) == self._defkw:
+				# Yeah, that's what it looks like -- a workaround.
+				e.as_str = e.package + '\n'
+				e.modified = False
+
+		PackageFileSet.write(*((self,) + args))
+
 class PackageFiles(object):
 	def __init__(self, basedir, dbapi):
 		p = lambda x: os.path.join(basedir, x)
