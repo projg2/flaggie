@@ -242,15 +242,12 @@ class PackageFileSet(object):
 
 class PackageFiles(object):
 	def __init__(self, basedir):
-		fmap = (
-			('use', 'package.use'),
-			('kw', 'package.keywords'),
-			('lic', 'package.license')
-		)
-
-		self.files = {}
-		for k, fn in fmap:
-			self.files[k] = PackageFileSet(os.path.join(basedir, fn))
+		p = lambda x: os.path.join(basedir, x)
+		self.files = {
+			'use': PackageFileSet(p('package.use')),
+			'kw': PackageFileSet(p('package.keywords')),
+			'lic': PackageFileSet(p('package.license'))
+		}
 
 	def __getitem__(self, k):
 		return self.files[k]
