@@ -265,11 +265,13 @@ class PackageKeywordsFileSet(PackageFileSet):
 		if not self._files:
 			return
 
-		for e in self:
-			if set([x.toString() for x in e.flags]) == self._defkw:
-				# Yeah, that's what it looks like -- a workaround.
-				e.as_str = e.package + '\n'
-				e.modified = False
+		for f in self.files:
+			for e in f:
+				if set([x.toString() for x in e.flags]) == self._defkw:
+					# Yeah, that's what it looks like -- a workaround.
+					e.as_str = e.package + '\n'
+					e.modified = False
+					f.modified = True
 
 		PackageFileSet.write(*((self,) + args))
 
