@@ -169,7 +169,7 @@ format as taken by emerge).''' % os.path.basename(argv[0]))
 		return 0
 
 	pfiles = PackageFiles(os.path.join( \
-		porttree.settings['PORTAGE_CONFIGROOT'], USER_CONFIG_PATH))
+		porttree.settings['PORTAGE_CONFIGROOT'], USER_CONFIG_PATH), porttree)
 
 	for actset in act:
 		try:
