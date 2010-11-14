@@ -3,7 +3,7 @@
 # (C) 2010 Michał Górny <gentoo@mgorny.alt.pl>
 # Released under the terms of the 3-clause BSD license.
 
-import codecs, glob, os.path
+import codecs, os, os.path
 
 class PackageFileSet(object):
 	class PackageFile(list):
@@ -158,9 +158,13 @@ class PackageFileSet(object):
 			return
 
 		if os.path.isdir(self._path):
-			files = sorted(glob.glob(os.path.join(self._path, '*')))
+			files = [os.path.join(self._path, x) \
+					for x in os.listdir(self._path) \
+					if not x.startswith('.') and not x.endswith('~')]
 			if not files:
 				files = [os.path.join(self._path, 'flaggie')]
+			else:
+				files.sort()
 		else:
 			files = [self._path]
 
