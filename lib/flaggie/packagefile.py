@@ -7,24 +7,6 @@ import codecs, glob, os.path
 
 class PackageFileSet(object):
 	class PackageFile(list):
-		class Whitespace(object):
-			def __init__(self, l):
-				self.data = l
-
-			def __nonzero__(self):
-				return True
-
-			def toString(self):
-				return self.data
-
-			@property
-			def modified(self):
-				return False
-
-			@modified.setter
-			def modified(self, newval):
-				pass
-
 		class PackageEntry(object):
 			class InvalidPackageEntry(Exception):
 				pass
@@ -44,22 +26,25 @@ class PackageFileSet(object):
 				def toString(self):
 					return '%s%s' % (self.modifier, self.name)
 
-			def __init__(self, l):
+			def __init__(self, l, whitespace = []):
 				sl = l.split()
 				if not sl or sl[0].startswith('#'): # whitespace
 					raise self.InvalidPackageEntry()
 
+				self.whitespace = whitespace
 				self.as_str = l
 				self.modified = False
 				self.package = sl.pop(0)
 				self.flags = [self.PackageFlag(x) for x in sl]
 
 			def toString(self):
+				ret = ''.join(self.whitespace)
 				if not self.modified:
-					return self.as_str
+					ret += self.as_str
 				else:
-					return ' '.join([self.package] + \
+					ret += ' '.join([self.package] + \
 							[x.toString() for x in self.flags]) + '\n'
+				return ret
 
 			def append(self, flag):
 				if not isinstance(flag, self.PackageFlag):
@@ -112,20 +97,21 @@ class PackageFileSet(object):
 			if not os.path.exists(path):
 				return
 			f = codecs.open(path, 'r', 'utf8')
+
+			ws = []
 			for l in f:
 				try:
-					e = self.PackageEntry(l)
+					e = self.PackageEntry(l, ws)
+					ws = []
 				except self.PackageEntry.InvalidPackageEntry:
-					e = self.Whitespace(l)
-				self.append(e)
+					ws.append(l)
+				else:
+					self.append(e)
+
+			self.trailing_whitespace = ws
 			f.close()
 
 		def sort(self):
-			# we have to drop all the whitespace before sorting
-			for e in list(self):
-				if isinstance(e, self.Whitespace):
-					self.remove(e)
-
 			list.sort(self)
 			self.modified = True
 
@@ -150,6 +136,7 @@ class PackageFileSet(object):
 			for l in self:
 				if not l.modified or l:
 					f.write(l.toString())
+			f.write(''.join(self.trailing_whitespace))
 			f.close()
 
 			for e in self:
@@ -218,8 +205,7 @@ class PackageFileSet(object):
 		""" Iterate over package entries. """
 		for f in reversed(self.files):
 			for e in reversed(f):
-				if isinstance(e, f.PackageEntry):
-					yield e
+				yield e
 
 	def __getitem__(self, pkg):
 		""" Get package entries for a package in order of effectiveness
@@ -267,8 +253,6 @@ class PackageKeywordsFileSet(PackageFileSet):
 
 		for f in self.files:
 			for e in f:
-				if not isinstance(e, f.PackageEntry):
-					continue
 				if set([x.toString() for x in e.flags]) == self._defkw:
 					# Yeah, that's what it looks like -- a workaround.
 					e.as_str = e.package + '\n'
