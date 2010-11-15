@@ -257,7 +257,7 @@ class PackageKeywordsFileSet(PackageFileSet):
 
 		for f in self.files:
 			for e in f:
-				if set([x.toString() for x in e.flags]) == self._defkw:
+				if e.modified and set([x.toString() for x in e.flags]) == self._defkw:
 					# Yeah, that's what it looks like -- a workaround.
 					e.as_str = e.package + '\n'
 					e.modified = False
