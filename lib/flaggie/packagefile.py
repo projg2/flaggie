@@ -95,6 +95,7 @@ class PackageFileSet(object):
 			# _modified is for when items are removed
 			self._modified = False
 			if not os.path.exists(path):
+				self.trailing_whitespace = []
 				return
 			f = codecs.open(path, 'r', 'utf8')
 
