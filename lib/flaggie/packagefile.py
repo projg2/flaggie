@@ -3,7 +3,7 @@
 # (C) 2010 Michał Górny <gentoo@mgorny.alt.pl>
 # Released under the terms of the 3-clause BSD license.
 
-import codecs, os, os.path, tempfile
+import codecs, os, os.path, shutil, tempfile
 
 class PackageFileSet(object):
 	class PackageFile(list):
@@ -145,12 +145,8 @@ class PackageFileSet(object):
 			f.close()
 
 			backup = self.path + '~'
-			try:
-				os.rename(self.path, backup)
-			except OSError: # Windows?
-				os.remove(backup)
-				os.rename(self.path, backup)
-			os.rename(tmpname, self.path)
+			shutil.move(self.path, backup)
+			shutil.move(tmpname, self.path)
 
 			for e in self:
 				e.modified = False
