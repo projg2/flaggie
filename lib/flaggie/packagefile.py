@@ -145,7 +145,7 @@ class PackageFileSet(object):
 			f.close()
 
 			backup = self.path + '~'
-			shutil.move(self.path, backup)
+			shutil.copy2(self.path, backup)
 			shutil.move(tmpname, self.path)
 			shutil.copymode(backup, self.path)
 
