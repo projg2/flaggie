@@ -3,7 +3,7 @@
 # (C) 2010 Michał Górny <gentoo@mgorny.alt.pl>
 # Released under the terms of the 3-clause BSD license.
 
-import codecs, os, os.path
+import codecs, os, os.path, tempfile
 
 class PackageFileSet(object):
 	class PackageFile(list):
@@ -133,12 +133,24 @@ class PackageFileSet(object):
 			if not self.modified:
 				return
 
-			f = codecs.open(self.path, 'w', 'utf8')
+			f = tempfile.NamedTemporaryFile('w', delete = False, \
+					dir = os.path.dirname(os.path.realpath(self.path)))
+			tmpname = f.name
+
+			f = codecs.getwriter('utf8')(f)
 			for l in self:
 				if not l.modified or l:
 					f.write(l.toString())
 			f.write(''.join(self.trailing_whitespace))
 			f.close()
+
+			backup = self.path + '~'
+			try:
+				os.rename(self.path, backup)
+			except OSError: # Windows?
+				os.remove(backup)
+				os.rename(self.path, backup)
+			os.rename(tmpname, self.path)
 
 			for e in self:
 				e.modified = False
