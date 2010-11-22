@@ -48,14 +48,17 @@ class Action(object):
 
 			if not arg:
 				arg = '*'
+
 			# Check whether the argument looks like a pattern
-			for schr in ('*', '?', '['):
-				if schr in arg:
-					if not ns:
-						ns = frozenset(('use',))
-					self.ns = ns
-					self.args.add(self.Pattern(arg))
-					return
+			# but denote that '**' has special meaning.
+			if arg != '**':
+				for schr in ('*', '?', '['):
+					if schr in arg:
+						if not ns:
+							ns = frozenset(('use',))
+						self.ns = ns
+						self.args.add(self.Pattern(arg))
+						return
 
 			warn = None
 			if not pkgs:
