@@ -5,6 +5,7 @@
 
 import os, os.path
 
+from portage.const import USER_CONFIG_PATH
 from portage.dep import use_reduce
 from portage.versions import best
 
@@ -131,11 +132,25 @@ class Caches(object):
 			lic.discard('||')
 			return lic
 
+	class EnvCache(object):
+		def __init__(self, dbapi):
+			# XXX: filter out directories
+			path = os.path.join(dbapi.settings['PORTAGE_CONFIGROOT'], USER_CONFIG_PATH, 'env')
+			self.cache = frozenset(os.listdir(path))
+
+		@property
+		def glob(self):
+			return self.cache
+
+		def __getitem__(self, k):
+			return self.cache
+
 	def __init__(self, dbapi):
 		self.caches = {
 			'use': self.FlagCache(dbapi),
 			'kw': self.KeywordCache(dbapi),
-			'lic': self.LicenseCache(dbapi)
+			'lic': self.LicenseCache(dbapi),
+			'env': self.EnvCache(dbapi)
 		}
 
 	def glob_whatis(self, arg, restrict = None):
@@ -163,6 +178,8 @@ class Caches(object):
 			return 'keyword'
 		elif ns == 'lic':
 			return 'license'
+		elif ns == 'env':
+			return 'env file'
 		else:
 			raise AssertionError('Unexpected ns %s' % ns)
 

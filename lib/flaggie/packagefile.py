@@ -281,7 +281,8 @@ class PackageFiles(object):
 		self.files = {
 			'use': PackageFileSet(p('package.use')),
 			'kw': PackageKeywordsFileSet(p('package.keywords'), dbapi),
-			'lic': PackageFileSet(p('package.license'))
+			'lic': PackageFileSet(p('package.license')),
+			'env': PackageFileSet(p('package.env'))
 		}
 
 	def __getitem__(self, k):
