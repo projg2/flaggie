@@ -134,9 +134,11 @@ class Caches(object):
 
 	class EnvCache(object):
 		def __init__(self, dbapi):
-			# XXX: filter out directories
+			out = set()
 			path = os.path.join(dbapi.settings['PORTAGE_CONFIGROOT'], USER_CONFIG_PATH, 'env')
-			self.cache = frozenset(os.listdir(path))
+			for parent, dirs, files in os.walk(path):
+				out.update([os.path.relpath(os.path.join(parent, x), path) for x in files])
+			self.cache = frozenset(out)
 
 		@property
 		def glob(self):
