@@ -145,9 +145,13 @@ class PackageFileSet(object):
 			f.close()
 
 			backup = self.path + '~'
-			shutil.copy2(self.path, backup)
+			try:
+				shutil.copy2(self.path, backup)
+			except IOError:
+				backup = None
 			shutil.move(tmpname, self.path)
-			shutil.copymode(backup, self.path)
+			if backup is not None:
+				shutil.copymode(backup, self.path)
 
 			for e in self:
 				e.modified = False
