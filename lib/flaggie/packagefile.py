@@ -153,9 +153,9 @@ class PackageFileSet(object):
 			if backup is not None:
 				shutil.copymode(backup, self.path)
 			else:
-				umask = os.umask(022)
+				umask = os.umask(0o22)
 				os.umask(umask)
-				os.chmod(self.path, 0666 & ~umask)
+				os.chmod(self.path, 0o666 & ~umask)
 
 			for e in self:
 				e.modified = False
