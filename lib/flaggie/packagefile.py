@@ -133,7 +133,7 @@ class PackageFileSet(object):
 			if not self.modified:
 				return
 
-			f = tempfile.NamedTemporaryFile('w', delete = False, \
+			f = tempfile.NamedTemporaryFile('wb', delete = False, \
 					dir = os.path.dirname(os.path.realpath(self.path)))
 			tmpname = f.name
 
