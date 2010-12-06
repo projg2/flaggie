@@ -137,19 +137,24 @@ class PackageFileSet(object):
 					dir = os.path.dirname(os.path.realpath(self.path)))
 			tmpname = f.name
 
-			f = codecs.getwriter('utf8')(f)
-			for l in self:
-				if not l.modified or l:
-					f.write(l.toString())
-			f.write(''.join(self.trailing_whitespace))
-			f.close()
-
-			backup = self.path + '~'
 			try:
-				shutil.copy2(self.path, backup)
-			except IOError:
-				backup = None
-			shutil.move(tmpname, self.path)
+				f = codecs.getwriter('utf8')(f)
+				for l in self:
+					if not l.modified or l:
+						f.write(l.toString())
+				f.write(''.join(self.trailing_whitespace))
+				f.close()
+
+				backup = self.path + '~'
+				try:
+					shutil.copy2(self.path, backup)
+				except IOError:
+					backup = None
+				shutil.move(tmpname, self.path)
+			except Exception:
+				os.unlink(tmpname)
+				raise
+
 			if backup is not None:
 				shutil.copymode(backup, self.path)
 			else:
