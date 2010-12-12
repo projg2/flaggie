@@ -18,7 +18,7 @@ from flaggie.cleanup import DropIneffective, DropUnmatchedPkgs, \
 from flaggie.packagefile import PackageFiles
 
 def parse_actions(args, dbapi, settings, quiet = False, strict = False, \
-		cleanupact = [], output = sys.stderr):
+		cleanupact = [], dataout = sys.stdout, output = sys.stderr):
 	out = []
 	cache = Caches(dbapi)
 	actset = ActionSet(cache = cache)
@@ -29,7 +29,7 @@ def parse_actions(args, dbapi, settings, quiet = False, strict = False, \
 			continue
 		try:
 			try:
-				act = Action(a)
+				act = Action(a, output = dataout)
 			except Action.NotAnAction:
 				if actset:
 					# Avoid transforming actset with all atoms being
@@ -79,10 +79,12 @@ def main(argv):
 	locale.setlocale(locale.LC_ALL, '')
 	# Python3 does std{in,out,err} and argv recoding implicitly
 	if not hasattr(argv[0], 'decode'):
+		dataout = sys.stdout
 		output = sys.stderr
 	else:
 		indec = codecs.getdecoder(locale.getpreferredencoding())
 		argv = [indec(x)[0] for x in argv]
+		dataout = codecs.getwriter(locale.getpreferredencoding())(sys.stderr, 'backslashescape')
 		output = codecs.getwriter(locale.getpreferredencoding())(sys.stderr, 'backslashescape')
 
 	for a in list(argv[1:]):
@@ -171,7 +173,7 @@ format as taken by emerge).\n''' % os.path.basename(argv[0]))
 
 	act = parse_actions(argv[1:], porttree.dbapi, porttree.settings, \
 			quiet = quiet, strict = strict, cleanupact = cleanup_actions, \
-			output = output)
+			output = output, dataout = dataout)
 	if act is None:
 		return 1
 	if not act:

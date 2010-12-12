@@ -23,9 +23,10 @@ class Action(object):
 			def __hash__(self):
 				return hash(self.pattern)
 
-		def __init__(self, arg, key):
+		def __init__(self, arg, key, output = None):
 			self.args = set((arg,))
 			self.ns = None
+			self.output = output
 
 		def clarify(self, pkgs, cache):
 			if len(self.args) > 1:
