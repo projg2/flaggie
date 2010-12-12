@@ -3,7 +3,7 @@
 # (C) 2010 Michał Górny <gentoo@mgorny.alt.pl>
 # Released under the terms of the 3-clause BSD license.
 
-import os, os.path
+import codecs, locale, os, os.path, sys
 
 from portage import create_trees
 from portage.const import USER_CONFIG_PATH
@@ -18,7 +18,7 @@ from flaggie.cleanup import DropIneffective, DropUnmatchedPkgs, \
 from flaggie.packagefile import PackageFiles
 
 def parse_actions(args, dbapi, settings, quiet = False, strict = False, \
-		cleanupact = []):
+		cleanupact = [], output = sys.stderr):
 	out = []
 	cache = Caches(dbapi)
 	actset = ActionSet(cache = cache)
@@ -54,10 +54,10 @@ def parse_actions(args, dbapi, settings, quiet = False, strict = False, \
 				actset.append(act)
 		except (ParserError, ParserWarning) as e:
 			if not quiet or strict:
-				print('At argv[%d]=\'%s\': %s' % (i + 1, a, e))
+				output.write('At argv[%d]=\'%s\': %s\n' % (i + 1, a, e))
 			if strict:
 				if not quiet:
-					print('Strict mode, aborting.')
+					output.write('Strict mode, aborting.\n')
 				return None
 
 	if actset and (actset.pkgs or not had_pkgs):
@@ -76,13 +76,22 @@ def main(argv):
 	quiet = False
 	strict = False
 
+	locale.setlocale(locale.LC_ALL, '')
+	# Python3 does std{in,out,err} and argv recoding implicitly
+	if not hasattr(argv[0], 'decode'):
+		output = sys.stderr
+	else:
+		indec = codecs.getdecoder(locale.getpreferredencoding())
+		argv = [indec(x)[0] for x in argv]
+		output = codecs.getwriter(locale.getpreferredencoding())(sys.stderr, 'backslashescape')
+
 	for a in list(argv[1:]):
 		if a.startswith('--'):
 			if a == '--version':
-				print('flaggie %s' % PV)
+				output.write('flaggie %s\n' % PV)
 				return 0
 			elif a == '--help':
-				print('''Synopsis:
+				output.write('''Synopsis:
 %s [<options>] [<global-actions>] [<packages> <actions>] [...]
 
 Options:
@@ -118,7 +127,7 @@ in order to apply the action to all of the flags, keywords or licenses
 respectively.
 
 A package specification can be any atom acceptable for Portage (in the same
-format as taken by emerge).''' % os.path.basename(argv[0]))
+format as taken by emerge).\n''' % os.path.basename(argv[0]))
 				return 0
 			elif a == '--quiet':
 				quiet = True
@@ -151,7 +160,7 @@ format as taken by emerge).''' % os.path.basename(argv[0]))
 				argv.remove(a)
 				break
 			else:
-				print('Error: unknown option: %s' % a)
+				output.write('Error: unknown option: %s\n' % a)
 				return 1
 			argv.remove(a)
 
@@ -161,7 +170,8 @@ format as taken by emerge).''' % os.path.basename(argv[0]))
 	porttree = trees[max(trees)]['porttree']
 
 	act = parse_actions(argv[1:], porttree.dbapi, porttree.settings, \
-			quiet = quiet, strict = strict, cleanupact = cleanup_actions)
+			quiet = quiet, strict = strict, cleanupact = cleanup_actions, \
+			output = output)
 	if act is None:
 		return 1
 	if not act:
@@ -175,7 +185,7 @@ format as taken by emerge).''' % os.path.basename(argv[0]))
 		try:
 			actset(pfiles)
 		except NotImplementedError as e:
-			print('Warning: %s' % e)
+			output.write('Warning: %s\n' % e)
 
 	pfiles.write()
 
