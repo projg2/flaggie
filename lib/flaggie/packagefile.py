@@ -58,8 +58,10 @@ class PackageFileSet(object):
 				self.modified = True
 
 			def sort(self):
-				self.flags.sort()
-				self.modified = True
+				newflags = sorted(self.flags)
+				if newflags != self.flags:
+					self.flags = newflags
+					self.modified = True
 
 			def __lt__(self, other):
 				return self.package < other.package
@@ -113,8 +115,10 @@ class PackageFileSet(object):
 			f.close()
 
 		def sort(self):
-			list.sort(self)
-			self.modified = True
+			newlist = sorted(self)
+			if newlist != self:
+				self[:] = newlist
+				self.modified = True
 
 		@property
 		def modified(self):
