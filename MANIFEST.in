@@ -1,1 +1,2 @@
 include COPYING
+include contrib/bash-completion/*
