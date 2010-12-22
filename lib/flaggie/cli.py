@@ -15,7 +15,7 @@ from flaggie.action import Action, ActionSet, ParserError, ParserWarning
 from flaggie.cache import Caches
 from flaggie.cleanup import DropIneffective, DropUnmatchedPkgs, \
 		DropUnmatchedFlags, SortEntries, SortFlags
-from flaggie.packagefile import PackageFiles
+from flaggie.packagefile import PackageFiles, PackageFileConflict
 
 def parse_actions(args, dbapi, settings, quiet = False, strict = False, \
 		cleanupact = [], dataout = sys.stdout, output = sys.stderr):
@@ -180,8 +180,12 @@ format as taken by emerge).\n''' % os.path.basename(argv[0]))
 		main([argv[0], '--help'])
 		return 0
 
-	pfiles = PackageFiles(os.path.join( \
-		porttree.settings['PORTAGE_CONFIGROOT'], USER_CONFIG_PATH), porttree)
+	try:
+		pfiles = PackageFiles(os.path.join( \
+			porttree.settings['PORTAGE_CONFIGROOT'], USER_CONFIG_PATH), porttree)
+	except PackageFileConflict as e:
+		output.write('%s\n' % e)
+		return 1
 
 	for actset in act:
 		try:

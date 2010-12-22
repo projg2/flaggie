@@ -292,9 +292,18 @@ class PackageKeywordsFileSet(PackageFileSet):
 
 		PackageFileSet.write(*((self,) + args))
 
+class PackageFileConflict(Exception):
+	pass
+
 class PackageFiles(object):
 	def __init__(self, basedir, dbapi):
 		p = lambda x: os.path.join(basedir, x)
+
+		if os.path.exists(p('package.keywords')) \
+				and os.path.exists(p('package.accept_keywords')):
+			raise PackageFileConflict('''Both package.accept_keywords and package.keywords files exist. Please
+remove one of them or merge them. Refusing to proceed.''')
+
 		self.files = {
 			'use': PackageFileSet(p('package.use')),
 			'kw': PackageKeywordsFileSet(p('package.keywords'), dbapi),
