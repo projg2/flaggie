@@ -292,26 +292,12 @@ class PackageKeywordsFileSet(PackageFileSet):
 
 		PackageFileSet.write(*((self,) + args))
 
-class PackageFileConflict(Exception):
-	pass
-
 class PackageFiles(object):
 	def __init__(self, basedir, dbapi):
 		p = lambda x: os.path.join(basedir, x)
-
-		pkfs = [x for x in (p('package.keywords'), p('package.accept_keywords')) \
-				if os.path.exists(x)]
-
-		if len(pkfs) > 1:
-			raise PackageFileConflict('''Both package.accept_keywords and package.keywords files exist. Please
-remove one of them or merge them. Refusing to proceed.''')
-		elif not pkfs:
-			# XXX: use package.accept_keywords by default when appropriate
-			pkfs = (p('package.keywords'),)
-
 		self.files = {
 			'use': PackageFileSet(p('package.use')),
-			'kw': PackageKeywordsFileSet(p(pkfs[0]), dbapi),
+			'kw': PackageKeywordsFileSet(p('package.keywords'), dbapi),
 			'lic': PackageFileSet(p('package.license')),
 			'env': PackageFileSet(p('package.env'))
 		}
