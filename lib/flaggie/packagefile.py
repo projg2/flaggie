@@ -171,7 +171,10 @@ class PackageFileSet(object):
 			self.modified = False
 
 	def __init__(self, path):
-		self._path = path
+		if not isinstance(path, tuple):
+			path = (path,)
+
+		self._paths = path
 		self._files = []
 
 	@property
@@ -184,19 +187,20 @@ class PackageFileSet(object):
 		if self._files:
 			return
 
-		if os.path.isdir(self._path):
-			files = [os.path.join(self._path, x) \
-					for x in os.listdir(self._path) \
-					if not x.startswith('.') and not x.endswith('~')]
-			if not files:
-				files = [os.path.join(self._path, 'flaggie')]
+		for fn in self._paths:
+			if os.path.isdir(fn):
+				files = [os.path.join(fn, x) \
+						for x in os.listdir(fn) \
+						if not x.startswith('.') and not x.endswith('~')]
+				if not files:
+					files = [os.path.join(fn, 'flaggie')]
+				else:
+					files.sort()
 			else:
-				files.sort()
-		else:
-			files = [self._path]
+				files = [fn]
 
-		for path in files:
-			self._files.append(self.PackageFile(path))
+			for path in files:
+				self._files.append(self.PackageFile(path))
 
 	def write(self):
 		if not self._files:
