@@ -143,31 +143,37 @@ class PackageFileSet(object):
 					data += l.toString()
 			data += ''.join(self.trailing_whitespace)
 
-			f = tempfile.NamedTemporaryFile('wb', delete = False, \
-					dir = os.path.dirname(os.path.realpath(self.path)))
-			tmpname = f.name
-
-			try:
-				f = codecs.getwriter('utf8')(f)
-				f.write(data)
-				f.close()
-
-				backup = self.path + '~'
+			backup = self.path + '~'
+			if not data:
 				try:
-					shutil.copy2(self.path, backup)
+					shutil.move(self.path, backup)
 				except IOError:
-					backup = None
-				shutil.move(tmpname, self.path)
-			except Exception:
-				os.unlink(tmpname)
-				raise
-
-			if backup is not None:
-				shutil.copymode(backup, self.path)
+					os.unlink(self.path)
 			else:
-				umask = os.umask(0o22)
-				os.umask(umask)
-				os.chmod(self.path, 0o666 & ~umask)
+				f = tempfile.NamedTemporaryFile('wb', delete = False, \
+						dir = os.path.dirname(os.path.realpath(self.path)))
+				tmpname = f.name
+
+				try:
+					f = codecs.getwriter('utf8')(f)
+					f.write(data)
+					f.close()
+
+					try:
+						shutil.copy2(self.path, backup)
+					except IOError:
+						backup = None
+					shutil.move(tmpname, self.path)
+				except Exception:
+					os.unlink(tmpname)
+					raise
+
+				if backup is not None:
+					shutil.copymode(backup, self.path)
+				else:
+					umask = os.umask(0o22)
+					os.umask(umask)
+					os.chmod(self.path, 0o666 & ~umask)
 
 			for e in self:
 				e.modified = False
