@@ -301,7 +301,8 @@ class PackageFiles(object):
 		p = lambda x: os.path.join(basedir, x)
 		self.files = {
 			'use': PackageFileSet(p('package.use')),
-			'kw': PackageKeywordsFileSet(p('package.keywords'), dbapi),
+			'kw': PackageKeywordsFileSet((p('package.keywords'),
+				p('package.accept_keywords')), dbapi),
 			'lic': PackageFileSet(p('package.license')),
 			'env': PackageFileSet(p('package.env'))
 		}
