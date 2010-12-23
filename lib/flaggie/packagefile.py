@@ -183,6 +183,28 @@ class PackageFileSet(object):
 			self.read()
 		return self._files
 
+	def migrate(self):
+		paths = self._paths
+		if len(paths) <= 1:
+			return
+
+		lp = paths[-1]
+		for f in self.files:
+			if f.path == lp or os.path.dirname(f.path) == lp:
+				lf = f
+				break
+		else:
+			raise AssertionError('Final file not found while trying to migrate.')
+
+		for p in paths[:-1]:
+			for f in self.files:
+				if f.path == p or os.path.dirname(f.path) == p:
+					lf[0:0] = f
+					del f[:]
+					f.modified = True
+
+		lf.modified = True
+
 	def read(self):
 		if self._files:
 			return

@@ -96,5 +96,9 @@ class SortFlags(BaseCleanupAction):
 		for pe in f:
 			pe.sort()
 
-cleanupact_order = (DropUnmatchedPkgs, DropUnmatchedFlags, DropIneffective, \
-		SortEntries, SortFlags)
+class MigrateFiles(BaseCleanupAction):
+	def _perform(self, f):
+		f.migrate()
+
+cleanupact_order = (MigrateFiles, DropUnmatchedPkgs, DropUnmatchedFlags, \
+		DropIneffective, SortEntries, SortFlags)
