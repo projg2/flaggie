@@ -137,16 +137,19 @@ class PackageFileSet(object):
 			if not self.modified:
 				return
 
+			data = ''
+			for l in self:
+				if not l.modified or l:
+					data += l.toString()
+			data += ''.join(self.trailing_whitespace)
+
 			f = tempfile.NamedTemporaryFile('wb', delete = False, \
 					dir = os.path.dirname(os.path.realpath(self.path)))
 			tmpname = f.name
 
 			try:
 				f = codecs.getwriter('utf8')(f)
-				for l in self:
-					if not l.modified or l:
-						f.write(l.toString())
-				f.write(''.join(self.trailing_whitespace))
+				f.write(data)
 				f.close()
 
 				backup = self.path + '~'
