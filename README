@@ -115,6 +115,13 @@ available too:
 - `--destructive-cleanup` to perform all of the cleanup actions
 	listed above.
 
+There is also a single special option:
+
+- `--migrate-files` to upgrade all the outdated files to the latest
+	formats used by Portage. Right now, this involves dropping
+	`package.keywords` and moving all its entries
+	to `package.accept_keywords`.
+
 
 Examples
 --------
