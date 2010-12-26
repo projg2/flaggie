@@ -5,6 +5,9 @@
 
 import codecs, os, os.path, shutil, tempfile
 
+from portage import VERSION as portage_ver
+from portage.versions import vercmp
+
 class PackageFileSet(object):
 	class PackageFile(list):
 		class PackageEntry(object):
@@ -180,7 +183,7 @@ class PackageFileSet(object):
 			self.modified = False
 
 	def __init__(self, path):
-		if not isinstance(path, tuple):
+		if not isinstance(path, tuple) and not isinstance(path, list):
 			path = (path,)
 
 		self._paths = path
@@ -330,10 +333,14 @@ class PackageKeywordsFileSet(PackageFileSet):
 class PackageFiles(object):
 	def __init__(self, basedir, dbapi):
 		p = lambda x: os.path.join(basedir, x)
+
+		pkw = [p('package.keywords')]
+		if vercmp(portage_ver, '2.1.9') >= 0:
+			pkw.append(p('package.accept_keywords'))
+
 		self.files = {
 			'use': PackageFileSet(p('package.use')),
-			'kw': PackageKeywordsFileSet((p('package.keywords'),
-				p('package.accept_keywords')), dbapi),
+			'kw': PackageKeywordsFileSet(pkw, dbapi),
 			'lic': PackageFileSet(p('package.license')),
 			'env': PackageFileSet(p('package.env'))
 		}
