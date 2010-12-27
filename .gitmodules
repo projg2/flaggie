@@ -1,3 +1,3 @@
 [submodule "contrib/bash-completion"]
 	path = contrib/bash-completion
-	url = git://github.com/mruwek/flaggie_bash-completion.git
+	url = git://github.com/mruwek/flaggie.bash-completion.git
