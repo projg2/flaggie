@@ -93,14 +93,14 @@ class Caches(object):
 						f.close()
 
 				# and the ** special keyword
-				kws.add('**')
+				kws.update('*', '**')
 				self.cache[None] = frozenset(kws)
 
 			return self.cache[None]
 
 		def _aux_parse(self, arg):
 			kw = [x for x in arg.split() if not x.startswith('-')]
-			kw.append('**')
+			kw.extend(('*', '**'))
 			return kw
 
 	class LicenseCache(DBAPICache):
