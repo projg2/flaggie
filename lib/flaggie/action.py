@@ -50,9 +50,9 @@ class Action(object):
 			if not arg:
 				arg = '*'
 
-			# Check whether the argument looks like a pattern
-			# but denote that '**' has special meaning.
-			if arg != '**':
+			# Check whether the argument looks like a pattern but denote that
+			# for keywords '**' and '*' have special meaning.
+			if (ns and 'kw' not in ns) or arg not in ('**', '*'):
 				for schr in ('*', '?', '['):
 					if schr in arg:
 						if not ns:

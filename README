@@ -59,6 +59,10 @@ With `+` and `-` actions, pattern matching is performed against package
 `IUSE`, `KEYWORDS` or `LICENSE` variable. With `%` and `?`, it is done
 against values specified in `package.*` files.
 
+Please denote that for keywords, `*` and `**` arguments have special
+meaning and will not be parsed as patterns. If you need to perform
+pattern matching there, please use `?*` instead.
+
 In addition to that, the argument can be preceded by a namespace
 specifier in the form `ns::`, where `ns` can be one of `use`, `kw` or
 `lic` (or a pattern).
