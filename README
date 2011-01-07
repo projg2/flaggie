@@ -53,7 +53,7 @@ obligatory argument (flag). The action symbols are:
 Each of the actions should be followed by an argument. It could be
 a flag name, a keyword or a license string. Arguments can be shell
 patterns (same as in filename matching). If no argument is passed,
-flaggie assumes `*`.
+flaggie assumes `?*`.
 
 With `+` and `-` actions, pattern matching is performed against package
 `IUSE`, `KEYWORDS` or `LICENSE` variable. With `%` and `?`, it is done

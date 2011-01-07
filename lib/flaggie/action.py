@@ -48,7 +48,7 @@ class Action(object):
 				ns = None
 
 			if not arg:
-				arg = '*'
+				arg = '?*'
 
 			# Check whether the argument looks like a pattern but denote that
 			# for keywords '**' and '*' have special meaning.
