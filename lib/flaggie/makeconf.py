@@ -63,7 +63,7 @@ class MakeConf(object):
 			def toString(self):
 				return '${%s}' % self.s
 
-		def __init__(self, path, parent):
+		def __init__(self, path):
 			list.__init__(self)
 			self.path = path
 			# not used in MakeConfFile
@@ -141,7 +141,7 @@ class MakeConf(object):
 
 	def __init__(self, path, dbapi):
 		self.files = []
-		self.files.append(self.MakeConfFile(path, self))
+		self.files.append(self.MakeConfFile(path))
 
 	def write(self):
 		for f in self.files:
