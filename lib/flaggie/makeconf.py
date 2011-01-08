@@ -7,6 +7,11 @@ import codecs, os.path, string
 
 from flaggie.packagefile import PackageFileSet
 
+class MakeConfVariable(object):
+	def __init__(self, key, makeconf):
+		self._key = key
+		self._makeconf = makeconf
+
 class MakeConf(object):
 	class MakeConfFile(PackageFileSet.PackageFile):
 		class Token(object):
@@ -17,15 +22,26 @@ class MakeConf(object):
 			def __len__(self):
 				return len(self.s)
 
+			def __eq__(self, other):
+				return self.s == other
+
 			def __iadd__(self, s):
 				self.s += s
 				return self
 
+			@property
+			def data(self):
+				return self.s
+
 			def toString(self):
 				return self.s
 
+			def __repr__(self):
+				return '%s(%s)' % (self.__class__.__name__, self.toString())
+
 		class Whitespace(Token):
-			pass
+			def hasNL(self):
+				return '\n' in self.s
 
 		class UnquotedWord(Token):
 			pass
@@ -140,9 +156,56 @@ class MakeConf(object):
 			f.close()
 
 	def __init__(self, path, dbapi):
-		self.files = []
-		self.files.append(self.MakeConfFile(path))
+		mf = self.MakeConfFile(path)
+		self.files = {path: mf}
+
+		self.variables = {
+			'use': MakeConfVariable('USE', mf),
+			'kw': MakeConfVariable('ACCEPT_KEYWORDS', mf),
+			'lic': MakeConfVariable('ACCEPT_LICENSE', mf)
+		}
+		
+		self.parse(mf)
+
+	def parse(self, mf):
+		cleanline = True
+
+		ti = iter(mf)
+		for t in ti:
+			if isinstance(t, self.MakeConfFile.Whitespace):
+				if t.hasNL():
+					cleanline = True
+			elif not cleanline:
+				continue
+			elif t == 'source':
+				try:
+					nt = next(ti)
+					if not isinstance(nt, self.MakeConfFile.Whitespace):
+						cleanline = False
+					elif not nt.hasNL():
+						fn = ''
+						nt = next(ti)
+						try:
+							while not isinstance(nt, self.MakeConfFile.Whitespace):
+								fn += nt.data
+								nt = next(ti)
+						except StopIteration:
+							pass
+						else:
+							if nt.hasNL():
+								cleanline = True
+
+						if fn not in self.files:
+							self.files[fn] = self.MakeConfFile(fn)
+						self.parse(self.files[fn])
+				except StopIteration:
+					break
+			elif t == 'export':
+				continue
+			else:
+				# XXX: we get variables here
+				cleanline = False
 
 	def write(self):
-		for f in self.files:
+		for f in self.files.values():
 			f.write()
