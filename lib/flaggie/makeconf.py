@@ -61,8 +61,8 @@ class MakeConf(object):
 			f = codecs.open(path, 'r', 'utf8')
 			for l in f:
 				if not isinstance(token, self.QuotedString) and l.startswith('#'):
-					tmptoken = newtoken(self.Whitespace)
-					tmptoken += l
+					token = newtoken(self.Whitespace, token)
+					token += l
 					continue
 
 				ci = iter(l)
@@ -91,9 +91,6 @@ class MakeConf(object):
 						token = None
 					else:
 						token += c
-
-				if not isinstance(token, self.QuotedString):
-					token = None
 
 			f.close()
 
