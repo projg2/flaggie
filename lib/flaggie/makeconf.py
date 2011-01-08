@@ -32,7 +32,15 @@ class MakeConf(object):
 
 		class QuotedString(Token):
 			def toString(self):
+				raise NotImplementedError('QuotedString.toString() needs to be overriden')
+
+		class SingleQuotedString(QuotedString):
+			def toString(self):
 				return "'%s'" % self.s
+
+		class DoubleQuotedString(QuotedString):
+			def toString(self):
+				return '"%s"' % self.s
 
 		def __init__(self, path, parent):
 			list.__init__(self)
@@ -71,15 +79,18 @@ class MakeConf(object):
 							token = newtoken(self.Whitespace, token)
 							token += c
 						elif c == "'":
-							token = newtoken(self.QuotedString, token)
+							token = newtoken(self.SingleQuotedString, token)
+						elif c == '"':
+							token = newtoken(self.DoubleQuotedString, token)
 						else:
 							token = newtoken(self.UnquotedWord, token)
 							token += c
+					elif isinstance(token, self.SingleQuotedString) and c == "'":
+						token = None
+					elif isinstance(token, self.DoubleQuotedString) and c == '"':
+						token = None
 					else:
-						if c == "'":
-							token = None
-						else:
-							token += c
+						token += c
 
 				if not isinstance(token, self.QuotedString):
 					token = None
