@@ -5,10 +5,13 @@
 
 import codecs, os.path, string
 
+from flaggie.packagefile import PackageFileSet
+
 class MakeConf(object):
-	class MakeConfFile(list):
+	class MakeConfFile(PackageFileSet.PackageFile):
 		class Token(object):
 			def __init__(self, s = ''):
+				self.modified = False
 				self.s = s
 
 			def __len__(self):
@@ -32,6 +35,10 @@ class MakeConf(object):
 
 		def __init__(self, path, parent):
 			list.__init__(self)
+			self.path = path
+			# not used in MakeConfFile
+			self._modified = False
+			self.trailing_whitespace = []
 
 			def newtoken(kind, oldtoken = None):
 				if isinstance(oldtoken, kind):
@@ -62,15 +69,6 @@ class MakeConf(object):
 					token = None
 
 			f.close()
-
-		def toString(self):
-			s = ''
-			for t in self:
-				s += t.toString()
-			return s
-
-		def write(self):
-			pass
 
 	def __init__(self, path, dbapi):
 		self.files = []

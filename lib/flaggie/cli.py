@@ -198,5 +198,6 @@ format as taken by emerge).\n''' % os.path.basename(argv[0]))
 			output.write('Warning: %s\n' % e)
 
 	pfiles.write()
+	mkconf.write()
 
 	return 0
