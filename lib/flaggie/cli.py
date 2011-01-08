@@ -6,7 +6,7 @@
 import codecs, locale, os, os.path, sys
 
 from portage import create_trees
-from portage.const import USER_CONFIG_PATH
+from portage.const import MAKE_CONF_FILE, USER_CONFIG_PATH
 from portage.dbapi.dep_expand import dep_expand
 from portage.exception import AmbiguousPackageName, InvalidAtom
 
@@ -15,6 +15,7 @@ from flaggie.action import Action, ActionSet, ParserError, ParserWarning
 from flaggie.cache import Caches
 from flaggie.cleanup import DropIneffective, DropUnmatchedPkgs, \
 		DropUnmatchedFlags, SortEntries, SortFlags, MigrateFiles
+from flaggie.makeconf import MakeConf
 from flaggie.packagefile import PackageFiles
 
 def parse_actions(args, dbapi, settings, quiet = False, strict = False, \
@@ -187,6 +188,8 @@ format as taken by emerge).\n''' % os.path.basename(argv[0]))
 
 	pfiles = PackageFiles(os.path.join( \
 		porttree.settings['PORTAGE_CONFIGROOT'], USER_CONFIG_PATH), porttree)
+	mkconf = MakeConf(os.path.join( \
+		porttree.settings['PORTAGE_CONFIGROOT'], MAKE_CONF_FILE), porttree)
 
 	for actset in act:
 		try:
