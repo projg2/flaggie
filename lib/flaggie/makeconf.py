@@ -56,11 +56,18 @@ class MakeConf(object):
 					tmptoken += l
 					continue
 
-				for c in l:
+				ci = iter(l)
+				for c in ci:
 					if not isinstance(token, self.QuotedString):
 						if c in string.whitespace:
 							token = newtoken(self.Whitespace, token)
 							token += c
+						elif c == '\\':
+							token = newtoken(self.UnquotedWord, token)
+							try:
+								token += c + ci.next()
+							except StopIteration:
+								token += c
 						else:
 							token = newtoken(self.UnquotedWord, token)
 							token += c
