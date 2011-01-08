@@ -193,7 +193,7 @@ format as taken by emerge).\n''' % os.path.basename(argv[0]))
 
 	for actset in act:
 		try:
-			actset(pfiles)
+			actset(pfiles, mkconf)
 		except NotImplementedError as e:
 			output.write('Warning: %s\n' % e)
 

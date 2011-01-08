@@ -177,7 +177,6 @@ class MakeConf(object):
 		self.variables = {}
 
 		self.parse(mf, path)
-		print(self.variables)
 
 	def parse(self, mf, path):
 		# 1) group tokens in lines
