@@ -96,6 +96,7 @@ class PackageFileSet(object):
 				self.modified = True
 
 		def __init__(self, path):
+			list.__init__(self)
 			self.path = path
 			# _modified is for when items are removed
 			self._modified = False
