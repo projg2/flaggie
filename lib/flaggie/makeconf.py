@@ -8,9 +8,12 @@ import codecs, os.path, string
 from flaggie.packagefile import PackageFileSet
 
 class MakeConfVariable(object):
-	def __init__(self, key, makeconf):
+	def __init__(self, key, tokens):
 		self._key = key
-		self._makeconf = makeconf
+		self._tokens = tokens
+
+	def __repr__(self):
+		return 'MakeConfVariable(%s, %s)' % (self._key, self._tokens)
 
 class MakeConf(object):
 	class MakeConfFile(PackageFileSet.PackageFile):
@@ -79,7 +82,7 @@ class MakeConf(object):
 			def toString(self):
 				return '${%s}' % self.s
 
-		def __init__(self, path):
+		def __init__(self, path, basedir = None):
 			list.__init__(self)
 			self.path = path
 			# not used in MakeConfFile
@@ -95,6 +98,8 @@ class MakeConf(object):
 				return token
 
 			token = None
+			if basedir:
+				path = os.path.join(basedir, path)
 			f = codecs.open(path, 'r', 'utf8')
 			for l in f:
 				if not isinstance(token, self.QuotedString) and l.startswith('#'):
@@ -160,53 +165,63 @@ class MakeConf(object):
 	def __init__(self, path, dbapi):
 		mf = self.MakeConfFile(path)
 		self.files = {path: mf}
+		self.variables = {}
 
-		self.variables = {
-			'use': MakeConfVariable('USE', mf),
-			'kw': MakeConfVariable('ACCEPT_KEYWORDS', mf),
-			'lic': MakeConfVariable('ACCEPT_LICENSE', mf)
-		}
-		
-		self.parse(mf)
+		self.parse(mf, path)
+		print(self.variables)
 
-	def parse(self, mf):
-		cleanline = True
-
-		ti = iter(mf)
-		for t in ti:
+	def parse(self, mf, path):
+		# 1) group tokens in lines
+		lines = []
+		words = []
+		tokens = []
+		for t in mf:
 			if isinstance(t, self.MakeConfFile.Whitespace):
+				if tokens:
+					words.append(tokens)
+					tokens = []
 				if t.hasNL():
-					cleanline = True
-			elif not cleanline:
-				continue
-			elif t == 'source':
-				try:
-					nt = next(ti)
-					if not isinstance(nt, self.MakeConfFile.Whitespace):
-						cleanline = False
-					elif not nt.hasNL():
-						fn = ''
-						nt = next(ti)
-						try:
-							while not isinstance(nt, self.MakeConfFile.Whitespace):
-								fn += nt.data
-								nt = next(ti)
-						except StopIteration:
-							pass
-						else:
-							if nt.hasNL():
-								cleanline = True
-
-						if fn not in self.files:
-							self.files[fn] = self.MakeConfFile(fn)
-						self.parse(self.files[fn])
-				except StopIteration:
-					break
-			elif t == 'export':
-				continue
+					if words:
+						lines.append(words)
+						words = []
 			else:
-				# XXX: we get variables here
-				cleanline = False
+				tokens.append(t)
+		else:
+			if tokens:
+				words.append(tokens)
+			if words:
+				lines.append(words)
+
+		def join(words):
+			return ''.join([t.data for t in words])
+
+		# 2) now go for it
+		for l in lines:
+			joined = join(l[0])
+			if joined == 'source':
+				fn = join(l[1])
+				if fn not in self.files:
+					self.files[fn] = self.MakeConfFile(fn, path)
+				self.parse(self.files[fn], fn)
+				continue
+			elif joined == 'export':
+				assignm = l[1]
+			else:
+				assignm = l[0]
+			
+			for i, t in enumerate(assignm):
+				if isinstance(t, self.MakeConfFile.UnquotedWord) and t.data.endswith('='):
+					key = join(assignm[:i+1])[:-1]
+					val = []
+
+					for t in assignm[i+1:]:
+						if isinstance(t, self.MakeConfFile.VariableRef):
+							pass # XXX
+						else:
+							val.append(t)
+
+					self.variables[key] = MakeConfVariable(key, val)
+					break
 
 	def write(self):
 		for f in self.files.values():
