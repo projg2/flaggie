@@ -71,7 +71,7 @@ class MakeConf(object):
 						if not isinstance(token, self.QuotedString):
 							token = newtoken(self.UnquotedWord, token)
 						try:
-							token += c + ci.next()
+							token += c + next(ci)
 						except StopIteration:
 							token += c
 					elif not isinstance(token, self.QuotedString):
