@@ -30,6 +30,10 @@ class MakeConf(object):
 		class UnquotedWord(Token):
 			pass
 
+		class VariableRef(UnquotedWord):
+			def toString(self):
+				return '$%s' % self.s
+
 		class QuotedString(Token):
 			def toString(self):
 				raise NotImplementedError('QuotedString.toString() needs to be overriden')
@@ -39,8 +43,25 @@ class MakeConf(object):
 				return "'%s'" % self.s
 
 		class DoubleQuotedString(QuotedString):
+			lquo = True
+			rquo = True
+
 			def toString(self):
-				return '"%s"' % self.s
+				out = ''
+				if self.lquo:
+					out += '"'
+				out += self.s
+				if self.rquo:
+					out += '"'
+
+				return out
+
+		class DoubleQuotedVariableRef(VariableRef, DoubleQuotedString):
+			pass
+
+		class DoubleQuotedBracedVariableRef(DoubleQuotedVariableRef):
+			def toString(self):
+				return '${%s}' % self.s
 
 		def __init__(self, path, parent):
 			list.__init__(self)
@@ -82,6 +103,8 @@ class MakeConf(object):
 							token = newtoken(self.SingleQuotedString, token)
 						elif c == '"':
 							token = newtoken(self.DoubleQuotedString, token)
+						elif c == '$':
+							token = newtoken(self.VariableRef, token)
 						else:
 							token = newtoken(self.UnquotedWord, token)
 							token += c
@@ -89,6 +112,28 @@ class MakeConf(object):
 						token = None
 					elif isinstance(token, self.DoubleQuotedString) and c == '"':
 						token = None
+					elif isinstance(token, self.DoubleQuotedBracedVariableRef) and c == '}':
+						token = newtoken(self.DoubleQuotedString)
+						token.lquo = False
+					elif isinstance(token, self.DoubleQuotedVariableRef) and c in string.whitespace:
+						token = newtoken(self.DoubleQuotedString)
+						token.lquo = False
+						token += c
+					elif c == '$':
+						try:
+							n = next(ci)
+						except StopIteration:
+							token += c
+						else:
+							if n == '{':
+								token.rquo = False
+								token = newtoken(self.DoubleQuotedBracedVariableRef)
+							elif n in string.whitespace:
+								token += c + n
+							else:
+								token.rquo = False
+								token = newtoken(self.DoubleQuotedVariableRef)
+								token += n
 					else:
 						token += c
 
