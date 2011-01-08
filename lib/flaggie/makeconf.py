@@ -225,7 +225,10 @@ class MakeConf(object):
 
 					for t in assignm[i+1:]:
 						if isinstance(t, self.MakeConfFile.VariableRef):
-							pass # XXX
+							try:
+								val.append(self.variables[t.data])
+							except KeyError:
+								pass
 						else:
 							val.append(t)
 
