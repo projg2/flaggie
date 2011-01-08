@@ -31,7 +31,8 @@ class MakeConf(object):
 			pass
 
 		class QuotedString(Token):
-			pass
+			def toString(self):
+				return "'%s'" % self.s
 
 		def __init__(self, path, parent):
 			list.__init__(self)
@@ -58,18 +59,26 @@ class MakeConf(object):
 
 				ci = iter(l)
 				for c in ci:
-					if not isinstance(token, self.QuotedString):
+					if c == '\\':
+						if not isinstance(token, self.QuotedString):
+							token = newtoken(self.UnquotedWord, token)
+						try:
+							token += c + ci.next()
+						except StopIteration:
+							token += c
+					elif not isinstance(token, self.QuotedString):
 						if c in string.whitespace:
 							token = newtoken(self.Whitespace, token)
 							token += c
-						elif c == '\\':
-							token = newtoken(self.UnquotedWord, token)
-							try:
-								token += c + ci.next()
-							except StopIteration:
-								token += c
+						elif c == "'":
+							token = newtoken(self.QuotedString, token)
 						else:
 							token = newtoken(self.UnquotedWord, token)
+							token += c
+					else:
+						if c == "'":
+							token = None
+						else:
 							token += c
 
 				if not isinstance(token, self.QuotedString):
