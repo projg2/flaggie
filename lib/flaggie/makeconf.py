@@ -124,6 +124,8 @@ class MakeConf(object):
 						else:
 							token = newtoken(self.UnquotedWord, token)
 							token += c
+							if c == '=':
+								token = None
 					elif isinstance(token, self.SingleQuotedString) and c == "'":
 						token = None
 					elif isinstance(token, self.DoubleQuotedString) and c == '"':
