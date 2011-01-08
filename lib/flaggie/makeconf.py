@@ -53,6 +53,13 @@ class MakeConf(object):
 			def toString(self):
 				return '$%s' % self.s
 
+			@property
+			def data(self):
+				ret = self.s
+				if ret.startswith('{') and ret.endswith('}'):
+					return ret[1:-1]
+				return ret
+
 		class QuotedString(Token):
 			def toString(self):
 				raise NotImplementedError('QuotedString.toString() needs to be overriden')
@@ -76,7 +83,9 @@ class MakeConf(object):
 				return out
 
 		class DoubleQuotedVariableRef(VariableRef, DoubleQuotedString):
-			pass
+			@property
+			def data(self):
+				return self.s
 
 		class DoubleQuotedBracedVariableRef(DoubleQuotedVariableRef):
 			def toString(self):
