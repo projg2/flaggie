@@ -138,7 +138,10 @@ class MakeConf(object):
 
 			@property
 			def data(self):
-				return self.s
+				if self.modified:
+					return ''.join([f.toString() for f in self.flags])
+				else:
+					return self.s
 
 			def toString(self):
 				return self.data
