@@ -195,6 +195,13 @@ class MakeConf(object):
 			def toString(self):
 				return '${%s}' % self.data
 
+		@property
+		def data(self):
+			data = ''
+			for l in self:
+				data += l.toString()
+			return data
+
 		def __init__(self, path, basedir = None):
 			list.__init__(self)
 			self.path = path

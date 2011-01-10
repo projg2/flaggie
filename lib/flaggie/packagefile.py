@@ -137,15 +137,20 @@ class PackageFileSet(object):
 		def modified(self, val):
 			self._modified = val
 
-		def write(self):
-			if not self.modified:
-				return
-
+		@property
+		def data(self):
 			data = ''
 			for l in self:
 				if not l.modified or l:
 					data += l.toString()
 			data += ''.join(self.trailing_whitespace)
+			return data
+
+		def write(self):
+			if not self.modified:
+				return
+
+			data = self.data
 
 			backup = self.path + '~'
 			if not data:
