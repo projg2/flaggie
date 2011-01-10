@@ -234,9 +234,9 @@ class MakeConf(object):
 							token = newtoken(self.Whitespace, token)
 							token += c
 						elif c == "'":
-							token = newtoken(self.SingleQuotedString, token)
+							token = newtoken(self.SingleQuotedString)
 						elif c == '"':
-							token = newtoken(self.DoubleQuotedString, token)
+							token = newtoken(self.DoubleQuotedString)
 						elif c == '$':
 							token = newtoken(self.VariableRef, token)
 						else:
