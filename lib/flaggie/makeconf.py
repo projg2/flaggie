@@ -55,6 +55,11 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 				# 'flag1 flag2 ' -> flag1, ' ', flag2, ' ', ''
 				# ' ' -> '', ' ', ''
 				# '' -> ''
+
+				if nt:
+					sl[0] = ''
+					nt = None
+
 				lta = []
 				t.flags = []
 				if sl[-1]:
@@ -62,23 +67,20 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 						try:
 							nmv, nt = next(fti)
 						except StopIteration:
+							nt = None
 							break
 						else:
 							nsl = wsregex.split(nt.data)
-							if len(nsl) == 1:
-								if not nsl[0]:
-									nt.flags = []
-									continue
-								else:
-									pf = self.PartialFlag(nsl[0])
-									nt.flags = [pf]
-									lta.append(pf)
-									continue
+							if len(nsl) == 1 and not nsl[0]:
+								nt.flags = []
 							elif not nsl[0]: # the whitespace we were hoping for
 								break
 							else:
-								print(nsl)
-								raise NotImplementedError('Cross-token flags not supported yet')
+								pf = self.PartialFlag(nsl[0])
+								nt.flags = [pf]
+								lta.append(pf)
+								if len(nsl) != 1:
+									break
 
 				lasti = len(sl) - 1
 				for i, e in enumerate(sl):
@@ -95,7 +97,6 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 				if nt:
 					mv = nmv
 					t = nt
-					nt = None
 				else:
 					break
 
