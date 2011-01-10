@@ -12,8 +12,13 @@ wsregex = re.compile('(?u)(\s+)')
 class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 	class MakeConfFlag(PackageFileSet.PackageFile.PackageEntry.PackageFlag):
 		def __init__(self, s, lta = []):
-			PackageFileSet.PackageFile.PackageEntry.PackageFlag.__init__(self, s)
+			self._origs = s
 			self._partialflags = lta
+			s += ''.join([x.toString() for x in lta])
+			PackageFileSet.PackageFile.PackageEntry.PackageFlag.__init__(self, s)
+
+		def toString(self):
+			return self._origs
 
 	class Whitespace(object):
 		def __init__(self, s):
@@ -53,6 +58,7 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 					sl = nsl
 					nt = None
 				else:
+					t.flags = []
 					sl = wsregex.split(t.data)
 					# 'flag1 flag2' -> flag1, ' ', flag2
 					# ' flag1 flag2' -> '', ' ', flag1, ' ', flag2
@@ -61,7 +67,6 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 					# '' -> ''
 
 				lta = []
-				t.flags = []
 				if sl[-1]:
 					while True:
 						try:
@@ -71,13 +76,14 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 							break
 						else:
 							nsl = wsregex.split(nt.data)
+							nt.flags = []
 							if len(nsl) == 1 and not nsl[0]:
-								nt.flags = []
+								pass
 							elif not nsl[0]: # the whitespace we were hoping for
 								break
 							else:
 								pf = self.PartialFlag(nsl[0])
-								nt.flags = [pf]
+								nt.flags.append(pf)
 								lta.append(pf)
 								if len(nsl) != 1:
 									nsl[0] = ''
@@ -88,7 +94,6 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 					if i%2 == 0:
 						if e:
 							if lta and i == lasti:
-								e += ''.join([x.toString() for x in lta])
 								t.flags.append(self.MakeConfFlag(e, lta))
 							else:
 								t.flags.append(self.MakeConfFlag(e))
