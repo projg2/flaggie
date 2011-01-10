@@ -85,6 +85,11 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 	def __repr__(self):
 		return 'MakeConfVariable(%s, %s)' % (self._key, self._tokens)
 
+class FakeVariable(MakeConfVariable):
+	def __init__(self):
+		self._flattokens = ()
+		self._parsed = True
+
 class MakeConf(object):
 	class MakeConfFile(PackageFileSet.PackageFile):
 		class Token(object):
@@ -305,6 +310,9 @@ class MakeConf(object):
 					break
 
 	def __getitem__(self, k):
+		if k == 'env': # env not supported as a global var
+			return FakeVariable()
+
 		kmap = {
 			'use': 'USE',
 			'kw': 'ACCEPT_KEYWORDS',
