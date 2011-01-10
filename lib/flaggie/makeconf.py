@@ -53,22 +53,33 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 				if sl[-1]:
 					while True:
 						try:
-							nt = next(fti)
+							nmv, nt = next(fti)
 						except StopIteration:
 							break
 						else:
-							raise NotImplementedError('Cross-token flags not supported yet')
+							nsl = wsregex.split(nt.data)
+							if len(nsl) == 1 and not nsl[0]:
+								nt.flags = []
+								continue
+							elif not nsl[0]: # the whitespace we were hoping for
+								break
+							else:
+								print(nsl)
+								raise NotImplementedError('Cross-token flags not supported yet')
 
 				tdata = []
 				for i, e in enumerate(sl):
-					if i%2 == 0 and e:
-						tdata.append(self.MakeConfFlag(e))
+					if i%2 == 0:
+						if e:
+							tdata.append(self.MakeConfFlag(e))
 					else:
 						tdata.append(self.Whitespace(e))
 				t.flags = tdata
 
 				if nt:
+					mv = nmv
 					t = nt
+					nt = None
 				else:
 					break
 
@@ -79,7 +90,7 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 
 		for mv, t in reversed(self._flattokens):
 			for i, f in enumerate(reversed(t.flags)):
-				if i%2 == 0:
+				if isinstance(f, self.MakeConfFlag):
 					yield f
 
 	def __repr__(self):
