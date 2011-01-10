@@ -141,14 +141,14 @@ class MakeConf(object):
 				return self.s
 
 			def toString(self):
-				return self.s
+				return self.data
 
 			def __repr__(self):
 				return '%s(%s)' % (self.__class__.__name__, self.toString())
 
 		class Whitespace(Token):
 			def hasNL(self):
-				return '\n' in self.s
+				return '\n' in self.data
 
 		class UnquotedWord(Token):
 			pass
@@ -170,7 +170,7 @@ class MakeConf(object):
 
 		class SingleQuotedString(QuotedString):
 			def toString(self):
-				return "'%s'" % self.s
+				return "'%s'" % self.data
 
 		class DoubleQuotedString(QuotedString):
 			lquo = True
@@ -180,7 +180,7 @@ class MakeConf(object):
 				out = ''
 				if self.lquo:
 					out += '"'
-				out += self.s
+				out += self.data
 				if self.rquo:
 					out += '"'
 
@@ -193,7 +193,7 @@ class MakeConf(object):
 
 		class DoubleQuotedBracedVariableRef(DoubleQuotedVariableRef):
 			def toString(self):
-				return '${%s}' % self.s
+				return '${%s}' % self.data
 
 		def __init__(self, path, basedir = None):
 			list.__init__(self)
