@@ -11,7 +11,9 @@ wsregex = re.compile('(?u)(\s+)')
 
 class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 	class MakeConfFlag(PackageFileSet.PackageFile.PackageEntry.PackageFlag):
-		pass
+		def __init__(self, s, lta = []):
+			PackageFileSet.PackageFile.PackageEntry.PackageFlag.__init__(self, s)
+			self._partialflags = lta
 
 	class Whitespace(object):
 		def __init__(self, s):
@@ -19,6 +21,9 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 
 		def toString(self):
 			return self.s
+
+	class PartialFlag(Whitespace):
+		pass
 
 	def __init__(self, key, tokens):
 		def flattentokens(l, parentvar):
@@ -50,6 +55,8 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 				# 'flag1 flag2 ' -> flag1, ' ', flag2, ' ', ''
 				# ' ' -> '', ' ', ''
 				# '' -> ''
+				lta = []
+				t.flags = []
 				if sl[-1]:
 					while True:
 						try:
@@ -58,23 +65,32 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 							break
 						else:
 							nsl = wsregex.split(nt.data)
-							if len(nsl) == 1 and not nsl[0]:
-								nt.flags = []
-								continue
+							if len(nsl) == 1:
+								if not nsl[0]:
+									nt.flags = []
+									continue
+								else:
+									pf = self.PartialFlag(nsl[0])
+									nt.flags = [pf]
+									lta.append(pf)
+									continue
 							elif not nsl[0]: # the whitespace we were hoping for
 								break
 							else:
 								print(nsl)
 								raise NotImplementedError('Cross-token flags not supported yet')
 
-				tdata = []
+				lasti = len(sl) - 1
 				for i, e in enumerate(sl):
 					if i%2 == 0:
 						if e:
-							tdata.append(self.MakeConfFlag(e))
+							if lta and i == lasti:
+								e += ''.join([x.toString() for x in lta])
+								t.flags.append(self.MakeConfFlag(e, lta))
+							else:
+								t.flags.append(self.MakeConfFlag(e))
 					else:
-						tdata.append(self.Whitespace(e))
-				t.flags = tdata
+						t.flags.append(self.Whitespace(e))
 
 				if nt:
 					mv = nmv
