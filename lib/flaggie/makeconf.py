@@ -261,15 +261,15 @@ class MakeConf(object):
 						except StopIteration:
 							token += c
 						else:
-							if n == '{':
-								token.rquo = False
-								token = newtoken(self.DoubleQuotedBracedVariableRef)
-							elif n in string.whitespace:
+							if n in string.whitespace:
 								token += c + n
 							else:
 								token.rquo = False
-								token = newtoken(self.DoubleQuotedVariableRef)
-								token += n
+								if n == '{':
+									token = newtoken(self.DoubleQuotedBracedVariableRef)
+								else:
+									token = newtoken(self.DoubleQuotedVariableRef)
+									token += n
 					else:
 						token += c
 
