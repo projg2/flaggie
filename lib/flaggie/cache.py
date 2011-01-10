@@ -142,7 +142,7 @@ class Caches(object):
 
 		@property
 		def glob(self):
-			return self.cache
+			return frozenset()
 
 		def __getitem__(self, k):
 			return self.cache
