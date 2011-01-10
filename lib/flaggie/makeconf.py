@@ -49,16 +49,16 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 		for mv, t in fti:
 			nt = None
 			while True:
-				sl = wsregex.split(t.data)
-				# 'flag1 flag2' -> flag1, ' ', flag2
-				# ' flag1 flag2' -> '', ' ', flag1, ' ', flag2
-				# 'flag1 flag2 ' -> flag1, ' ', flag2, ' ', ''
-				# ' ' -> '', ' ', ''
-				# '' -> ''
-
 				if nt:
-					sl[0] = ''
+					sl = nsl
 					nt = None
+				else:
+					sl = wsregex.split(t.data)
+					# 'flag1 flag2' -> flag1, ' ', flag2
+					# ' flag1 flag2' -> '', ' ', flag1, ' ', flag2
+					# 'flag1 flag2 ' -> flag1, ' ', flag2, ' ', ''
+					# ' ' -> '', ' ', ''
+					# '' -> ''
 
 				lta = []
 				t.flags = []
@@ -80,6 +80,7 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 								nt.flags = [pf]
 								lta.append(pf)
 								if len(nsl) != 1:
+									nsl[0] = ''
 									break
 
 				lasti = len(sl) - 1
