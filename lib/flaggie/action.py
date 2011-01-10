@@ -200,8 +200,24 @@ class Action(object):
 						l.append(flags[fn].toString() if flags[fn] is not None else '?%s' % fn)
 
 					print(' '.join(l))
+
 				if not pkgs:
-					raise NotImplementedError('Global actions are not supported yet.')
+					mvar = mkconf[ns]
+					flags = {}
+					l = ['<global>']
+					for arg in self.args:
+						for f in mvar[arg]:
+							if f.name not in flags:
+								flags[f.name] = f
+					for arg in self.args:
+						if arg not in flags and not isinstance(arg, self.Pattern):
+							flags[arg] = None
+					if not flags:
+						continue
+					for fn in sorted(flags):
+						l.append(flags[fn].toString() if flags[fn] is not None else '?%s' % fn)
+
+					print(' '.join(l))
 
 	mapping = {
 		'+': enable,

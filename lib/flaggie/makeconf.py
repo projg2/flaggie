@@ -3,14 +3,84 @@
 # (C) 2010 Michał Górny <gentoo@mgorny.alt.pl>
 # Released under the terms of the 3-clause BSD license.
 
-import codecs, os.path, string
+import codecs, os.path, re, string
 
 from flaggie.packagefile import PackageFileSet
 
-class MakeConfVariable(object):
+wsregex = re.compile('(?u)(\s+)')
+
+class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
+	class MakeConfFlag(PackageFileSet.PackageFile.PackageEntry.PackageFlag):
+		pass
+
+	class Whitespace(object):
+		def __init__(self, s):
+			self.s = s
+
+		def toString(self):
+			return self.s
+
 	def __init__(self, key, tokens):
+		def flattentokens(l, parentvar):
+			out = []
+			for t in l:
+				if isinstance(t, MakeConfVariable):
+					out.extend(flattentokens(t._tokens, t))
+				else:
+					out.append((parentvar, t))
+			return out
+
 		self._key = key
 		self._tokens = tokens
+		self._flattokens = flattentokens(tokens, self)
+		self._parsed = False
+
+	def parseflags(self):
+		if self._parsed:
+			return
+		ftokens = self._flattokens
+
+		fti = iter(ftokens)
+		for mv, t in fti:
+			nt = None
+			while True:
+				sl = wsregex.split(t.data)
+				# 'flag1 flag2' -> flag1, ' ', flag2
+				# ' flag1 flag2' -> '', ' ', flag1, ' ', flag2
+				# 'flag1 flag2 ' -> flag1, ' ', flag2, ' ', ''
+				# ' ' -> '', ' ', ''
+				# '' -> ''
+				if sl[-1]:
+					while True:
+						try:
+							nt = next(fti)
+						except StopIteration:
+							break
+						else:
+							raise NotImplementedError('Cross-token flags not supported yet')
+
+				tdata = []
+				for i, e in enumerate(sl):
+					if i%2 == 0 and e:
+						tdata.append(self.MakeConfFlag(e))
+					else:
+						tdata.append(self.Whitespace(e))
+				t.flags = tdata
+
+				if nt:
+					t = nt
+				else:
+					break
+
+		self._parsed = True
+
+	def __iter__(self):
+		self.parseflags()
+
+		for mv, t in reversed(self._flattokens):
+			for i, f in enumerate(reversed(t.flags)):
+				if i%2 == 0:
+					yield f
 
 	def __repr__(self):
 		return 'MakeConfVariable(%s, %s)' % (self._key, self._tokens)
@@ -233,6 +303,14 @@ class MakeConf(object):
 
 					self.variables[key] = MakeConfVariable(key, val)
 					break
+
+	def __getitem__(self, k):
+		kmap = {
+			'use': 'USE',
+			'kw': 'ACCEPT_KEYWORDS',
+			'lic': 'ACCEPT_LICENSE'
+		}
+		return self.variables[kmap[k]]
 
 	def write(self):
 		for f in self.files.values():
