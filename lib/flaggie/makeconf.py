@@ -70,18 +70,18 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 				raise NotImplementedError('Disabling modified for PartialFlag is not supported.')
 
 	def __init__(self, key, tokens):
-		def flattentokens(l, parentvar):
+		def flattentokens(l):
 			out = []
 			for t in l:
 				if isinstance(t, MakeConfVariable):
-					out.extend(flattentokens(t._tokens, t))
+					out.extend(flattentokens(t._tokens))
 				else:
-					out.append((parentvar, t))
+					out.append(t)
 			return out
 
 		self._key = key
 		self._tokens = tokens
-		self._flattokens = flattentokens(tokens, self)
+		self._flattokens = flattentokens(tokens)
 		self._parsed = False
 
 	def parseflags(self):
@@ -90,7 +90,7 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 		ftokens = self._flattokens
 
 		fti = iter(ftokens)
-		for mv, t in fti:
+		for t in fti:
 			nt = None
 			while True:
 				if nt:
@@ -109,7 +109,7 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 				if sl[-1]:
 					while True:
 						try:
-							nmv, nt = next(fti)
+							nt = next(fti)
 						except StopIteration:
 							nt = None
 							break
@@ -140,7 +140,6 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 						t.flags.append(self.Whitespace(e))
 
 				if nt:
-					mv = nmv
 					t = nt
 				else:
 					break
@@ -150,7 +149,7 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 	def __iter__(self):
 		self.parseflags()
 
-		for mv, t in reversed(self._flattokens):
+		for t in reversed(self._flattokens):
 			for i, f in enumerate(reversed(t.flags)):
 				if isinstance(f, self.MakeConfFlag):
 					yield f
@@ -159,7 +158,7 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 		""" Remove all occurences of a flag. """
 		self.parseflags()
 
-		for mv, t in self._flattokens:
+		for t in self._flattokens:
 			flags = []
 			wasflag = False
 			for f in t.flags:
