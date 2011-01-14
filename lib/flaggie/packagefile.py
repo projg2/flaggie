@@ -167,8 +167,14 @@ class PackageFileSet(object):
 				except IOError:
 					os.unlink(self.path)
 			else:
+				if not os.path.isdir(os.path.dirname(self.path)):
+					try:
+						os.makedirs(os.path.dirname(self.path))
+					except Exception:
+						pass
 				f = tempfile.NamedTemporaryFile('wb', delete = False, \
 						dir = os.path.dirname(os.path.realpath(self.path)))
+
 				tmpname = f.name
 
 				try:
