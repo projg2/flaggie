@@ -152,21 +152,17 @@ class Action(object):
 
 	class enable(EffectiveEntryOp):
 		def __call__(self, pkgs, pfiles):
-			for p in pkgs:
+			for p in pkgs or (None,):
 				for ns, arg in self.expand_patterns(self.args, p):
 					f = self.grab_effective_entry(p, arg, pfiles[ns], rw = True)
 					f.modifier = ''
-			if not pkgs:
-				raise NotImplementedError('Global actions are not supported yet.')
 
 	class disable(EffectiveEntryOp):
 		def __call__(self, pkgs, pfiles):
-			for p in pkgs:
+			for p in pkgs or (None,):
 				for ns, arg in self.expand_patterns(self.args, p):
 					f = self.grab_effective_entry(p, arg, pfiles[ns], rw = True)
 					f.modifier = '-'
-			if not pkgs:
-				raise NotImplementedError('Global actions are not supported yet.')
 
 	class reset(BaseAction):
 		def __call__(self, pkgs, pfiles):

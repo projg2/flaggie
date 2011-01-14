@@ -31,6 +31,15 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 			else:
 				raise NotImplementedError('Disable modified for MakeConfFlag is not supported.')
 
+		@property
+		def modifier(self):
+			return self._modifier
+
+		@modifier.setter
+		def modifier(self, val):
+			self._modifier = val
+			self.modified = True
+
 		def toString(self):
 			if not self.modified:
 				return self._origs
