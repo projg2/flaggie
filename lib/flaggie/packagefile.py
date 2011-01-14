@@ -17,11 +17,19 @@ class PackageFileSet(object):
 			class PackageFlag(object):
 				def __init__(self, s):
 					if s[0] in ('-', '+'):
-						self.modifier = s[0]
+						self._modifier = s[0]
 						self.name = s[1:]
 					else:
-						self.modifier = ''
+						self._modifier = ''
 						self.name = s
+
+				@property
+				def modifier(self):
+					return self._modifier
+
+				@modifier.setter
+				def modifier(self, val):
+					self._modifier = val
 
 				def __lt__(self, other):
 					return self.name < other.name
