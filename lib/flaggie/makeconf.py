@@ -290,12 +290,16 @@ class MakeConf(object):
 
 			f.close()
 
-	def __init__(self, path, dbapi):
-		mf = self.MakeConfFile(path)
-		self.files = {path: mf}
+	def __init__(self, paths, dbapi):
+		self.files = {}
 		self.variables = {}
 
-		self.parse(mf, path)
+		for path in paths:
+			if os.path.exists(path):
+				mf = self.MakeConfFile(path)
+				self.files[path] = mf
+				self.parse(mf, path)
+		# XXX: handle the case when none of the files are found
 
 	def parse(self, mf, path):
 		# 1) group tokens in lines
