@@ -172,12 +172,10 @@ class Action(object):
 		def __call__(self, pkgs, pfiles):
 			for ns in self.ns:
 				puse = pfiles[ns]
-				for p in pkgs:
+				for p in pkgs or (None,):
 					for pe in puse[p]:
 						for f in self.args:
 							del pe[f]
-				if not pkgs:
-					raise NotImplementedError('Global actions are not supported yet.')
 
 	class output(BaseAction):
 		def __call__(self, pkgs, pfiles):
