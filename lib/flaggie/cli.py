@@ -186,10 +186,11 @@ format as taken by emerge).\n''' % os.path.basename(argv[0]))
 		main([argv[0], '--help'])
 		return 0
 
-	pfiles = PackageFiles(os.path.join( \
-		porttree.settings['PORTAGE_CONFIGROOT'], USER_CONFIG_PATH), porttree)
 	mkconf = MakeConf(os.path.join( \
 		porttree.settings['PORTAGE_CONFIGROOT'], MAKE_CONF_FILE), porttree)
+	pfiles = PackageFiles(os.path.join( \
+		porttree.settings['PORTAGE_CONFIGROOT'], USER_CONFIG_PATH), porttree,
+		mkconf)
 
 	for actset in act:
 		try:
