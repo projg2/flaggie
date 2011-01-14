@@ -148,7 +148,7 @@ class MakeConf(object):
 	class MakeConfFile(PackageFileSet.PackageFile):
 		class Token(object):
 			def __init__(self, s = ''):
-				self.modified = False
+				self._modified = False
 				self.s = s
 
 			def __len__(self):
@@ -160,6 +160,14 @@ class MakeConf(object):
 			def __iadd__(self, s):
 				self.s += s
 				return self
+
+			@property
+			def modified(self):
+				return self._modified
+
+			@modified.setter
+			def modified(self, val):
+				self._modified = val
 
 			@property
 			def data(self):
