@@ -16,7 +16,7 @@ class BaseCleanupAction(Action.BaseAction):
 			raise AssertionError('pkgs not empty in cleanup action')
 		self._cache = cache
 
-	def __call__(self, pkgs, pfiles, mkconf):
+	def __call__(self, pkgs, pfiles):
 		if pkgs:
 			raise AssertionError('pkgs not empty in cleanup action')
 		for f in pfiles:
@@ -43,7 +43,7 @@ class DropIneffective(BaseCleanupAction):
 					pe.remove(flag)
 
 class DropUnmatchedFlags(BaseCleanupAction):
-	def __call__(self, pkgs, pfiles, mkconf):
+	def __call__(self, pkgs, pfiles):
 		if pkgs:
 			raise AssertionError('pkgs not empty in cleanup action')
 		

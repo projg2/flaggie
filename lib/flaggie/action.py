@@ -151,7 +151,7 @@ class Action(object):
 			return out
 
 	class enable(EffectiveEntryOp):
-		def __call__(self, pkgs, pfiles, mkconf):
+		def __call__(self, pkgs, pfiles):
 			for p in pkgs:
 				for ns, arg in self.expand_patterns(self.args, p):
 					f = self.grab_effective_entry(p, arg, pfiles[ns], rw = True)
@@ -160,7 +160,7 @@ class Action(object):
 				raise NotImplementedError('Global actions are not supported yet.')
 
 	class disable(EffectiveEntryOp):
-		def __call__(self, pkgs, pfiles, mkconf):
+		def __call__(self, pkgs, pfiles):
 			for p in pkgs:
 				for ns, arg in self.expand_patterns(self.args, p):
 					f = self.grab_effective_entry(p, arg, pfiles[ns], rw = True)
@@ -169,7 +169,7 @@ class Action(object):
 				raise NotImplementedError('Global actions are not supported yet.')
 
 	class reset(BaseAction):
-		def __call__(self, pkgs, pfiles, mkconf):
+		def __call__(self, pkgs, pfiles):
 			for ns in self.ns:
 				puse = pfiles[ns]
 				for p in pkgs:
@@ -180,7 +180,7 @@ class Action(object):
 					raise NotImplementedError('Global actions are not supported yet.')
 
 	class output(BaseAction):
-		def __call__(self, pkgs, pfiles, mkconf):
+		def __call__(self, pkgs, pfiles):
 			for ns in self.ns:
 				puse = pfiles[ns]
 				for p in pkgs:
@@ -200,24 +200,8 @@ class Action(object):
 						l.append(flags[fn].toString() if flags[fn] is not None else '?%s' % fn)
 
 					print(' '.join(l))
-
 				if not pkgs:
-					mvar = mkconf[ns]
-					flags = {}
-					l = ['<global>']
-					for arg in self.args:
-						for f in mvar[arg]:
-							if f.name not in flags:
-								flags[f.name] = f
-					for arg in self.args:
-						if arg not in flags and not isinstance(arg, self.Pattern):
-							flags[arg] = None
-					if not flags:
-						continue
-					for fn in sorted(flags):
-						l.append(flags[fn].toString() if flags[fn] is not None else '?%s' % fn)
-
-					print(' '.join(l))
+					raise NotImplementedError('Global actions are not supported yet.')
 
 	mapping = {
 		'+': enable,
@@ -264,7 +248,7 @@ class ActionSet(list):
 		else:
 			self.pkgs.append(item)
 
-	def __call__(self, pfiles, mkconf):
+	def __call__(self, pfiles):
 		self.sort()
 		for a in self:
-			a(self.pkgs, pfiles, mkconf)
+			a(self.pkgs, pfiles)
