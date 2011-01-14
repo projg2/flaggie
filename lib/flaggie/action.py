@@ -183,8 +183,8 @@ class Action(object):
 		def __call__(self, pkgs, pfiles):
 			for ns in self.ns:
 				puse = pfiles[ns]
-				for p in pkgs:
-					l = [p]
+				for p in pkgs or (None,):
+					l = [p if p is not None else '<global>']
 					flags = {}
 					for pe in puse[p]:
 						for arg in self.args:
@@ -200,8 +200,6 @@ class Action(object):
 						l.append(flags[fn].toString() if flags[fn] is not None else '?%s' % fn)
 
 					print(' '.join(l))
-				if not pkgs:
-					raise NotImplementedError('Global actions are not supported yet.')
 
 	mapping = {
 		'+': enable,
