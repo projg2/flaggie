@@ -362,7 +362,11 @@ class MakeConf(object):
 			'kw': 'ACCEPT_KEYWORDS',
 			'lic': 'ACCEPT_LICENSE'
 		}
-		return self.variables[kmap[k]]
+
+		try:
+			return self.variables[kmap[k]]
+		except KeyError:
+			return None
 
 	def write(self):
 		for f in self.files.values():
