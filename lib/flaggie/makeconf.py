@@ -12,13 +12,30 @@ wsregex = re.compile('(?u)(\s+)')
 class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 	class MakeConfFlag(PackageFileSet.PackageFile.PackageEntry.PackageFlag):
 		def __init__(self, s, lta = []):
+			PackageFileSet.PackageFile.PackageEntry.PackageFlag.__init__( \
+				self, s + ''.join([x.toString() for x in lta]))
+
 			self._origs = s
 			self._partialflags = lta
-			s += ''.join([x.toString() for x in lta])
-			PackageFileSet.PackageFile.PackageEntry.PackageFlag.__init__(self, s)
+
+		@property
+		def modified(self):
+			return self._origs is None
+
+		@modified.setter
+		def modified(self, val):
+			if val:
+				self._origs = None
+				for pf in self._partialflags:
+					pf.modified = True
+			else:
+				raise NotImplementedError('Disable modified for MakeConfFlag is not supported.')
 
 		def toString(self):
-			return self._origs
+			if not self.modified:
+				return self._origs
+			else:
+				return PackageFileSet.PackageFile.PackageEntry.PackageFlag.toString(self)
 
 	class Whitespace(object):
 		def __init__(self, s):
@@ -27,8 +44,21 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 		def toString(self):
 			return self.s
 
+		@property
+		def modified(self):
+			return False
+
 	class PartialFlag(Whitespace):
-		pass
+		@property
+		def modified(self):
+			return not self.s
+
+		@modified.setter
+		def modified(self, val):
+			if val:
+				self.s = ''
+			else:
+				raise NotImplementedError('Disabling modified for PartialFlag is not supported.')
 
 	def __init__(self, key, tokens):
 		def flattentokens(l, parentvar):
@@ -163,7 +193,13 @@ class MakeConf(object):
 
 			@property
 			def modified(self):
-				return self._modified
+				if self._modified:
+					return True
+				elif hasattr(self, 'flags'):
+					for f in self.flags:
+						if f.modified:
+							return True
+				return False
 
 			@modified.setter
 			def modified(self, val):
