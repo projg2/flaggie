@@ -7,6 +7,7 @@ import os, os.path
 
 from portage.const import USER_CONFIG_PATH
 from portage.dep import use_reduce
+from portage.util import grabdict
 from portage.versions import best
 
 class Caches(object):
@@ -115,6 +116,10 @@ class Caches(object):
 						lic.update(os.listdir(os.path.join(r, 'licenses')))
 					except OSError:
 						pass
+
+					lgroups = grabdict(os.path.join(r, 'profiles', 'license_groups'))
+					lic.update(['@%s' % x for x in lgroups])
+
 				lic.discard('CVS')
 				self.cache[None] = frozenset(lic)
 
