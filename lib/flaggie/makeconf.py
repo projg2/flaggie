@@ -10,67 +10,67 @@ from flaggie.packagefile import PackageFileSet
 wsregex = re.compile('(?u)(\s+)')
 
 class MakeConfVariable(object):
-	class MakeConfFlag(PackageFileSet.PackageFile.PackageEntry.PackageFlag):
-		def __init__(self, s, lta = []):
-			PackageFileSet.PackageFile.PackageEntry.PackageFlag.__init__( \
-				self, s + ''.join([f.toString() for t, f in lta]))
-
-			self._origs = s
-			self._partialflags = lta
-
-		@property
-		def modified(self):
-			return self._origs is None
-
-		@modified.setter
-		def modified(self, val):
-			if val:
-				self._origs = None
-				for t, pf in self._partialflags:
-					t.modified = True
-					pf.modified = True
-			else:
-				raise NotImplementedError('Disable modified for MakeConfFlag is not supported.')
-
-		@property
-		def modifier(self):
-			return self._modifier
-
-		@modifier.setter
-		def modifier(self, val):
-			self._modifier = val
-			self.modified = True
-
-		def toString(self):
-			if not self.modified:
-				return self._origs
-			else:
-				return PackageFileSet.PackageFile.PackageEntry.PackageFlag.toString(self)
-
-	class Whitespace(object):
-		def __init__(self, s):
-			self.s = s
-
-		def toString(self):
-			return self.s
-
-		@property
-		def modified(self):
-			return False
-
-	class PartialFlag(Whitespace):
-		@property
-		def modified(self):
-			return not self.s
-
-		@modified.setter
-		def modified(self, val):
-			if val:
-				self.s = ''
-			else:
-				raise NotImplementedError('Disabling modified for PartialFlag is not supported.')
-
 	class FlattenedToken(PackageFileSet.PackageFile.PackageEntry):
+		class MakeConfFlag(PackageFileSet.PackageFile.PackageEntry.PackageFlag):
+			def __init__(self, s, lta = []):
+				PackageFileSet.PackageFile.PackageEntry.PackageFlag.__init__( \
+					self, s + ''.join([f.toString() for t, f in lta]))
+
+				self._origs = s
+				self._partialflags = lta
+
+			@property
+			def modified(self):
+				return self._origs is None
+
+			@modified.setter
+			def modified(self, val):
+				if val:
+					self._origs = None
+					for t, pf in self._partialflags:
+						t.modified = True
+						pf.modified = True
+				else:
+					raise NotImplementedError('Disable modified for MakeConfFlag is not supported.')
+
+			@property
+			def modifier(self):
+				return self._modifier
+
+			@modifier.setter
+			def modifier(self, val):
+				self._modifier = val
+				self.modified = True
+
+			def toString(self):
+				if not self.modified:
+					return self._origs
+				else:
+					return PackageFileSet.PackageFile.PackageEntry.PackageFlag.toString(self)
+
+		class Whitespace(object):
+			def __init__(self, s):
+				self.s = s
+
+			def toString(self):
+				return self.s
+
+			@property
+			def modified(self):
+				return False
+
+		class PartialFlag(Whitespace):
+			@property
+			def modified(self):
+				return not self.s
+
+			@modified.setter
+			def modified(self, val):
+				if val:
+					self.s = ''
+				else:
+					raise NotImplementedError('Disabling modified for PartialFlag is not supported.')
+
 		def __init__(self, token):
 			self._token = token
 			token.flags = []
@@ -94,7 +94,7 @@ class MakeConfVariable(object):
 		def __iter__(self):
 			""" Iterate over all flags in the entry. """
 			for f in reversed(self.flags):
-				if isinstance(f, MakeConfVariable.MakeConfFlag):
+				if isinstance(f, self.MakeConfFlag):
 					yield f
 
 		def __delitem__(self, flag):
@@ -102,13 +102,13 @@ class MakeConfVariable(object):
 			flags = []
 			wasflag = False
 			for f in self.flags:
-				if isinstance(f, MakeConfVariable.MakeConfFlag) and flag == f.name:
+				if isinstance(f, self.MakeConfFlag) and flag == f.name:
 					# set modified to clean up partial flags
 					f.modified = True
 					flags.append(f)
 					wasflag = True
 				else:
-					if isinstance(f, MakeConfVariable.Whitespace) and wasflag:
+					if isinstance(f, self.Whitespace) and wasflag:
 						flags.append(f)
 					wasflag = False
 			for f in flags:
@@ -164,7 +164,7 @@ class MakeConfVariable(object):
 							elif not nsl[0]: # the whitespace we were hoping for
 								break
 							else:
-								pf = self.PartialFlag(nsl[0])
+								pf = self.FlattenedToken.PartialFlag(nsl[0])
 								nt.flags.append(pf)
 								lta.append((nt, pf))
 								if len(nsl) != 1:
@@ -176,11 +176,11 @@ class MakeConfVariable(object):
 					if i%2 == 0:
 						if e:
 							if lta and i == lasti:
-								t.flags.append(self.MakeConfFlag(e, lta))
+								t.flags.append(self.FlattenedToken.MakeConfFlag(e, lta))
 							else:
-								t.flags.append(self.MakeConfFlag(e))
+								t.flags.append(self.FlattenedToken.MakeConfFlag(e))
 					else:
-						t.flags.append(self.Whitespace(e))
+						t.flags.append(self.FlattenedToken.Whitespace(e))
 
 				if nt:
 					t = nt
