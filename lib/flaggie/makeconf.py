@@ -97,6 +97,21 @@ class MakeConfVariable(object):
 				if isinstance(f, MakeConfVariable.MakeConfFlag):
 					yield f
 
+		def __delitem__(self, flag):
+			""" Remove all occurences of a flag. """
+			flags = []
+			wasflag = False
+			for f in self.flags:
+				if isinstance(f, MakeConfVariable.MakeConfFlag) and flag == f.name:
+					flags.append(f)
+					wasflag = True
+				else:
+					if isinstance(f, MakeConfVariable.Whitespace) and wasflag:
+						flags.append(f)
+					wasflag = False
+			for f in flags:
+				self.remove(f)
+
 	def __init__(self, key, tokens):
 		def flattentokens(l):
 			out = []
@@ -177,26 +192,6 @@ class MakeConfVariable(object):
 
 		for t in reversed(self._flattokens):
 			yield t
-
-	def __delitem__(self, flag):
-		""" Remove all occurences of a flag. """
-		self.parseflags()
-
-		for t in self:
-			flags = []
-			wasflag = False
-			for f in t.flags:
-				if isinstance(f, self.MakeConfFlag) and flag == f.name:
-					flags.append(f)
-					wasflag = True
-				else:
-					if isinstance(f, self.Whitespace) and wasflag:
-						flags.append(f)
-					wasflag = False
-			for f in flags:
-				t.flags.remove(f)
-
-			t.modified = True
 
 	def __repr__(self):
 		return 'MakeConfVariable(%s, %s)' % (self._key, self._tokens)
