@@ -409,6 +409,14 @@ class MakeConf(object):
 
 			f.close()
 
+	class NewMakeConfFile(MakeConfFile):
+		def __init__(self, path):
+			list.__init__(self)
+			self.path = path
+			# not used in MakeConfFile
+			self._modified = False
+			self.trailing_whitespace = []
+
 	def __init__(self, paths, dbapi):
 		self.files = {}
 		self.variables = {}
@@ -421,7 +429,12 @@ class MakeConf(object):
 				self.files[path] = mf
 				self.parse(mf, path)
 				self.masterfile = mf
-		# XXX: handle the case when none of the files are found
+
+		if not self.masterfile:
+			path = paths[0]
+			mf = self.NewMakeConfFile(path)
+			self.files[path] = mf
+			self.masterfile = mf
 
 	def parse(self, mf, path):
 		# 1) group tokens in lines
