@@ -92,7 +92,8 @@ class MakeConfVariable(object):
 			return self._token.flags
 
 		def append(self, flag):
-			assert(not isinstance(self._token, MakeConf.MakeConfFile.UnquotedWord))
+			if isinstance(self._token, MakeConf.MakeConfFile.UnquotedWord):
+				self._token.quoted = True
 
 			if not isinstance(flag, self.MakeConfFlag):
 				flag = self.MakeConfFlag(flag)
@@ -257,7 +258,13 @@ class MakeConf(object):
 				return '\n' in self.data
 
 		class UnquotedWord(Token):
-			pass
+			quoted = False
+
+			def toString(self):
+				if self.quoted:
+					return '"%s"' % self.data
+				else:
+					return self.data
 
 		class VariableRef(UnquotedWord):
 			def toString(self):
