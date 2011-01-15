@@ -305,7 +305,8 @@ class PackageFileSet(object):
 
 		if pkg is None:
 			if self.makeconfvar is not None:
-				yield self.makeconfvar
+				for e in self.makeconfvar:
+					yield e
 			else:
 				raise KeyError('PackageFileSet[None] requested but no MakeConf assigned.')
 			return

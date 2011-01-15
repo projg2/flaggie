@@ -9,7 +9,7 @@ from flaggie.packagefile import PackageFileSet
 
 wsregex = re.compile('(?u)(\s+)')
 
-class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
+class MakeConfVariable(object):
 	class MakeConfFlag(PackageFileSet.PackageFile.PackageEntry.PackageFlag):
 		def __init__(self, s, lta = []):
 			PackageFileSet.PackageFile.PackageEntry.PackageFlag.__init__( \
@@ -69,6 +69,33 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 			else:
 				raise NotImplementedError('Disabling modified for PartialFlag is not supported.')
 
+	class FlattenedToken(PackageFileSet.PackageFile.PackageEntry):
+		def __init__(self, token):
+			self._token = token
+			token.flags = []
+
+		@property
+		def data(self):
+			return self._token.data
+
+		@property
+		def modified(self):
+			return self._token.modified
+
+		@modified.setter
+		def modified(self, val):
+			self._token.modified = val
+
+		@property
+		def flags(self):
+			return self._token.flags
+
+		def __iter__(self):
+			""" Iterate over all flags in the entry. """
+			for f in reversed(self.flags):
+				if isinstance(f, MakeConfVariable.MakeConfFlag):
+					yield f
+
 	def __init__(self, key, tokens):
 		def flattentokens(l):
 			out = []
@@ -76,7 +103,7 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 				if isinstance(t, MakeConfVariable):
 					out.extend(flattentokens(t._tokens))
 				else:
-					out.append(t)
+					out.append(self.FlattenedToken(t))
 			return out
 
 		self._key = key
@@ -97,7 +124,6 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 					sl = nsl
 					nt = None
 				else:
-					t.flags = []
 					sl = wsregex.split(t.data)
 					# 'flag1 flag2' -> flag1, ' ', flag2
 					# ' flag1 flag2' -> '', ' ', flag1, ' ', flag2
@@ -115,7 +141,6 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 							break
 						else:
 							nsl = wsregex.split(nt.data)
-							nt.flags = []
 							if len(nsl) == 1 and not nsl[0]:
 								pass
 							elif not nsl[0]: # the whitespace we were hoping for
@@ -150,15 +175,13 @@ class MakeConfVariable(PackageFileSet.PackageFile.PackageEntry):
 		self.parseflags()
 
 		for t in reversed(self._flattokens):
-			for i, f in enumerate(reversed(t.flags)):
-				if isinstance(f, self.MakeConfFlag):
-					yield f
+			yield t
 
 	def __delitem__(self, flag):
 		""" Remove all occurences of a flag. """
 		self.parseflags()
 
-		for t in self._flattokens:
+		for t in self:
 			flags = []
 			wasflag = False
 			for f in t.flags:
@@ -201,13 +224,7 @@ class MakeConf(object):
 
 			@property
 			def modified(self):
-				if self._modified:
-					return True
-				elif hasattr(self, 'flags'):
-					for f in self.flags:
-						if f.modified:
-							return True
-				return False
+				return self._modified
 
 			@modified.setter
 			def modified(self, val):
