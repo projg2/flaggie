@@ -308,7 +308,7 @@ class PackageFileSet(object):
 				for e in self.makeconfvar:
 					yield e
 			else:
-				raise KeyError('PackageFileSet[None] requested but no MakeConf assigned.')
+				raise KeyError('PackageFileSet[None] requested but no MakeConfVariable assigned.')
 			return
 
 		for e in self:
