@@ -13,7 +13,7 @@ class MakeConfVariable(object):
 	class MakeConfFlag(PackageFileSet.PackageFile.PackageEntry.PackageFlag):
 		def __init__(self, s, lta = []):
 			PackageFileSet.PackageFile.PackageEntry.PackageFlag.__init__( \
-				self, s + ''.join([x.toString() for x in lta]))
+				self, s + ''.join([f.toString() for t, f in lta]))
 
 			self._origs = s
 			self._partialflags = lta
@@ -26,7 +26,8 @@ class MakeConfVariable(object):
 		def modified(self, val):
 			if val:
 				self._origs = None
-				for pf in self._partialflags:
+				for t, pf in self._partialflags:
+					t.modified = True
 					pf.modified = True
 			else:
 				raise NotImplementedError('Disable modified for MakeConfFlag is not supported.')
@@ -148,7 +149,7 @@ class MakeConfVariable(object):
 							else:
 								pf = self.PartialFlag(nsl[0])
 								nt.flags.append(pf)
-								lta.append(pf)
+								lta.append((nt, pf))
 								if len(nsl) != 1:
 									nsl[0] = ''
 									break
