@@ -17,7 +17,9 @@ Key features:
 	appear),
 - support for `package.license` file,
 - smart recognition of action arguments -- flaggie knows whether you're
-	passing a USE flag or a keyword.
+	passing a USE flag or a keyword,
+- extensive support for `make.conf` file syntax (though without
+	`USE_EXPAND` support at the moment).
 
 [1]: http://damien.krotkine.com/the-player-of-games/flagedit.html
 
