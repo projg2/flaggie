@@ -230,7 +230,7 @@ class NewVariable(FakeVariable):
 		return self._key
 
 class MakeConf(object):
-	class MakeConfFile(PackageFileSet.PackageFile):
+	class NewMakeConfFile(PackageFileSet.PackageFile):
 		class Token(object):
 			def __init__(self, s = ''):
 				self._modified = False
@@ -329,12 +329,16 @@ class MakeConf(object):
 				data += l.toString()
 			return data
 
-		def __init__(self, path, basedir = None):
+		def __init__(self, path):
 			list.__init__(self)
 			self.path = path
 			# not used in MakeConfFile
 			self._modified = False
 			self.trailing_whitespace = []
+
+	class MakeConfFile(NewMakeConfFile):
+		def __init__(self, path, basedir = None):
+			MakeConf.NewMakeConfFile.__init__(self, path)
 
 			def newtoken(kind, oldtoken = None):
 				if isinstance(oldtoken, kind):
@@ -408,14 +412,6 @@ class MakeConf(object):
 						token += c
 
 			f.close()
-
-	class NewMakeConfFile(MakeConfFile):
-		def __init__(self, path):
-			list.__init__(self)
-			self.path = path
-			# not used in MakeConfFile
-			self._modified = False
-			self.trailing_whitespace = []
 
 	def __init__(self, paths, dbapi):
 		self.files = {}
