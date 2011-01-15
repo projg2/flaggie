@@ -95,12 +95,15 @@ class MakeConfVariable(object):
 			return self._token.toString()
 
 		def append(self, flag):
-			if isinstance(self._token, MakeConf.MakeConfFile.UnquotedWord):
+			nonempty = bool(self.flags)
+
+			if nonempty and isinstance(self._token, MakeConf.MakeConfFile.UnquotedWord):
 				self._token.quoted = True
 
 			if not isinstance(flag, self.MakeConfFlag):
 				flag = self.MakeConfFlag(flag)
-				self.flags.append(self.Whitespace(' '))
+				if nonempty:
+					self.flags.append(self.Whitespace(' '))
 
 			self.flags.append(flag)
 			self.modified = True
