@@ -103,6 +103,8 @@ class MakeConfVariable(object):
 			wasflag = False
 			for f in self.flags:
 				if isinstance(f, MakeConfVariable.MakeConfFlag) and flag == f.name:
+					# set modified to clean up partial flags
+					f.modified = True
 					flags.append(f)
 					wasflag = True
 				else:
