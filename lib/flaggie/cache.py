@@ -97,6 +97,20 @@ class Caches(object):
 
 	class LicenseCache(DBAPICache):
 		aux_key = 'LICENSE'
+		_groupcache = None
+
+		@property
+		def groups(self):
+			if self._groupcache is None:
+				self._groupcache = {}
+				for r in self.dbapi.porttrees:
+					for k, v in grabdict(os.path.join(r, 'profiles', 'license_groups')).items():
+						k = '@%s' % k
+						if k not in self._groupcache:
+							self._groupcache[k] = set()
+						self._groupcache[k].update(v)
+
+			return self._groupcache
 
 		@property
 		def glob(self):
@@ -107,9 +121,7 @@ class Caches(object):
 						lic.update(os.listdir(os.path.join(r, 'licenses')))
 					except OSError:
 						pass
-
-					lgroups = grabdict(os.path.join(r, 'profiles', 'license_groups'))
-					lic.update(['@%s' % x for x in lgroups])
+					lic.update(self.groups)
 
 				lic.discard('CVS')
 				self.cache[None] = frozenset(lic)
@@ -126,6 +138,7 @@ class Caches(object):
 
 			lic = set(lic)
 			lic.discard('||')
+			lic.update([k for k, v in self.groups.items() if lic & v])
 			return lic
 
 	class EnvCache(object):
