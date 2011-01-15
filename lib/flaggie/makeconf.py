@@ -91,6 +91,9 @@ class MakeConfVariable(object):
 		def flags(self):
 			return self._token.flags
 
+		def toString(self):
+			return self._token.toString()
+
 		def append(self, flag):
 			if isinstance(self._token, MakeConf.MakeConfFile.UnquotedWord):
 				self._token.quoted = True
@@ -211,9 +214,17 @@ class MakeConfVariable(object):
 		return 'MakeConfVariable(%s, %s)' % (self._key, self._tokens)
 
 class FakeVariable(MakeConfVariable):
-	def __init__(self):
-		self._flattokens = ()
-		self._parsed = True
+	def __init__(self, key):
+		MakeConfVariable.__init__(self, key,
+			(MakeConf.MakeConfFile.UnquotedWord(''),))
+
+class NewVariable(FakeVariable):
+	def __init__(self, key):
+		FakeVariable.__init__(self, key)
+
+	@property
+	def key(self):
+		return self._key
 
 class MakeConf(object):
 	class MakeConfFile(PackageFileSet.PackageFile):
@@ -398,12 +409,15 @@ class MakeConf(object):
 	def __init__(self, paths, dbapi):
 		self.files = {}
 		self.variables = {}
+		self.newvars = []
+		self.masterfile = None
 
 		for path in paths:
 			if os.path.exists(path):
 				mf = self.MakeConfFile(path)
 				self.files[path] = mf
 				self.parse(mf, path)
+				self.masterfile = mf
 		# XXX: handle the case when none of the files are found
 
 	def parse(self, mf, path):
@@ -464,19 +478,39 @@ class MakeConf(object):
 
 	def __getitem__(self, k):
 		if k == 'env': # env not supported as a global var
-			return FakeVariable()
+			return FakeVariable('DUMMY_%s' % k.upper())
 
 		kmap = {
 			'use': 'USE',
 			'kw': 'ACCEPT_KEYWORDS',
 			'lic': 'ACCEPT_LICENSE'
 		}
+		varname = kmap[k]
 
-		try:
-			return self.variables[kmap[k]]
-		except KeyError:
-			return None
+		if varname not in self.variables:
+			nv = NewVariable(varname)
+			self.newvars.append(nv)
+			self.variables[varname] = nv
+
+		return self.variables[varname]
 
 	def write(self):
+		for nv in self.newvars:
+			for t in nv:
+				if t.modified:
+					nl = self.MakeConfFile.Whitespace('\n')
+					out = []
+					if self.masterfile:
+						lt = self.masterfile[-1]
+						if not isinstance(lt, self.MakeConfFile.Whitespace) or not lt.hasNL():
+							out.append(nl)
+
+					out.append(self.MakeConfFile.UnquotedWord('%s=' % nv.key))
+					out.extend(list(nv))
+					out.append(nl)
+
+					self.masterfile.extend(out)
+					break
+
 		for f in self.files.values():
 			f.write()
