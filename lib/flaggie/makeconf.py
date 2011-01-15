@@ -219,7 +219,7 @@ class MakeConfVariable(object):
 class FakeVariable(MakeConfVariable):
 	def __init__(self, key):
 		MakeConfVariable.__init__(self, key,
-			(MakeConf.MakeConfFile.UnquotedWord(''),))
+			(MakeConf.MakeConfFile.DoubleQuotedString(''),))
 
 class NewVariable(FakeVariable):
 	def __init__(self, key):
