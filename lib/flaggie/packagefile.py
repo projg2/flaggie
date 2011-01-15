@@ -95,13 +95,11 @@ class PackageFileSet(object):
 			def __delitem__(self, flag):
 				""" Remove all occurences of a flag. """
 				flags = []
-				for f in self.flags:
+				for f in self:
 					if flag == f.name:
 						flags.append(f)
 				for f in flags:
-					self.flags.remove(f)
-
-				self.modified = True
+					self.remove(f)
 
 		def __init__(self, path):
 			list.__init__(self)
