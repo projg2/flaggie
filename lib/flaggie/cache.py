@@ -7,7 +7,7 @@ import os, os.path
 
 from portage.const import USER_CONFIG_PATH
 from portage.dep import use_reduce
-from portage.util import grabdict
+from portage.util import grabdict, grabfile
 from portage.versions import best
 
 class Caches(object):
@@ -82,19 +82,10 @@ class Caches(object):
 			if None not in self.cache:
 				kws = set()
 				for r in self.dbapi.porttrees:
-					try:
-						f = open(os.path.join(r, 'profiles', 'arch.list'), 'r')
-					except IOError:
-						pass
-					else:
-						for l in f:
-							kw = l.strip()
-							if kw and not kw.startswith('#'):
-								kws.update((kw, '~' + kw))
-						f.close()
+					kws.update(grabfile(os.path.join(r, 'profiles', 'arch.list')))
+				kws.update(['~%s' % x for x in kws], ('*', '**'))
 
 				# and the ** special keyword
-				kws.update('*', '**')
 				self.cache[None] = frozenset(kws)
 
 			return self.cache[None]
