@@ -91,6 +91,17 @@ class MakeConfVariable(object):
 		def flags(self):
 			return self._token.flags
 
+		def append(self, flag):
+			assert(not isinstance(self._token, MakeConf.MakeConfFile.UnquotedWord))
+
+			if not isinstance(flag, self.MakeConfFlag):
+				flag = self.MakeConfFlag(flag)
+				self.flags.append(self.Whitespace(' '))
+
+			self.flags.append(flag)
+			self.modified = True
+			return flag
+
 		def __iter__(self):
 			""" Iterate over all flags in the entry. """
 			for f in reversed(self.flags):
