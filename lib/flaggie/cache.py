@@ -10,6 +10,21 @@ from portage.dep import use_reduce
 from portage.util import grabdict, grabfile
 from portage.versions import best
 
+def grab_use_desc(path):
+	flags = {}
+	try:
+		f = open(path, 'r')
+	except IOError:
+		pass
+	else:
+		for l in f:
+			ll = l.split(' - ', 1)
+			if len(ll) > 1:
+				flags[ll[0]] = ll[1].strip()
+		f.close()
+
+	return flags
+
 class Caches(object):
 	class DBAPICache(object):
 		aux_key = None
@@ -57,16 +72,7 @@ class Caches(object):
 			if None not in self.cache:
 				flags = set()
 				for r in self.dbapi.porttrees:
-					try:
-						f = open(os.path.join(r, 'profiles', 'use.desc'), 'r')
-					except IOError:
-						pass
-					else:
-						for l in f:
-							ll = l.split(' - ', 1)
-							if len(ll) > 1:
-								flags.add(ll[0])
-						f.close()
+					flags.update(grab_use_desc(os.path.join(r, 'profiles', 'use.desc')))
 				self.cache[None] = frozenset(flags)
 
 			return self.cache[None]
