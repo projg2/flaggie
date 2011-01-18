@@ -10,7 +10,7 @@ from portage.dep import use_reduce
 from portage.util import grabdict, grabfile
 from portage.versions import best
 
-def grab_use_desc(path):
+def grab_use_desc(path, prefix = ''):
 	flags = {}
 	try:
 		f = open(path, 'r')
@@ -20,7 +20,7 @@ def grab_use_desc(path):
 		for l in f:
 			ll = l.split(' - ', 1)
 			if len(ll) > 1:
-				flags[ll[0]] = ll[1].strip()
+				flags[prefix + ll[0]] = ll[1].strip()
 		f.close()
 
 	return flags
@@ -77,6 +77,10 @@ class Caches(object):
 				flags = set()
 				for r in self.dbapi.porttrees:
 					flags.update(grab_use_desc(os.path.join(r, 'profiles', 'use.desc')))
+					for k in self.use_expand_vars:
+						flags.update(grab_use_desc(
+							os.path.join(r, 'profiles', 'desc', '%s.desc' % k.lower()),
+							prefix = '%s_' % k.lower()))
 				self.cache[None] = frozenset(flags)
 
 			return self.cache[None]
