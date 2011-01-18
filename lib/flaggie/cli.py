@@ -22,7 +22,7 @@ from flaggie.packagefile import PackageFiles
 def parse_actions(args, dbapi, settings, quiet = False, strict = False, \
 		cleanupact = [], dataout = sys.stdout, output = sys.stderr):
 	out = []
-	cache = Caches(dbapi)
+	cache = Caches(dbapi, settings)
 	actset = ActionSet(cache = cache)
 	had_pkgs = False
 
