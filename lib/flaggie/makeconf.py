@@ -18,6 +18,7 @@ class MakeConfVariable(object):
 
 				self._origs = s
 				self._partialflags = lta
+				self._removed = False
 
 			@property
 			def modified(self):
@@ -34,6 +35,16 @@ class MakeConfVariable(object):
 					raise NotImplementedError('Disable modified for MakeConfFlag is not supported.')
 
 			@property
+			def removed(self):
+				return self._removed
+
+			@removed.setter
+			def removed(self, val):
+				# This also cleans up partial flags.
+				self.modified = True
+				self._removed = val
+
+			@property
 			def modifier(self):
 				return self._modifier
 
@@ -43,7 +54,9 @@ class MakeConfVariable(object):
 				self.modified = True
 
 			def toString(self, raw = False):
-				if not self.modified:
+				if self.removed:
+					return ''
+				elif not self.modified:
 					return self._origs
 				else:
 					return PackageFileSet.PackageFile.PackageEntry.PackageFlag.toString(self)
@@ -135,20 +148,10 @@ class MakeConfVariable(object):
 
 		def __delitem__(self, flag):
 			""" Remove all occurences of a flag. """
-			flags = []
-			wasflag = False
 			for f in self.flags:
 				if isinstance(f, self.MakeConfFlag) and flag == f.name:
-					# set modified to clean up partial flags
-					f.modified = True
-					flags.append(f)
-					wasflag = True
-				else:
-					if isinstance(f, self.Whitespace) and wasflag:
-						flags.append(f)
-					wasflag = False
-			for f in flags:
-				self.remove(f)
+					f.removed = True
+					self.modified = True
 
 	def __init__(self, key, tokens):
 		def flattentokens(l):
