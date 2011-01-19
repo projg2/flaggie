@@ -19,10 +19,9 @@ from flaggie.cleanup import DropIneffective, DropUnmatchedPkgs, \
 from flaggie.makeconf import MakeConf
 from flaggie.packagefile import PackageFiles
 
-def parse_actions(args, dbapi, settings, quiet = False, strict = False, \
+def parse_actions(args, dbapi, settings, cache, quiet = False, strict = False, \
 		cleanupact = [], dataout = sys.stdout, output = sys.stderr):
 	out = []
-	cache = Caches(dbapi, settings)
 	actset = ActionSet(cache = cache)
 	had_pkgs = False
 
@@ -184,9 +183,11 @@ format as taken by emerge).\n''' % os.path.basename(argv[0]))
 			target_root = os.environ.get('ROOT'))
 	porttree = trees[max(trees)]['porttree']
 
-	act = parse_actions(argv[1:], porttree.dbapi, porttree.settings, \
-			quiet = quiet, strict = strict, cleanupact = cleanup_actions, \
-			output = output, dataout = dataout)
+	cache = Caches(porttree.dbapi, porttree.settings)
+	act = parse_actions(argv[1:], porttree.dbapi, porttree.settings,
+			cache, quiet = quiet, strict = strict,
+			cleanupact = cleanup_actions, output = output,
+			dataout = dataout)
 	if act is None:
 		return 1
 	if not act:
