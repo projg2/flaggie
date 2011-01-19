@@ -198,7 +198,7 @@ format as taken by emerge).\n''' % os.path.basename(argv[0]))
 	mkconf = MakeConf(
 		(os.path.join(confroot, MAKE_CONF_FILE),
 			os.path.join(usercpath, 'make.conf')),
-		porttree)
+		porttree, cache)
 	pfiles = PackageFiles(usercpath, porttree, mkconf)
 
 	for actset in act:

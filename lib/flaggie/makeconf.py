@@ -42,17 +42,29 @@ class MakeConfVariable(object):
 				self._modifier = val
 				self.modified = True
 
-			def toString(self):
+			def toString(self, raw = False):
 				if not self.modified:
 					return self._origs
 				else:
 					return PackageFileSet.PackageFile.PackageEntry.PackageFlag.toString(self)
 
+		class ExpandedFlag(MakeConfFlag):
+			def __init__(self, s, use_expanded_from):
+				self.prefix = '%s_' % use_expanded_from
+				MakeConfVariable.FlattenedToken.MakeConfFlag.__init__(
+						self, self.prefix + s)
+
+			def toString(self, raw = False):
+				ret = MakeConfVariable.FlattenedToken.MakeConfFlag.toString(self)
+				if raw:
+					ret = ret.replace(self.prefix, '', 1)
+				return ret
+
 		class Whitespace(object):
 			def __init__(self, s):
 				self.s = s
 
-			def toString(self):
+			def toString(self, raw = False):
 				return self.s
 
 			@property
@@ -72,6 +84,7 @@ class MakeConfVariable(object):
 					raise NotImplementedError('Disabling modified for PartialFlag is not supported.')
 
 		def __init__(self, token):
+			self.use_expanded = False
 			self._token = token
 			token.flags = []
 
@@ -146,6 +159,7 @@ class MakeConfVariable(object):
 		self._tokens = tokens
 		self._flattokens = flattentokens(tokens)
 		self._parsed = False
+		self._useexpanded = []
 
 	def parseflags(self):
 		if self._parsed:
@@ -193,7 +207,14 @@ class MakeConfVariable(object):
 				for i, e in enumerate(sl):
 					if i%2 == 0:
 						if e:
-							if lta and i == lasti:
+							strippedtoken = e.lstrip('+-')
+							if t.use_expanded:
+								assert(not lta or i != lasti)
+								t.flags.append(self.FlattenedToken.ExpandedFlag(e, t.use_expanded))
+							elif [x for x in self._useexpanded if strippedtoken.startswith(x)]:
+								# inactive due to USE_EXPAND
+								t.flags.append(self.FlattenedToken.PartialFlag(e))
+							elif lta and i == lasti:
 								t.flags.append(self.FlattenedToken.MakeConfFlag(e, lta))
 							else:
 								t.flags.append(self.FlattenedToken.MakeConfFlag(e))
@@ -206,6 +227,21 @@ class MakeConfVariable(object):
 					break
 
 		self._parsed = True
+
+	def append(self, var):
+		if self._parsed:
+			raise NotImplementedError('Appending to a parsed variable not supported')
+
+		key = var._key.lower()
+		self._useexpanded.append(key)
+
+		newtokens = []
+		for t in var._flattokens:
+			t.use_expanded = key
+			newtokens.append(t)
+		newtokens.append(self.FlattenedToken(MakeConf.MakeConfFile.Whitespace(' ')))
+		newtokens.extend(self._flattokens)
+		self._flattokens = newtokens
 
 	def __iter__(self):
 		self.parseflags()
@@ -257,7 +293,7 @@ class MakeConf(object):
 			@property
 			def data(self):
 				if self.modified:
-					return ''.join([f.toString() for f in self.flags])
+					return ''.join([f.toString(True) for f in self.flags])
 				else:
 					return self.s
 
@@ -413,11 +449,13 @@ class MakeConf(object):
 
 			f.close()
 
-	def __init__(self, paths, dbapi):
+	def __init__(self, paths, dbapi, caches = None):
 		self.files = {}
 		self.variables = {}
 		self.newvars = []
 		self.masterfile = None
+		
+		use_expand_vars = frozenset(caches['use'].use_expand_vars)
 
 		for path in paths:
 			if os.path.exists(path):
@@ -431,6 +469,10 @@ class MakeConf(object):
 			mf = self.NewMakeConfFile(path)
 			self.files[path] = mf
 			self.masterfile = mf
+
+		for key in use_expand_vars:
+			if key in self.variables:
+				self.variables['USE'].append(self.variables[key])
 
 	def parse(self, mf, path):
 		# 1) group tokens in lines
