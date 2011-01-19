@@ -62,9 +62,9 @@ class MakeConfVariable(object):
 					return PackageFileSet.PackageFile.PackageEntry.PackageFlag.toString(self)
 
 		class ExpandedFlag(MakeConfFlag):
-			def __init__(self, s, use_expanded_from):
+			def __init__(self, s, use_expanded_from, lta = []):
 				self.prefix = '%s_' % use_expanded_from
-				MakeConfVariable.FlattenedToken.MakeConfFlag.__init__(self, s)
+				MakeConfVariable.FlattenedToken.MakeConfFlag.__init__(self, s, lta)
 
 			@property
 			def removed(self):
@@ -224,10 +224,15 @@ class MakeConfVariable(object):
 						if e:
 							strippedtoken = e.lstrip('+-')
 							if t.use_expanded:
-								assert(not lta or i != lasti)
 								flagname = '%s_%s' % (t.use_expanded, e)
-								self._useexpanded[t.use_expanded].remove(flagname)
-								t.flags.append(self.FlattenedToken.ExpandedFlag(flagname, t.use_expanded))
+								if lta and i == lasti:
+									flag = self.FlattenedToken.ExpandedFlag(
+										flagname, t.use_expanded, lta)
+								else:
+									flag = self.FlattenedToken.ExpandedFlag(
+										flagname, t.use_expanded)
+								self._useexpanded[t.use_expanded].remove(flag.name)
+								t.flags.append(flag)
 							elif [x for x in self._useexpanded if strippedtoken.startswith(x)]:
 								# inactive due to USE_EXPAND
 								t.flags.append(self.FlattenedToken.PartialFlag(e))
