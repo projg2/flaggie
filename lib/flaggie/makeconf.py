@@ -233,6 +233,13 @@ class MakeConfVariable(object):
 				else:
 					break
 
+		# Add disabled USE_EXPAND flags.
+		for t in reversed(self._flattokens):
+			if t.use_expanded:
+				for f in self._useexpanded.pop(t.use_expanded):
+					t.append('-%s' % f)
+				t.modified = False
+
 		self._parsed = True
 
 	def add_expand(self, var, flagcache):
