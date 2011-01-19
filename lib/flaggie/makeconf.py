@@ -232,14 +232,14 @@ class MakeConfVariable(object):
 									flag = self.FlattenedToken.ExpandedFlag(
 										flagname, t.use_expanded)
 								self._useexpanded[t.use_expanded].remove(flag.name)
-								t.flags.append(flag)
 							elif [x for x in self._useexpanded if strippedtoken.startswith(x)]:
 								# inactive due to USE_EXPAND
-								t.flags.append(self.FlattenedToken.PartialFlag(e))
+								flag = self.FlattenedToken.PartialFlag(e)
 							elif lta and i == lasti:
-								t.flags.append(self.FlattenedToken.MakeConfFlag(e, lta))
+								flag = self.FlattenedToken.MakeConfFlag(e, lta)
 							else:
-								t.flags.append(self.FlattenedToken.MakeConfFlag(e))
+								flag = self.FlattenedToken.MakeConfFlag(e)
+							t.flags.append(flag)
 					else:
 						t.flags.append(self.FlattenedToken.Whitespace(e))
 
