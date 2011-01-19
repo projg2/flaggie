@@ -316,7 +316,19 @@ class MakeConf(object):
 			@property
 			def data(self):
 				if self.modified:
-					return ''.join([f.toString(True) for f in self.flags])
+					hadremovedflag = False
+					ret = ''
+					for f in self.flags:
+						if isinstance(f, MakeConfVariable.FlattenedToken.MakeConfFlag) and \
+								f.removed:
+							hadremovedflag = True
+						else:
+							if not isinstance(f, MakeConfVariable.FlattenedToken.Whitespace) or \
+									not hadremovedflag:
+								ret += f.toString(True)
+							hadremovedflag = False
+
+					return ret
 				else:
 					return self.s
 
