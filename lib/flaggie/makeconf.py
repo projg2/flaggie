@@ -245,7 +245,7 @@ class MakeConfVariable(object):
 
 		# Add disabled USE_EXPAND flags.
 		for t in reversed(self._flattokens):
-			if t.use_expanded:
+			if t.use_expanded in self._useexpanded:
 				for f in self._useexpanded.pop(t.use_expanded):
 					t.append('-%s' % f)
 				t.modified = False
