@@ -78,6 +78,8 @@ class MakeConfVariable(object):
 				ret = MakeConfVariable.FlattenedToken.MakeConfFlag.toString(self)
 				if raw:
 					ret = ret.replace(self.prefix, '', 1)
+				elif not ret:
+					ret = PackageFileSet.PackageFile.PackageEntry.PackageFlag.toString(self)
 				return ret
 
 		class Whitespace(object):
