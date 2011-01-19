@@ -56,7 +56,7 @@ class MakeConfVariable(object):
 			def toString(self, raw = False):
 				if self.removed:
 					return ''
-				elif not self.modified:
+				elif not self.modified and raw:
 					return self._origs
 				else:
 					return PackageFileSet.PackageFile.PackageEntry.PackageFlag.toString(self)
@@ -75,7 +75,7 @@ class MakeConfVariable(object):
 				self.modifier = '-' if val else ''
 
 			def toString(self, raw = False):
-				ret = MakeConfVariable.FlattenedToken.MakeConfFlag.toString(self)
+				ret = MakeConfVariable.FlattenedToken.MakeConfFlag.toString(self, raw)
 				if raw:
 					ret = ret.replace(self.prefix, '', 1)
 				elif not ret:
