@@ -318,15 +318,37 @@ class MakeConf(object):
 				if self.modified:
 					hadremovedflag = False
 					ret = ''
-					for f in self.flags:
-						if isinstance(f, MakeConfVariable.FlattenedToken.MakeConfFlag) and \
-								f.removed:
-							hadremovedflag = True
-						else:
-							if not isinstance(f, MakeConfVariable.FlattenedToken.Whitespace) or \
-									not hadremovedflag:
+					fi = iter(self.flags)
+					for f in fi:
+						while f is not None:
+							nf = None
+							if isinstance(f, MakeConfVariable.FlattenedToken.MakeConfFlag) and \
+									f.removed:
+								hadremovedflag = not hadremovedflag
+							else:
+								if isinstance(f, MakeConfVariable.FlattenedToken.Whitespace):
+									if not hadremovedflag:
+										try:
+											nf = next(fi)
+										except StopIteration:
+											pass
+										else:
+											# Drop whitespace before the flag.
+											if isinstance(f, MakeConfVariable.FlattenedToken.MakeConfFlag) and \
+													nf.removed:
+												# Reverse to not drop whitespace after it.
+												hadremovedflag = True
+												f = nf
+												continue
+									else:
+										# Drop whitespace after the flag.
+										hadremovedflag = False
+										f = nf
+										continue
+
 								ret += f.toString(True)
-							hadremovedflag = False
+								hadremovedflag = False
+							f = nf
 
 					return ret
 				else:
