@@ -66,10 +66,9 @@ class Caches(object):
 
 	class FlagCache(DBAPICache):
 		aux_key = 'IUSE'
-		def __init__(self, dbapi, settings = None):
+		def __init__(self, dbapi):
 			Caches.DBAPICache.__init__(self, dbapi)
-			self.use_expand_vars = settings.get('USE_EXPAND', '').split() \
-					if settings else []
+			self.use_expand_vars = dbapi.settings.get('USE_EXPAND', '').split()
 
 		@property
 		def glob(self):
@@ -170,9 +169,9 @@ class Caches(object):
 		def __getitem__(self, k):
 			return self.cache
 
-	def __init__(self, dbapi, settings = None):
+	def __init__(self, dbapi):
 		self.caches = {
-			'use': self.FlagCache(dbapi, settings),
+			'use': self.FlagCache(dbapi),
 			'kw': self.KeywordCache(dbapi),
 			'lic': self.LicenseCache(dbapi),
 			'env': self.EnvCache(dbapi)
