@@ -162,7 +162,7 @@ class MakeConfVariable(object):
 		self._tokens = tokens
 		self._flattokens = flattentokens(tokens)
 		self._parsed = False
-		self._useexpanded = []
+		self._useexpanded = {}
 
 	def parseflags(self):
 		if self._parsed:
@@ -213,6 +213,8 @@ class MakeConfVariable(object):
 							strippedtoken = e.lstrip('+-')
 							if t.use_expanded:
 								assert(not lta or i != lasti)
+								self._useexpanded[t.use_expanded].remove(
+										'%s_%s' % (t.use_expanded, e))
 								t.flags.append(self.FlattenedToken.ExpandedFlag(e, t.use_expanded))
 							elif [x for x in self._useexpanded if strippedtoken.startswith(x)]:
 								# inactive due to USE_EXPAND
@@ -231,12 +233,13 @@ class MakeConfVariable(object):
 
 		self._parsed = True
 
-	def append(self, var):
+	def add_expand(self, var, flagcache):
 		if self._parsed:
 			raise NotImplementedError('Appending to a parsed variable not supported')
 
 		key = var._key.lower()
-		self._useexpanded.append(key)
+		values = [f for f in flagcache.glob if f.startswith(key)]
+		self._useexpanded[key] = set(values)
 
 		newtokens = []
 		for t in var._flattokens:
@@ -457,8 +460,9 @@ class MakeConf(object):
 		self.variables = {}
 		self.newvars = []
 		self.masterfile = None
-		
-		use_expand_vars = frozenset(caches['use'].use_expand_vars)
+
+		flagcache = caches['use']
+		use_expand_vars = frozenset(flagcache.use_expand_vars)
 
 		for path in paths:
 			if os.path.exists(path):
@@ -475,7 +479,8 @@ class MakeConf(object):
 
 		for key in use_expand_vars:
 			if key in self.variables:
-				self.variables['USE'].append(self.variables[key])
+				self.variables['USE'].add_expand(self.variables[key],
+						flagcache)
 
 	def parse(self, mf, path):
 		# 1) group tokens in lines
