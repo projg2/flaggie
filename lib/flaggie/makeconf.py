@@ -66,13 +66,18 @@ class MakeConfVariable(object):
 				self.prefix = '%s_' % use_expanded_from
 				MakeConfVariable.FlattenedToken.MakeConfFlag.__init__(self, s)
 
+			@property
+			def removed(self):
+				return self.modifier == '-'
+
+			@removed.setter
+			def removed(self, val):
+				self.modifier = '-' if val else ''
+
 			def toString(self, raw = False):
 				ret = MakeConfVariable.FlattenedToken.MakeConfFlag.toString(self)
 				if raw:
-					if ret.startswith('-'):
-						ret = ''
-					else:
-						ret = ret.replace(self.prefix, '', 1)
+					ret = ret.replace(self.prefix, '', 1)
 				return ret
 
 		class Whitespace(object):
