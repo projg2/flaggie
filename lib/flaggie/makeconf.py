@@ -57,7 +57,10 @@ class MakeConfVariable(object):
 			def toString(self, raw = False):
 				ret = MakeConfVariable.FlattenedToken.MakeConfFlag.toString(self)
 				if raw:
-					ret = ret.replace(self.prefix, '', 1)
+					if ret.startswith('-'):
+						ret = ''
+					else:
+						ret = ret.replace(self.prefix, '', 1)
 				return ret
 
 		class Whitespace(object):
