@@ -202,10 +202,7 @@ format as taken by emerge).\n''' % os.path.basename(argv[0]))
 	pfiles = PackageFiles(usercpath, porttree, mkconf)
 
 	for actset in act:
-		try:
-			actset(pfiles)
-		except NotImplementedError as e:
-			output.write('Warning: %s\n' % e)
+		actset(pfiles)
 
 	pfiles.write()
 	mkconf.write()
