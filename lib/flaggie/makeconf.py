@@ -485,6 +485,9 @@ class MakeConf(object):
 					elif isinstance(token, self.SingleQuotedString) and c == "'":
 						token = None
 					elif isinstance(token, self.DoubleQuotedString) and c == '"':
+						if isinstance(token, self.DoubleQuotedVariableRef):
+							tmp = newtoken(self.DoubleQuotedString)
+							tmp.lquo = False
 						token = None
 					elif isinstance(token, self.DoubleQuotedBracedVariableRef) and c == '}':
 						token = newtoken(self.DoubleQuotedString)
