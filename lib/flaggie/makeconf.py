@@ -522,8 +522,12 @@ class MakeConf(object):
 		self.newvars = []
 		self.masterfile = None
 
-		flagcache = caches['use']
-		use_expand_vars = frozenset(flagcache.use_expand_vars)
+		try:
+			flagcache = caches['use']
+			use_expand_vars = frozenset(flagcache.use_expand_vars)
+		except (KeyError, TypeError):
+			flagcache = None
+			use_expand_vars = frozenset()
 
 		for path in paths:
 			if os.path.exists(path):
