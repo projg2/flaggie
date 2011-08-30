@@ -231,7 +231,7 @@ class MakeConfVariable(object):
 								else:
 									flag = self.FlattenedToken.ExpandedFlag(
 										flagname, t.use_expanded)
-								self._useexpanded[t.use_expanded].remove(flag.name)
+								self._useexpanded[t.use_expanded].discard(flag.name)
 							elif [x for x in self._useexpanded if strippedtoken.startswith(x)]:
 								# inactive due to USE_EXPAND
 								flag = self.FlattenedToken.PartialFlag(e)
