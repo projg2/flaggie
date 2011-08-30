@@ -5,7 +5,7 @@
 
 import codecs, os.path, re, string
 
-from flaggie.packagefile import PackageFileSet
+from .packagefile import PackageFileSet
 
 wsregex = re.compile('(?u)(\s+)')
 

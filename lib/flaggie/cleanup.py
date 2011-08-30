@@ -5,7 +5,7 @@
 
 from portage.exception import AmbiguousPackageName, InvalidAtom
 
-from flaggie.action import Action
+from .action import Action
 
 class BaseCleanupAction(Action.BaseAction):
 	def __init__(self, dbapi):

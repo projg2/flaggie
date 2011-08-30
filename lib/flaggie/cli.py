@@ -11,13 +11,13 @@ from portage.dbapi.dep_expand import dep_expand
 from portage.dep import Atom
 from portage.exception import AmbiguousPackageName, InvalidAtom
 
-from flaggie import PV
-from flaggie.action import Action, ActionSet, ParserError, ParserWarning
-from flaggie.cache import Caches
-from flaggie.cleanup import DropIneffective, DropUnmatchedPkgs, \
+from . import PV
+from .action import Action, ActionSet, ParserError, ParserWarning
+from .cache import Caches
+from .cleanup import DropIneffective, DropUnmatchedPkgs, \
 		DropUnmatchedFlags, SortEntries, SortFlags, MigrateFiles
-from flaggie.makeconf import MakeConf
-from flaggie.packagefile import PackageFiles
+from .makeconf import MakeConf
+from .packagefile import PackageFiles
 
 def parse_actions(args, dbapi, cache, quiet = False, strict = False, \
 		cleanupact = [], dataout = sys.stdout, output = sys.stderr):
