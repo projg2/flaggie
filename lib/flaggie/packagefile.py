@@ -363,6 +363,20 @@ class PackageKeywordsFileSet(PackageFileSet):
 
 		PackageFileSet.write(*((self,) + args))
 
+class PackageEnvFileSet(PackageFileSet):
+	def write(self, *args):
+		if not self._files:
+			return
+
+		for f in self.files:
+			for e in f:
+				if e.modified:
+					rlist = [fl for fl in e if fl.modifier == '-']
+					for fl in rlist:
+						e.remove(fl)
+
+		PackageFileSet.write(*((self,) + args))
+
 class PackageFiles(object):
 	def __init__(self, basedir, dbapi, mkconf = None):
 		p = lambda x: os.path.join(basedir, x)
@@ -375,7 +389,7 @@ class PackageFiles(object):
 			'use': PackageFileSet(p('package.use')),
 			'kw': PackageKeywordsFileSet(pkw, dbapi),
 			'lic': PackageFileSet(p('package.license')),
-			'env': PackageFileSet(p('package.env'))
+			'env': PackageEnvFileSet(p('package.env'))
 		}
 
 		if mkconf:
