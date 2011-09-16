@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #	vim:fileencoding=utf-8
 # (C) 2010 Michał Górny <gentoo@mgorny.alt.pl>
-# Released under the terms of the 3-clause BSD license.
+# Released under the terms of the 2-clause BSD license.
 
 import os, os.path
 

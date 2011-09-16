@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #	vim:fileencoding=utf-8
 # Create merged 'package.mask' file and maintain 'package.unmask' using it
-# (C) 2010 Michał Górny, distributed under the terms of 3-clause BSD license
+# (C) 2010 Michał Górny, distributed under the terms of 2-clause BSD license
 
 import sys
 
