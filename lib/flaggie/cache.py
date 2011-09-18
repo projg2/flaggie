@@ -5,7 +5,6 @@
 
 import os, os.path
 
-from portage.const import USER_CONFIG_PATH
 from portage.dep import use_reduce
 from portage.util import grabdict, grabfile
 from portage.versions import best
@@ -157,7 +156,8 @@ class Caches(object):
 	class EnvCache(object):
 		def __init__(self, dbapi):
 			out = set()
-			path = os.path.join(dbapi.settings['PORTAGE_CONFIGROOT'], USER_CONFIG_PATH, 'env')
+			path = os.path.join(os.environ.get('PORTAGE_CONFIGROOT', '/'),
+					'etc', 'portage', 'env')
 			for parent, dirs, files in os.walk(path):
 				out.update([os.path.relpath(os.path.join(parent, x), path) for x in files])
 			self.cache = frozenset(out)

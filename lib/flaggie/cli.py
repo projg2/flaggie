@@ -6,7 +6,6 @@
 import codecs, locale, os, os.path, sys
 
 from portage import create_trees
-from portage.const import MAKE_CONF_FILE, USER_CONFIG_PATH
 from portage.dbapi.dep_expand import dep_expand
 from portage.dep import Atom
 from portage.exception import AmbiguousPackageName, InvalidAtom
@@ -193,10 +192,10 @@ format as taken by emerge).\n''' % os.path.basename(argv[0]))
 		main([argv[0], '--help'])
 		return 0
 
-	confroot = porttree.settings['PORTAGE_CONFIGROOT']
-	usercpath = os.path.join(confroot, USER_CONFIG_PATH)
+	confroot = os.environ.get('PORTAGE_CONFIGROOT', '/')
+	usercpath = os.path.join(confroot, 'etc', 'portage')
 	mkconf = MakeConf(
-		(os.path.join(confroot, MAKE_CONF_FILE),
+		(os.path.join(confroot, 'etc', 'make.conf'),
 			os.path.join(usercpath, 'make.conf')),
 		porttree, cache)
 	pfiles = PackageFiles(usercpath, porttree, mkconf)
