@@ -544,7 +544,7 @@ class MakeConf(object):
 
 		for key in use_expand_vars:
 			if key in self.variables:
-				self.variables['USE'].add_expand(self.variables[key],
+				self['use'].add_expand(self.variables[key],
 						flagcache)
 
 	def parse(self, mf, path):
