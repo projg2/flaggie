@@ -266,10 +266,11 @@ class MakeConfVariable(object):
 		self._useexpanded[key] = set(values)
 
 		newtokens = []
+		var._flattokens.append(self.FlattenedToken(
+				MakeConf.MakeConfFile.Whitespace(' ')))
 		for t in var._flattokens:
 			t.use_expanded = key
 			newtokens.append(t)
-		newtokens.append(self.FlattenedToken(MakeConf.MakeConfFile.Whitespace(' ')))
 		newtokens.extend(self._flattokens)
 		self._flattokens = newtokens
 
