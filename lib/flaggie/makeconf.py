@@ -633,7 +633,7 @@ class MakeConf(object):
 							out.append(nl)
 
 					out.append(self.MakeConfFile.UnquotedWord('%s=' % nv.key))
-					out.extend(list(nv))
+					out.extend([t for t in nv if not t.use_expanded])
 					out.append(nl)
 
 					self.masterfile.extend(out)
