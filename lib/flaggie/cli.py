@@ -22,7 +22,6 @@ def parse_actions(args, dbapi, cache, quiet = False, strict = False, \
 		cleanupact = [], dataout = sys.stdout, output = sys.stderr):
 	out = []
 	actset = ActionSet(cache = cache)
-	had_pkgs = False
 
 	for i, a in enumerate(args):
 		if not a:
@@ -31,13 +30,6 @@ def parse_actions(args, dbapi, cache, quiet = False, strict = False, \
 			try:
 				act = Action(a, output = dataout)
 			except Action.NotAnAction:
-				if actset:
-					# Avoid transforming actset with all atoms being
-					# incorrect into global actions.
-					if actset.pkgs or not had_pkgs:
-						out.append(actset)
-					actset = ActionSet(cache = cache)
-				had_pkgs = True
 				try:
 					atom = dep_expand(a, mydb = dbapi, settings = dbapi.settings)
 					if atom.startswith('null/'):
@@ -69,7 +61,7 @@ def parse_actions(args, dbapi, cache, quiet = False, strict = False, \
 				output.write('Strict mode, aborting.\n')
 				return None
 
-	if actset and (actset.pkgs or not had_pkgs):
+	if actset:
 		out.append(actset)
 
 	if cleanupact:
