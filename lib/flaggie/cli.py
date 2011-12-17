@@ -58,12 +58,15 @@ def parse_actions(args, dbapi, cache, quiet = False, strict = False, \
 				raise
 			else:
 				actset.append(act)
-		except (ParserError, ParserWarning) as e:
+		except ParserError as e:
+			output.write('At argv[%d]=\'%s\': %s\n' % (i + 1, a, e))
+			output.write('Aborting.\n')
+			return None
+		except ParserWarning as e:
 			if not quiet or strict:
 				output.write('At argv[%d]=\'%s\': %s\n' % (i + 1, a, e))
 			if strict:
-				if not quiet:
-					output.write('Strict mode, aborting.\n')
+				output.write('Strict mode, aborting.\n')
 				return None
 
 	if actset and (actset.pkgs or not had_pkgs):
