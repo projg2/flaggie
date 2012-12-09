@@ -187,7 +187,7 @@ format as taken by emerge).\n''' % os.path.basename(argv[0]))
 		main([argv[0], '--help'])
 		return 0
 
-	confroot = os.environ.get('PORTAGE_CONFIGROOT', '/')
+	confroot = porttree.settings['PORTAGE_CONFIGROOT']
 	usercpath = os.path.join(confroot, 'etc', 'portage')
 	mkconf = MakeConf(
 		(os.path.join(confroot, 'etc', 'make.conf'),
