@@ -3,10 +3,13 @@
 # (C) 2010 Michał Górny <gentoo@mgorny.alt.pl>
 # Released under the terms of the 2-clause BSD license.
 
-import codecs, os, os.path, shutil, tempfile
+import codecs, os, os.path, re, shutil, tempfile
 
 from portage import VERSION as portage_ver
 from portage.versions import vercmp
+
+# comments start with '#' following whitespace
+comment_regexp = re.compile(r'\s#.*$')
 
 class PackageFileSet(object):
 	class PackageFile(list):
@@ -46,15 +49,27 @@ class PackageFileSet(object):
 				self.as_str = l
 				self.modified = False
 				self.package = sl.pop(0)
-				self.flags = [self.PackageFlag(x) for x in sl]
+				self.flags = []
+
+				for x in sl:
+					if x.startswith('#'):
+						break
+					self.flags.append(self.PackageFlag(x))
+
+				m = comment_regexp.search(l)
+				if m:
+					self.trailing_whitespace = m.group(0) + '\n'
+				else:
+					self.trailing_whitespace = '\n'
 
 			def toString(self):
 				ret = ''.join(self.whitespace)
 				if not self.modified:
 					ret += self.as_str
 				else:
-					ret += ' '.join([self.package] + \
-							[x.toString() for x in self.flags]) + '\n'
+					ret += ' '.join([self.package] \
+							+ [x.toString() for x in self.flags]) \
+							+ self.trailing_whitespace
 				return ret
 
 			def append(self, flag):
