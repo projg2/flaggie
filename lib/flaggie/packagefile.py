@@ -317,7 +317,7 @@ class PackageFileSet(object):
 		""" Get package entries for a package in order of effectiveness
 			(the last declarations in the file are effective, and those
 			will be returned first).
-			
+
 			If pkg is None and PackageFileSet has self.makeconfvar set,
 			calling self[None] will return the MakeConfVariable instance.
 		"""
