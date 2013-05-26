@@ -256,9 +256,13 @@ class PackageFileSet(object):
 
 		for fn in self._paths:
 			if os.path.isdir(fn):
-				files = [os.path.join(fn, x) \
-						for x in os.listdir(fn) \
-						if not x.startswith('.') and not x.endswith('~')]
+				files = []
+				for toppath, wdirs, wfiles in os.walk(fn):
+					for f in wfiles:
+						if f.startswith('.') or f.endswith('~'):
+							continue
+						files.append(os.path.join(toppath, f))
+
 				if not files:
 					files = [os.path.join(fn, 'flaggie')]
 				else:
