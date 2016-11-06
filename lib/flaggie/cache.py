@@ -95,7 +95,7 @@ class Caches(object):
 				kws = set()
 				for r in self.dbapi.porttrees:
 					kws.update(grabfile(os.path.join(r, 'profiles', 'arch.list')))
-				kws.update(['~%s' % x for x in kws], ('*', '**'))
+				kws.update(['~%s' % x for x in kws], ('*', '**', '~*'))
 
 				# and the ** special keyword
 				self.cache[None] = frozenset(kws)

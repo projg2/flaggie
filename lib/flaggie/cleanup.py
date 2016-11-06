@@ -61,7 +61,7 @@ class DropUnmatchedFlags(BaseCleanupAction):
 				if dbcache[pe.package]:
 					flags = cache[pe.package]
 					for flag in set([x.name for x in pe]):
-						if k == 'kw' and flag == '**':
+						if k == 'kw' and (flag == '*' or flag == '**' or flag == '~*'):
 							pass
 						elif flag not in flags:
 							del pe[flag]
