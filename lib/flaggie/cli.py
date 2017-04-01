@@ -3,7 +3,11 @@
 # (C) 2017 Michał Górny <gentoo@mgorny.alt.pl>
 # Released under the terms of the 2-clause BSD license.
 
-import codecs, locale, os, os.path, sys
+import codecs
+import locale
+import os
+import os.path
+import sys
 
 from portage import create_trees
 from portage.dbapi.dep_expand import dep_expand
@@ -13,25 +17,26 @@ from portage.exception import AmbiguousPackageName, InvalidAtom
 from . import PV
 from .action import Action, ActionSet, ParserError, ParserWarning
 from .cache import Caches
-from .cleanup import DropIneffective, DropUnmatchedPkgs, \
-		DropUnmatchedFlags, SortEntries, SortFlags, MigrateFiles
+from .cleanup import (DropIneffective, DropUnmatchedPkgs,
+		DropUnmatchedFlags, SortEntries, SortFlags, MigrateFiles)
 from .makeconf import MakeConf
 from .packagefile import PackageFiles
 
-def parse_actions(args, dbapi, cache, quiet = False, strict = False, \
-		cleanupact = [], dataout = sys.stdout, output = sys.stderr):
+
+def parse_actions(args, dbapi, cache, quiet=False, strict=False,
+		cleanupact=[], dataout=sys.stdout, output=sys.stderr):
 	out = []
-	actset = ActionSet(cache = cache)
+	actset = ActionSet(cache=cache)
 
 	for i, a in enumerate(args):
 		if not a:
 			continue
 		try:
 			try:
-				act = Action(a, output = dataout)
+				act = Action(a, output=dataout)
 			except Action.NotAnAction:
 				try:
-					atom = dep_expand(a, mydb = dbapi, settings = dbapi.settings)
+					atom = dep_expand(a, mydb=dbapi, settings=dbapi.settings)
 					if atom.startswith('null/'):
 						raise InvalidAtom(atom)
 				except AmbiguousPackageName as e:
@@ -39,7 +44,7 @@ def parse_actions(args, dbapi, cache, quiet = False, strict = False, \
 				except InvalidAtom as e:
 					try:
 						try:
-							atom = Atom(a, allow_wildcard = True)
+							atom = Atom(a, allow_wildcard=True)
 						except TypeError:
 							atom = Atom(a)
 					except InvalidAtom as e:
@@ -65,12 +70,13 @@ def parse_actions(args, dbapi, cache, quiet = False, strict = False, \
 		out.append(actset)
 
 	if cleanupact:
-		actset = ActionSet(cache = cache)
+		actset = ActionSet(cache=cache)
 		for a in cleanupact:
 			actset.append(a(dbapi))
 		out.append(actset)
 
 	return out
+
 
 def main(argv):
 	cleanup_actions = set()
@@ -85,8 +91,10 @@ def main(argv):
 	else:
 		indec = codecs.getdecoder(locale.getpreferredencoding())
 		argv = [indec(x)[0] for x in argv]
-		dataout = codecs.getwriter(locale.getpreferredencoding())(sys.stderr, 'backslashescape')
-		output = codecs.getwriter(locale.getpreferredencoding())(sys.stderr, 'backslashescape')
+		dataout = codecs.getwriter(locale.getpreferredencoding())(
+			sys.stderr, 'backslashescape')
+		output = codecs.getwriter(locale.getpreferredencoding())(
+			sys.stderr, 'backslashescape')
 
 	for a in list(argv[1:]):
 		if a.startswith('--'):
@@ -117,7 +125,7 @@ Options:
 
 	--migrate-files		Migrate the outdated files to newer variants
 				(package.keywords -> package.accept_keywords)
-		
+
 Global actions are applied to the make.conf file. Actions are applied to
 the package.* files, for the packages preceding them.
 
@@ -173,14 +181,14 @@ format as taken by emerge).\n''' % os.path.basename(argv[0]))
 			argv.remove(a)
 
 	trees = create_trees(
-			config_root = os.environ.get('PORTAGE_CONFIGROOT'),
-			target_root = os.environ.get('ROOT'))
+		config_root=os.environ.get('PORTAGE_CONFIGROOT'),
+		target_root=os.environ.get('ROOT'))
 	porttree = trees[max(trees)]['porttree'].dbapi
 
 	cache = Caches(porttree)
 	act = parse_actions(argv[1:], porttree, cache,
-			quiet = quiet, strict = strict, cleanupact = cleanup_actions,
-			output = output, dataout = dataout)
+			quiet=quiet, strict=strict, cleanupact=cleanup_actions,
+			output=output, dataout=dataout)
 	if act is None:
 		return 1
 	if not act:

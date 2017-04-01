@@ -5,11 +5,14 @@
 
 import fnmatch
 
+
 class ParserError(Exception):
 	pass
 
+
 class ParserWarning(Exception):
 	pass
+
 
 class Action(object):
 	class BaseAction(object):
@@ -23,14 +26,15 @@ class Action(object):
 			def __hash__(self):
 				return hash(self.pattern)
 
-		def __init__(self, arg, key, output = None):
+		def __init__(self, arg, key, output=None):
 			self.args = set((arg,))
 			self.ns = None
 			self.output = output
 
 		def clarify(self, pkgs, cache):
 			if len(self.args) > 1:
-				raise AssertionError('clarify() needs to be called before actions are joined.')
+				raise AssertionError(
+					'clarify() needs to be called before actions are joined.')
 			self._cache = cache
 			arg = self.args.pop()
 
@@ -63,22 +67,22 @@ class Action(object):
 
 			warn = None
 			if not pkgs:
-				wis = cache.glob_whatis(arg, restrict = ns)
+				wis = cache.glob_whatis(arg, restrict=ns)
 				if len(wis) > 1:
-					raise ParserError('Ambiguous argument: %s (matches %s).' % \
-							(arg, ', '.join(wis)))
+					raise ParserError('Ambiguous argument: %s (matches %s).'
+							% (arg, ', '.join(wis)))
 				elif wis:
 					ns = wis.pop()
 				elif ns:
 					ns = ns.pop()
-					warn = '%s seems to be an incorrect global %s' % \
-							(arg, cache.describe(ns))
+					warn = ('%s seems to be an incorrect global %s'
+							% (arg, cache.describe(ns)))
 				else:
 					ns = 'use'
 					warn = '%s seems to be an incorrect global flag' % arg
 			else:
 				for p in pkgs:
-					wis = cache.whatis(arg, p, restrict = ns)
+					wis = cache.whatis(arg, p, restrict=ns)
 					if wis:
 						gwis = wis
 					elif ns:
@@ -87,15 +91,15 @@ class Action(object):
 						gwis = cache.glob_whatis(arg)
 
 					if len(gwis) > 1:
-						raise ParserError('Ambiguous argument: %s (matches %s).' % \
-								(arg, ', '.join(wis)))
+						raise ParserError('Ambiguous argument: %s (matches %s).'
+								% (arg, ', '.join(wis)))
 					elif wis:
 						ns = wis.pop()
 					else:
 						if gwis:
 							ns = gwis.pop()
-							warn = '%s seems to be an incorrect %s for %s' % \
-									(arg, cache.describe(ns), p)
+							warn = ('%s seems to be an incorrect %s for %s'
+									% (arg, cache.describe(ns), p))
 						else:
 							ns = 'use'
 							warn = '%s seems to be an incorrect flag for %s' % (arg, p)
@@ -114,12 +118,12 @@ class Action(object):
 		def __lt__(self, other):
 			try:
 				idx = [Action.order.index(x.__class__) for x in (self, other)]
-			except ValueError: # an external class
+			except ValueError:  # an external class
 				return True
 			return idx[0] < idx[1]
 
 	class EffectiveEntryOp(BaseAction):
-		def grab_effective_entry(self, p, arg, f, rw = False):
+		def grab_effective_entry(self, p, arg, f, rw=False):
 			entries = f[p]
 			for pe in entries:
 				flags = pe[arg]
@@ -154,14 +158,14 @@ class Action(object):
 		def __call__(self, pkgs, pfiles):
 			for p in pkgs or (None,):
 				for ns, arg in self.expand_patterns(self.args, p):
-					f = self.grab_effective_entry(p, arg, pfiles[ns], rw = True)
+					f = self.grab_effective_entry(p, arg, pfiles[ns], rw=True)
 					f.modifier = ''
 
 	class disable(EffectiveEntryOp):
 		def __call__(self, pkgs, pfiles):
 			for p in pkgs or (None,):
 				for ns, arg in self.expand_patterns(self.args, p):
-					f = self.grab_effective_entry(p, arg, pfiles[ns], rw = True)
+					f = self.grab_effective_entry(p, arg, pfiles[ns], rw=True)
 					f.modifier = '-'
 
 	class reset(BaseAction):
@@ -214,8 +218,9 @@ class Action(object):
 		else:
 			raise cls.NotAnAction
 
+
 class ActionSet(list):
-	def __init__(self, cache = None):
+	def __init__(self, cache=None):
 		list.__init__(self)
 		self._cache = cache
 		self.pkgs = []

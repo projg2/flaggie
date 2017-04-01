@@ -3,17 +3,22 @@
 # (C) 2017 Michał Górny <gentoo@mgorny.alt.pl>
 # Released under the terms of the 2-clause BSD license.
 
-import codecs, os.path, re, string
+import codecs
+import os.path
+import re
+import string
 
 from .packagefile import PackageFileSet
 
+
 wsregex = re.compile('(?u)(\s+)')
+
 
 class MakeConfVariable(object):
 	class FlattenedToken(PackageFileSet.PackageFile.PackageEntry):
 		class MakeConfFlag(PackageFileSet.PackageFile.PackageEntry.PackageFlag):
-			def __init__(self, s, lta = []):
-				PackageFileSet.PackageFile.PackageEntry.PackageFlag.__init__( \
+			def __init__(self, s, lta=[]):
+				PackageFileSet.PackageFile.PackageEntry.PackageFlag.__init__(
 					self, s + ''.join([f.toString() for t, f in lta]))
 
 				self._origs = s
@@ -32,7 +37,8 @@ class MakeConfVariable(object):
 						t.modified = True
 						pf.modified = True
 				else:
-					raise NotImplementedError('Disable modified for MakeConfFlag is not supported.')
+					raise NotImplementedError(
+						'Disable modified for MakeConfFlag is not supported.')
 
 			@property
 			def removed(self):
@@ -53,7 +59,7 @@ class MakeConfVariable(object):
 				self._modifier = val
 				self.modified = True
 
-			def toString(self, raw = False):
+			def toString(self, raw=False):
 				if self.removed:
 					return ''
 				elif not self.modified and raw:
@@ -62,7 +68,7 @@ class MakeConfVariable(object):
 					return PackageFileSet.PackageFile.PackageEntry.PackageFlag.toString(self)
 
 		class ExpandedFlag(MakeConfFlag):
-			def __init__(self, s, use_expanded_from, lta = []):
+			def __init__(self, s, use_expanded_from, lta=[]):
 				self.prefix = '%s_' % use_expanded_from
 				MakeConfVariable.FlattenedToken.MakeConfFlag.__init__(self, s, lta)
 
@@ -74,7 +80,7 @@ class MakeConfVariable(object):
 			def removed(self, val):
 				self.modifier = '-' if val else ''
 
-			def toString(self, raw = False):
+			def toString(self, raw=False):
 				ret = MakeConfVariable.FlattenedToken.MakeConfFlag.toString(self, raw)
 				if raw:
 					ret = ret.replace(self.prefix, '', 1)
@@ -86,7 +92,7 @@ class MakeConfVariable(object):
 			def __init__(self, s):
 				self.s = s
 
-			def toString(self, raw = False):
+			def toString(self, raw=False):
 				return self.s
 
 			@property
@@ -103,7 +109,8 @@ class MakeConfVariable(object):
 				if val:
 					self.s = ''
 				else:
-					raise NotImplementedError('Disabling modified for PartialFlag is not supported.')
+					raise NotImplementedError(
+						'Disabling modified for PartialFlag is not supported.')
 
 		def __init__(self, token):
 			self.use_expanded = False
@@ -208,7 +215,7 @@ class MakeConfVariable(object):
 							nsl = wsregex.split(nt.data)
 							if len(nsl) == 1 and not nsl[0]:
 								pass
-							elif not nsl[0]: # the whitespace we were hoping for
+							elif not nsl[0]:  # the whitespace we were hoping for
 								break
 							else:
 								pf = self.FlattenedToken.PartialFlag(nsl[0])
@@ -220,7 +227,7 @@ class MakeConfVariable(object):
 
 				lasti = len(sl) - 1
 				for i, e in enumerate(sl):
-					if i%2 == 0:
+					if i % 2 == 0:
 						if e:
 							strippedtoken = e.lstrip('+-')
 							if t.use_expanded:
@@ -267,7 +274,7 @@ class MakeConfVariable(object):
 
 		newtokens = []
 		var._flattokens.append(self.FlattenedToken(
-				MakeConf.MakeConfFile.Whitespace(' ')))
+			MakeConf.MakeConfFile.Whitespace(' ')))
 		for t in var._flattokens:
 			t.use_expanded = key
 			newtokens.append(t)
@@ -283,10 +290,12 @@ class MakeConfVariable(object):
 	def __repr__(self):
 		return 'MakeConfVariable(%s, %s)' % (self._key, self._tokens)
 
+
 class FakeVariable(MakeConfVariable):
 	def __init__(self, key):
 		MakeConfVariable.__init__(self, key,
 			(MakeConf.MakeConfFile.DoubleQuotedString(''),))
+
 
 class NewVariable(FakeVariable):
 	def __init__(self, key):
@@ -296,10 +305,11 @@ class NewVariable(FakeVariable):
 	def key(self):
 		return self._key
 
+
 class MakeConf(object):
 	class NewMakeConfFile(PackageFileSet.PackageFile):
 		class Token(object):
-			def __init__(self, s = ''):
+			def __init__(self, s=''):
 				self._modified = False
 				self.s = s
 
@@ -330,8 +340,8 @@ class MakeConf(object):
 					for f in fi:
 						while f is not None:
 							nf = None
-							if isinstance(f, MakeConfVariable.FlattenedToken.MakeConfFlag) and \
-									f.removed:
+							if (isinstance(f, MakeConfVariable.FlattenedToken.MakeConfFlag)
+									and f.removed):
 								hadremovedflag = not hadremovedflag
 							else:
 								if isinstance(f, MakeConfVariable.FlattenedToken.Whitespace):
@@ -342,8 +352,8 @@ class MakeConf(object):
 											pass
 										else:
 											# Drop whitespace before the flag.
-											if isinstance(f, MakeConfVariable.FlattenedToken.MakeConfFlag) and \
-													nf.removed:
+											if (isinstance(f, MakeConfVariable.FlattenedToken.MakeConfFlag)
+													and nf.removed):
 												# Reverse to not drop whitespace after it.
 												hadremovedflag = True
 												f = nf
@@ -438,10 +448,10 @@ class MakeConf(object):
 			self.trailing_whitespace = []
 
 	class MakeConfFile(NewMakeConfFile):
-		def __init__(self, path, basedir = None):
+		def __init__(self, path, basedir=None):
 			MakeConf.NewMakeConfFile.__init__(self, path)
 
-			def newtoken(kind, oldtoken = None):
+			def newtoken(kind, oldtoken=None):
 				if isinstance(oldtoken, kind):
 					return oldtoken
 
@@ -493,7 +503,8 @@ class MakeConf(object):
 					elif isinstance(token, self.DoubleQuotedBracedVariableRef) and c == '}':
 						token = newtoken(self.DoubleQuotedString)
 						token.lquo = False
-					elif isinstance(token, self.DoubleQuotedVariableRef) and c in string.whitespace:
+					elif (isinstance(token, self.DoubleQuotedVariableRef)
+							and c in string.whitespace):
 						token = newtoken(self.DoubleQuotedString)
 						token.lquo = False
 						token += c
@@ -517,7 +528,7 @@ class MakeConf(object):
 
 			f.close()
 
-	def __init__(self, paths, dbapi, caches = None):
+	def __init__(self, paths, dbapi, caches=None):
 		self.files = {}
 		self.variables = {}
 		self.newvars = []
@@ -586,13 +597,13 @@ class MakeConf(object):
 				assignm = l[1]
 			else:
 				assignm = l[0]
-			
+
 			for i, t in enumerate(assignm):
 				if isinstance(t, self.MakeConfFile.UnquotedWord) and t.data.endswith('='):
-					key = join(assignm[:i+1])[:-1]
+					key = join(assignm[:i + 1])[:-1]
 					val = []
 
-					for t in assignm[i+1:]:
+					for t in assignm[i + 1:]:
 						if isinstance(t, self.MakeConfFile.VariableRef):
 							try:
 								val.append(self.variables[t.data])
@@ -605,7 +616,7 @@ class MakeConf(object):
 					break
 
 	def __getitem__(self, k):
-		if k == 'env': # env not supported as a global var
+		if k == 'env':  # env not supported as a global var
 			return FakeVariable('DUMMY_%s' % k.upper())
 
 		kmap = {

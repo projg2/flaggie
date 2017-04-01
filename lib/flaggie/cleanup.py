@@ -7,6 +7,7 @@ from portage.exception import AmbiguousPackageName, InvalidAtom
 
 from .action import Action
 
+
 class BaseCleanupAction(Action.BaseAction):
 	def __init__(self, dbapi):
 		self._dbapi = dbapi
@@ -25,9 +26,10 @@ class BaseCleanupAction(Action.BaseAction):
 	def __lt__(self, other):
 		try:
 			idx = [cleanupact_order.index(x.__class__) for x in (self, other)]
-		except ValueError: # cleanup actions always go to the end
+		except ValueError:  # cleanup actions always go to the end
 			return False
 		return idx[0] < idx[1]
+
 
 class DropIneffective(BaseCleanupAction):
 	def _perform(self, f):
@@ -42,11 +44,12 @@ class DropIneffective(BaseCleanupAction):
 				else:
 					pe.remove(flag)
 
+
 class DropUnmatchedFlags(BaseCleanupAction):
 	def __call__(self, pkgs, pfiles):
 		if pkgs:
 			raise AssertionError('pkgs not empty in cleanup action')
-		
+
 		dbcache = {}
 
 		for k, f in pfiles.files.items():
@@ -65,6 +68,7 @@ class DropUnmatchedFlags(BaseCleanupAction):
 							pass
 						elif flag not in flags:
 							del pe[flag]
+
 
 class DropUnmatchedPkgs(BaseCleanupAction):
 	def _perform(self, f):
@@ -87,18 +91,22 @@ class DropUnmatchedPkgs(BaseCleanupAction):
 			if not cache[pe.package]:
 				del pe[am]
 
+
 class SortEntries(BaseCleanupAction):
 	def _perform(self, f):
 		f.sort()
+
 
 class SortFlags(BaseCleanupAction):
 	def _perform(self, f):
 		for pe in f:
 			pe.sort()
 
+
 class MigrateFiles(BaseCleanupAction):
 	def _perform(self, f):
 		f.migrate()
 
-cleanupact_order = (MigrateFiles, DropUnmatchedPkgs, DropUnmatchedFlags, \
+
+cleanupact_order = (MigrateFiles, DropUnmatchedPkgs, DropUnmatchedFlags,
 		DropIneffective, SortEntries, SortFlags)

@@ -3,13 +3,15 @@
 # (C) 2017 Michał Górny <gentoo@mgorny.alt.pl>
 # Released under the terms of the 2-clause BSD license.
 
-import os, os.path
+import os
+import os.path
 
 from portage.dep import use_reduce
 from portage.util import grabdict, grabfile
 from portage.versions import best
 
-def grab_use_desc(path, prefix = ''):
+
+def grab_use_desc(path, prefix=''):
 	flags = {}
 	try:
 		f = open(path, 'r')
@@ -23,6 +25,7 @@ def grab_use_desc(path, prefix = ''):
 		f.close()
 
 	return flags
+
 
 class Caches(object):
 	class DBAPICache(object):
@@ -45,9 +48,10 @@ class Caches(object):
 		def __getitem__(self, k):
 			if k not in self.cache:
 				flags = set()
-				# get widest match possible to make sure we do not complain without a reason
+				# get widest match possible to make sure we do not
+				# complain without a reason
 				for p in self.dbapi.xmatch('match-all', k):
-					flags.update(self._aux_parse(self.dbapi.aux_get(p, \
+					flags.update(self._aux_parse(self.dbapi.aux_get(p,
 							(self.aux_key,))[0]))
 				self.cache[k] = frozenset(flags)
 			return self.cache[k]
@@ -56,8 +60,8 @@ class Caches(object):
 			if k not in self.effective_cache:
 				pkgs = self.dbapi.xmatch('match-all', k)
 				if pkgs:
-					flags = self._aux_parse(self.dbapi.aux_get( \
-							best(pkgs), (self.aux_key,))[0])
+					flags = self._aux_parse(self.dbapi.aux_get(
+						best(pkgs), (self.aux_key,))[0])
 				else:
 					flags = ()
 				self.effective_cache[k] = frozenset(flags)
@@ -65,6 +69,7 @@ class Caches(object):
 
 	class FlagCache(DBAPICache):
 		aux_key = 'IUSE'
+
 		def __init__(self, dbapi):
 			Caches.DBAPICache.__init__(self, dbapi)
 			self.use_expand_vars = dbapi.settings.get('USE_EXPAND', '').split()
@@ -78,7 +83,7 @@ class Caches(object):
 					for k in self.use_expand_vars:
 						flags.update(grab_use_desc(
 							os.path.join(r, 'profiles', 'desc', '%s.desc' % k.lower()),
-							prefix = '%s_' % k.lower()))
+							prefix=('%s_' % k.lower())))
 				self.cache[None] = frozenset(flags)
 
 			return self.cache[None]
@@ -116,7 +121,8 @@ class Caches(object):
 			if self._groupcache is None:
 				self._groupcache = {}
 				for r in self.dbapi.porttrees:
-					for k, v in grabdict(os.path.join(r, 'profiles', 'license_groups')).items():
+					path = os.path.join(r, 'profiles', 'license_groups')
+					for k, v in grabdict(path).items():
 						k = '@%s' % k
 						if k not in self._groupcache:
 							self._groupcache[k] = set()
@@ -142,11 +148,11 @@ class Caches(object):
 
 		def _aux_parse(self, arg):
 			try:
-				lic = use_reduce(arg, matchall = True, flat = True)
-			except TypeError: # portage-2.1.8 compat
+				lic = use_reduce(arg, matchall=True, flat=True)
+			except TypeError:  # portage-2.1.8 compat
 				from portage.dep import paren_reduce
-				lic = use_reduce(paren_reduce(arg, tokenize = True),
-						matchall = True)
+				lic = use_reduce(paren_reduce(arg, tokenize=True),
+						matchall=True)
 
 			lic = set(lic)
 			lic.discard('||')
@@ -177,7 +183,7 @@ class Caches(object):
 			'env': self.EnvCache(dbapi)
 		}
 
-	def glob_whatis(self, arg, restrict = None):
+	def glob_whatis(self, arg, restrict=None):
 		if not restrict:
 			restrict = frozenset(self.caches)
 		ret = set()
@@ -186,7 +192,7 @@ class Caches(object):
 				ret.add(k)
 		return ret
 
-	def whatis(self, arg, pkg, restrict = None):
+	def whatis(self, arg, pkg, restrict=None):
 		if not restrict:
 			restrict = frozenset(self.caches)
 		ret = set()

@@ -3,13 +3,20 @@
 # (C) 2017 Michał Górny <gentoo@mgorny.alt.pl>
 # Released under the terms of the 2-clause BSD license.
 
-import codecs, os, os.path, re, shutil, tempfile
+import codecs
+import os
+import os.path
+import re
+import shutil
+import tempfile
 
 from portage import VERSION as portage_ver
 from portage.versions import vercmp
 
+
 # comments start with '#' following whitespace
 comment_regexp = re.compile(r'\s#.*$')
+
 
 class PackageFileSet(object):
 	class PackageFile(list):
@@ -40,9 +47,9 @@ class PackageFileSet(object):
 				def toString(self):
 					return '%s%s' % (self.modifier, self.name)
 
-			def __init__(self, l, whitespace = []):
+			def __init__(self, l, whitespace=[]):
 				sl = l.split()
-				if not sl or sl[0].startswith('#'): # whitespace
+				if not sl or sl[0].startswith('#'):  # whitespace
 					raise self.InvalidPackageEntry()
 
 				self.whitespace = whitespace
@@ -67,9 +74,9 @@ class PackageFileSet(object):
 				if not self.modified:
 					ret += self.as_str
 				else:
-					ret += ' '.join([self.package] \
-							+ [x.toString() for x in self.flags]) \
-							+ self.trailing_whitespace
+					ret += (' '.join([self.package]
+							+ [x.toString() for x in self.flags])
+						+ self.trailing_whitespace)
 				return ret
 
 			def append(self, flag):
@@ -185,8 +192,8 @@ class PackageFileSet(object):
 						os.makedirs(os.path.dirname(self.path))
 					except Exception:
 						pass
-				f = tempfile.NamedTemporaryFile('wb', delete = False, \
-						dir = os.path.dirname(os.path.realpath(self.path)))
+				f = tempfile.NamedTemporaryFile('wb', delete=False,
+						dir=os.path.dirname(os.path.realpath(self.path)))
 
 				tmpname = f.name
 
@@ -327,7 +334,8 @@ class PackageFileSet(object):
 				for e in self.makeconfvar:
 					yield e
 			else:
-				raise KeyError('PackageFileSet[None] requested but no MakeConfVariable assigned.')
+				raise KeyError(
+					'PackageFileSet[None] requested but no MakeConfVariable assigned.')
 			return
 
 		for e in self:
@@ -347,13 +355,14 @@ class PackageFileSet(object):
 
 	makeconfvar = None
 
+
 class PackageKeywordsFileSet(PackageFileSet):
 	def __init__(self, path, dbapi):
 		PackageFileSet.__init__(self, path)
 
-		self._defkw = frozenset(['~' + x for x \
-				in dbapi.settings['ACCEPT_KEYWORDS'].split() \
-				if x[0] not in ('~', '-')])
+		self._defkw = frozenset(['~' + x for x
+			in dbapi.settings['ACCEPT_KEYWORDS'].split()
+			if x[0] not in ('~', '-')])
 
 	def read(self, *args):
 		if self._files:
@@ -382,6 +391,7 @@ class PackageKeywordsFileSet(PackageFileSet):
 
 		PackageFileSet.write(*((self,) + args))
 
+
 class PackageEnvFileSet(PackageFileSet):
 	def write(self, *args):
 		if not self._files:
@@ -396,9 +406,11 @@ class PackageEnvFileSet(PackageFileSet):
 
 		PackageFileSet.write(*((self,) + args))
 
+
 class PackageFiles(object):
-	def __init__(self, basedir, dbapi, mkconf = None):
-		p = lambda x: os.path.join(basedir, x)
+	def __init__(self, basedir, dbapi, mkconf=None):
+		def p(x):
+			return os.path.join(basedir, x)
 
 		pkw = [p('package.keywords')]
 		if vercmp(portage_ver, '2.1.9') >= 0:
