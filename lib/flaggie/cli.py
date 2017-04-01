@@ -70,6 +70,9 @@ def parse_actions(args, dbapi, cache, quiet=False, strict=False,
 		out.append(actset)
 
 	if cleanupact:
+		raise NotImplementedError(
+			'Cleanup actions are currently disabled due to missing wildcard support')
+
 		actset = ActionSet(cache=cache)
 		for a in cleanupact:
 			actset.append(a(dbapi))
