@@ -89,7 +89,7 @@ class Caches(object):
 			return self.cache[None]
 
 		def _aux_parse(self, arg):
-			return [x.lstrip('+-') for x in arg.split()]
+			return (x.lstrip('+-') for x in arg.split())
 
 	class KeywordCache(DBAPICache):
 		aux_key = 'KEYWORDS'
@@ -100,7 +100,7 @@ class Caches(object):
 				kws = set()
 				for r in self.dbapi.porttrees:
 					kws.update(grabfile(os.path.join(r, 'profiles', 'arch.list')))
-				kws.update(['~%s' % x for x in kws], ('*', '**', '~*'))
+				kws.update(('~%s' % x for x in kws), ('*', '**', '~*'))
 
 				# and the ** special keyword
 				self.cache[None] = frozenset(kws)
@@ -156,7 +156,7 @@ class Caches(object):
 
 			lic = set(lic)
 			lic.discard('||')
-			lic.update([k for k, v in self.groups.items() if lic & v])
+			lic.update(k for k, v in self.groups.items() if lic & v)
 			return lic
 
 	class EnvCache(object):
@@ -165,7 +165,7 @@ class Caches(object):
 			path = os.path.join(os.environ.get('PORTAGE_CONFIGROOT', '/'),
 					'etc', 'portage', 'env')
 			for parent, dirs, files in os.walk(path):
-				out.update([os.path.relpath(os.path.join(parent, x), path) for x in files])
+				out.update(os.path.relpath(os.path.join(parent, x), path) for x in files)
 			self.cache = frozenset(out)
 
 		@property

@@ -74,9 +74,9 @@ class PackageFileSet(object):
 				if not self.modified:
 					ret += self.as_str
 				else:
-					ret += (' '.join([self.package]
-							+ [x.toString() for x in self.flags])
-						+ self.trailing_whitespace)
+					ret += '%s %s%s' % (self.package,
+						' '.join(x.toString() for x in self.flags),
+						self.trailing_whitespace)
 				return ret
 
 			def append(self, flag):
@@ -360,9 +360,9 @@ class PackageKeywordsFileSet(PackageFileSet):
 	def __init__(self, path, dbapi):
 		PackageFileSet.__init__(self, path)
 
-		self._defkw = frozenset(['~' + x for x
+		self._defkw = frozenset('~' + x for x
 			in dbapi.settings['ACCEPT_KEYWORDS'].split()
-			if x[0] not in ('~', '-')])
+			if x[0] not in ('~', '-'))
 
 	def read(self, *args):
 		if self._files:
@@ -383,7 +383,7 @@ class PackageKeywordsFileSet(PackageFileSet):
 
 		for f in self.files:
 			for e in f:
-				if e.modified and set([x.toString() for x in e.flags]) == self._defkw:
+				if e.modified and set(x.toString() for x in e.flags) == self._defkw:
 					# Yeah, that's what it looks like -- a workaround.
 					e.as_str = e.package + '\n'
 					e.modified = False

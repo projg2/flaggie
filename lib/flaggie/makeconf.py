@@ -19,7 +19,7 @@ class MakeConfVariable(object):
 		class MakeConfFlag(PackageFileSet.PackageFile.PackageEntry.PackageFlag):
 			def __init__(self, s, lta=[]):
 				PackageFileSet.PackageFile.PackageEntry.PackageFlag.__init__(
-					self, s + ''.join([f.toString() for t, f in lta]))
+					self, s + ''.join(f.toString() for t, f in lta))
 
 				self._origs = s
 				self._partialflags = lta
@@ -582,7 +582,7 @@ class MakeConf(object):
 				lines.append(words)
 
 		def join(words):
-			return ''.join([t.data for t in words])
+			return ''.join(t.data for t in words)
 
 		# 2) now go for it
 		for l in lines:
@@ -645,7 +645,7 @@ class MakeConf(object):
 							out.append(nl)
 
 					out.append(self.MakeConfFile.UnquotedWord('%s=' % nv.key))
-					out.extend([t for t in nv if not t.use_expanded])
+					out.extend(t for t in nv if not t.use_expanded)
 					out.append(nl)
 
 					self.masterfile.extend(out)
