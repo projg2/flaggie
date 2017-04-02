@@ -313,9 +313,6 @@ class MakeConf(object):
 				self._modified = False
 				self.s = s
 
-			def __len__(self):
-				return len(self.s)
-
 			def __eq__(self, other):
 				return self.s == other
 

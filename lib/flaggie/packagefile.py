@@ -104,9 +104,6 @@ class PackageFileSet(object):
 				for f in reversed(self.flags):
 					yield f
 
-			def __len__(self):
-				return len(self.flags)
-
 			def __getitem__(self, flag):
 				""" Iterate over occurences of flag in the entry,
 					returning them in the order of occurence. """
