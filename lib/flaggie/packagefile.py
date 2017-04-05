@@ -134,11 +134,21 @@ class PackageFileSet(object):
 						self.trailing_whitespace)
 				return ret
 
-			def append(self, flag):
-				# TODO: use groups as appropriate
+			def append(self, flag, group=None):
 				if not isinstance(flag, self.PackageFlag):
-					flag = self.PackageFlag(flag)
-				self.flags.append(flag)
+					if group is None:
+						flag = self.PackageFlag(flag)
+					else:
+						assert flag.startswith(group.name.lower() + '_')
+						flag = self.PackageFlag(flag[len(group.name)+1:], group.name)
+				else:
+					if group is not None:
+						raise NotImplementedError(
+							'Attempting to append pre-filled PackageFlag w/ group!')
+
+				if group is None:
+					group = self.flags
+				group.append(flag)
 				self.modified = True
 				return flag
 
@@ -190,6 +200,15 @@ class PackageFileSet(object):
 						flags.append(f)
 				for f in flags:
 					self.remove(f)
+
+			def find_group_matching(self, flag):
+				for g in self.flag_groups:
+					if flag.startswith(g.name.lower() + '_'):
+						return g
+				return None
+
+			def has_groups(self):
+				return bool(self.flag_groups)
 
 		def __init__(self, path):
 			list.__init__(self)

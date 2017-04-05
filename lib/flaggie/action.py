@@ -124,8 +124,7 @@ class Action(object):
 
 	class EffectiveEntryOp(BaseAction):
 		def grab_effective_entry(self, p, arg, f, rw=False):
-			entries = f[p]
-			for pe in entries:
+			for pe in f[p]:
 				flags = pe[arg]
 				for f in flags:
 					if rw:
@@ -134,10 +133,24 @@ class Action(object):
 			else:
 				if not rw:
 					return None
-				# No matching flag found. Try to append to the last
-				# package entry if there's one. Otherwise, append
-				# a new entry.
+
+				# Now, a bit of complexity to handle USE_EXPAND
+				# groups in a reasonably readable way. First of all,
+				# see if there is an existing matching USE_EXPAND
+				# and add it there if there is one.
 				for pe in f[p]:
+					g = pe.find_group_matching(arg)
+					if g is not None:
+						return pe.append(arg, g)
+
+				# Alternatively, add the flag to the last entry for
+				# the package that does have any groups. If there are
+				# no entries for the package, or all of them contain
+				# groups, create a new one (for readability,
+				# in the latter case).
+				for pe in f[p]:
+					if pe.has_groups():
+						continue
 					return pe.append(arg)
 				else:
 					return f.append(p).append(arg)
