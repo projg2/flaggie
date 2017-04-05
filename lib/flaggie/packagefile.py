@@ -19,297 +19,301 @@ from portage.versions import vercmp
 comment_regexp = re.compile(r'\s#.*$')
 
 
-class PackageFileSet(object):
-	class PackageFile(list):
-		class PackageEntry(object):
-			class InvalidPackageEntry(Exception):
-				pass
+class InvalidPackageEntry(Exception):
+	pass
 
-			class PackageFlag(object):
-				def __init__(self, s, group_name=None):
-					if s[0] in ('-', '+'):
-						self._modifier = s[0]
-						self._name = s[1:]
-					else:
-						self._modifier = ''
-						self._name = s
-					self.group_name = group_name
 
-				@property
-				def modifier(self):
-					return self._modifier
+class PackageFlagGroup(object):
+	def __init__(self, name):
+		self.name = name
+		self.flags = []
+		self.modified = False
 
-				@modifier.setter
-				def modifier(self, val):
-					self._modifier = val
+	def append(self, flag):
+		self.flags.append(flag)
+		self.modified = True
 
-				@property
-				def name(self):
-					if self.group_name is not None:
-						return '%s_%s' % (self.group_name.lower(), self._name)
-					else:
-						return self._name
+	def remove(self, flag):
+		self.flags.remove(flag)
+		self.modified = True
 
-				def __lt__(self, other):
-					return self.name < other.name
+	def __iter__(self):
+		for f in self.flags:
+			yield f
 
-				def toString(self):
-					return '%s%s' % (self.modifier, self.name)
-
-				def subToString(self):
-					return '%s%s' % (self.modifier, self._name)
-
-			class PackageFlagGroup(object):
-				def __init__(self, name):
-					self.name = name
-					self.flags = []
-					self.modified = False
-
-				def append(self, flag):
-					self.flags.append(flag)
-					self.modified = True
-
-				def remove(self, flag):
-					self.flags.remove(flag)
-					self.modified = True
-
-				def __iter__(self):
-					for f in self.flags:
-						yield f
-
-				def __lt__(self, other):
-					# always sort after all 'loose' flags
-					if isinstance(other,
-							PackageFileSet.PackageFile.PackageEntry.PackageFlag):
-						return False
-					return self.name < other.name
-
-				def toString(self):
-					return '%s: %s' % (self.name, ' '.join(
-						x.subToString() for x in self.flags))
-
-				def sort(self):
-					newflags = sorted(self.flags)
-					if newflags != self.flags:
-						self.flags = newflags
-						self.modified = True
-
-			def __init__(self, l, whitespace=[]):
-				sl = l.split()
-				if not sl or sl[0].startswith('#'):  # whitespace
-					raise self.InvalidPackageEntry()
-
-				self.whitespace = whitespace
-				self.as_str = l
-				self.modified = False
-				self.package = sl.pop(0)
-				self.flags = []
-				self.flag_groups = []
-
-				group = self.flags
-				group_name = None
-				for x in sl:
-					if x.startswith('#'):
-						break
-					if x.endswith(':'):  # USE_EXPAND group
-						group_name = x[:-1]
-						group = self.PackageFlagGroup(group_name)
-						self.flag_groups.append(group)
-					else:
-						group.append(self.PackageFlag(x, group_name))
-
-				m = comment_regexp.search(l)
-				if m:
-					self.trailing_whitespace = m.group(0) + '\n'
-				else:
-					self.trailing_whitespace = '\n'
-
-			def toString(self):
-				ret = ''.join(self.whitespace)
-				if not self.modified:
-					ret += self.as_str
-				else:
-					ret += '%s %s%s' % (self.package,
-						' '.join(x.toString() for x
-							in itertools.chain(self.flags, self.flag_groups)),
-						self.trailing_whitespace)
-				return ret
-
-			def append(self, flag, group=None):
-				if not isinstance(flag, self.PackageFlag):
-					if group is None:
-						flag = self.PackageFlag(flag)
-					else:
-						assert flag.startswith(group.name.lower() + '_')
-						flag = self.PackageFlag(flag[len(group.name) + 1:], group.name)
-				else:
-					if group is not None:
-						raise NotImplementedError(
-							'Attempting to append pre-filled PackageFlag w/ group!')
-
-				if group is None:
-					group = self.flags
-				group.append(flag)
-				self.modified = True
-				return flag
-
-			def remove(self, flag):
-				for g in self.flag_groups:
-					if flag in g:
-						g.remove(flag)
-						self.modified = True
-						return
-
-				# this will intentionally throw if it does not exist
-				self.flags.remove(flag)
-				self.modified = True
-
-			def sort(self):
-				newflags = sorted(self.flags)
-				if newflags != self.flags:
-					self.flags = newflags
-					self.modified = True
-
-				for fg in self.flag_groups:
-					fg.sort()
-					if fg.modified:
-						self.modified = True
-
-			def __lt__(self, other):
-				return self.package < other.package
-
-			def __iter__(self):
-				""" Iterate over all flags in the entry. """
-				for f in reversed(self.flag_groups):
-					for sf in reversed(f.flags):
-						yield sf
-				for f in reversed(self.flags):
-					yield f
-
-			def __getitem__(self, flag):
-				""" Iterate over occurences of flag in the entry,
-					returning them in the order of occurence. """
-				for f in self:
-					if flag == f.name:
-						yield f
-
-			def __delitem__(self, flag):
-				""" Remove all occurences of a flag. """
-				flags = []
-				for f in self:
-					if flag == f.name:
-						flags.append(f)
-				for f in flags:
-					self.remove(f)
-
-			def find_group_matching(self, flag):
-				for g in self.flag_groups:
-					if flag.startswith(g.name.lower() + '_'):
-						return g
-				return None
-
-			def has_groups(self):
-				return bool(self.flag_groups)
-
-		def __init__(self, path):
-			list.__init__(self)
-			self.path = path
-			# _modified is for when items are removed
-			self._modified = False
-			if not os.path.exists(path):
-				self.trailing_whitespace = []
-				return
-			f = codecs.open(path, 'r', 'utf8')
-
-			ws = []
-			for l in f:
-				try:
-					e = self.PackageEntry(l, ws)
-					ws = []
-				except self.PackageEntry.InvalidPackageEntry:
-					ws.append(l)
-				else:
-					self.append(e)
-
-			self.trailing_whitespace = ws
-			f.close()
-
-		def sort(self):
-			newlist = sorted(self)
-			if newlist != self:
-				self[:] = newlist
-				self.modified = True
-
-		@property
-		def modified(self):
-			if self._modified:
-				return True
-			for e in self:
-				if e.modified:
-					return True
+	def __lt__(self, other):
+		# always sort after all 'loose' flags
+		if isinstance(other, PackageFlag):
 			return False
+		return self.name < other.name
 
-		@modified.setter
-		def modified(self, val):
-			self._modified = val
+	def toString(self):
+		return '%s: %s' % (self.name, ' '.join(
+			x.subToString() for x in self.flags))
 
-		@property
-		def data(self):
-			data = ''
-			for l in self:
-				if not l.modified or l:
-					data += l.toString()
-			data += ''.join(self.trailing_whitespace)
-			return data
+	def sort(self):
+		newflags = sorted(self.flags)
+		if newflags != self.flags:
+			self.flags = newflags
+			self.modified = True
 
-		def write(self):
-			if not self.modified:
+
+class PackageFlag(object):
+	def __init__(self, s, group_name=None):
+		if s[0] in ('-', '+'):
+			self._modifier = s[0]
+			self._name = s[1:]
+		else:
+			self._modifier = ''
+			self._name = s
+		self.group_name = group_name
+
+	@property
+	def modifier(self):
+		return self._modifier
+
+	@modifier.setter
+	def modifier(self, val):
+		self._modifier = val
+
+	@property
+	def name(self):
+		if self.group_name is not None:
+			return '%s_%s' % (self.group_name.lower(), self._name)
+		else:
+			return self._name
+
+	def __lt__(self, other):
+		return self.name < other.name
+
+	def toString(self):
+		return '%s%s' % (self.modifier, self.name)
+
+	def subToString(self):
+		return '%s%s' % (self.modifier, self._name)
+
+
+class PackageEntry(object):
+	def __init__(self, l, whitespace=[]):
+		sl = l.split()
+		if not sl or sl[0].startswith('#'):  # whitespace
+			raise InvalidPackageEntry()
+
+		self.whitespace = whitespace
+		self.as_str = l
+		self.modified = False
+		self.package = sl.pop(0)
+		self.flags = []
+		self.flag_groups = []
+
+		group = self.flags
+		group_name = None
+		for x in sl:
+			if x.startswith('#'):
+				break
+			if x.endswith(':'):  # USE_EXPAND group
+				group_name = x[:-1]
+				group = PackageFlagGroup(group_name)
+				self.flag_groups.append(group)
+			else:
+				group.append(PackageFlag(x, group_name))
+
+		m = comment_regexp.search(l)
+		if m:
+			self.trailing_whitespace = m.group(0) + '\n'
+		else:
+			self.trailing_whitespace = '\n'
+
+	def toString(self):
+		ret = ''.join(self.whitespace)
+		if not self.modified:
+			ret += self.as_str
+		else:
+			ret += '%s %s%s' % (self.package,
+				' '.join(x.toString() for x
+					in itertools.chain(self.flags, self.flag_groups)),
+				self.trailing_whitespace)
+		return ret
+
+	def append(self, flag, group=None):
+		if not isinstance(flag, PackageFlag):
+			if group is None:
+				flag = PackageFlag(flag)
+			else:
+				assert flag.startswith(group.name.lower() + '_')
+				flag = PackageFlag(flag[len(group.name) + 1:], group.name)
+		else:
+			if group is not None:
+				raise NotImplementedError(
+					'Attempting to append pre-filled PackageFlag w/ group!')
+
+		if group is None:
+			group = self.flags
+		group.append(flag)
+		self.modified = True
+		return flag
+
+	def remove(self, flag):
+		for g in self.flag_groups:
+			if flag in g:
+				g.remove(flag)
+				self.modified = True
 				return
 
-			data = self.data
+		# this will intentionally throw if it does not exist
+		self.flags.remove(flag)
+		self.modified = True
 
-			backup = self.path + '~'
-			if not data:
-				try:
-					shutil.move(self.path, backup)
-				except IOError:
-					os.unlink(self.path)
+	def sort(self):
+		newflags = sorted(self.flags)
+		if newflags != self.flags:
+			self.flags = newflags
+			self.modified = True
+
+		for fg in self.flag_groups:
+			fg.sort()
+			if fg.modified:
+				self.modified = True
+
+	def __lt__(self, other):
+		return self.package < other.package
+
+	def __iter__(self):
+		""" Iterate over all flags in the entry. """
+		for f in reversed(self.flag_groups):
+			for sf in reversed(f.flags):
+				yield sf
+		for f in reversed(self.flags):
+			yield f
+
+	def __getitem__(self, flag):
+		""" Iterate over occurences of flag in the entry,
+			returning them in the order of occurence. """
+		for f in self:
+			if flag == f.name:
+				yield f
+
+	def __delitem__(self, flag):
+		""" Remove all occurences of a flag. """
+		flags = []
+		for f in self:
+			if flag == f.name:
+				flags.append(f)
+		for f in flags:
+			self.remove(f)
+
+	def find_group_matching(self, flag):
+		for g in self.flag_groups:
+			if flag.startswith(g.name.lower() + '_'):
+				return g
+		return None
+
+	def has_groups(self):
+		return bool(self.flag_groups)
+
+
+class PackageFile(list):
+	def __init__(self, path):
+		list.__init__(self)
+		self.path = path
+		# _modified is for when items are removed
+		self._modified = False
+		if not os.path.exists(path):
+			self.trailing_whitespace = []
+			return
+		f = codecs.open(path, 'r', 'utf8')
+
+		ws = []
+		for l in f:
+			try:
+				e = PackageEntry(l, ws)
+				ws = []
+			except InvalidPackageEntry:
+				ws.append(l)
 			else:
-				if not os.path.isdir(os.path.dirname(self.path)):
-					try:
-						os.makedirs(os.path.dirname(self.path))
-					except Exception:
-						pass
-				f = tempfile.NamedTemporaryFile('wb', delete=False,
-						dir=os.path.dirname(os.path.realpath(self.path)))
+				self.append(e)
 
-				tmpname = f.name
+		self.trailing_whitespace = ws
+		f.close()
+
+	def sort(self):
+		newlist = sorted(self)
+		if newlist != self:
+			self[:] = newlist
+			self.modified = True
+
+	@property
+	def modified(self):
+		if self._modified:
+			return True
+		for e in self:
+			if e.modified:
+				return True
+		return False
+
+	@modified.setter
+	def modified(self, val):
+		self._modified = val
+
+	@property
+	def data(self):
+		data = ''
+		for l in self:
+			if not l.modified or l:
+				data += l.toString()
+		data += ''.join(self.trailing_whitespace)
+		return data
+
+	def write(self):
+		if not self.modified:
+			return
+
+		data = self.data
+
+		backup = self.path + '~'
+		if not data:
+			try:
+				shutil.move(self.path, backup)
+			except IOError:
+				os.unlink(self.path)
+		else:
+			if not os.path.isdir(os.path.dirname(self.path)):
+				try:
+					os.makedirs(os.path.dirname(self.path))
+				except Exception:
+					pass
+			f = tempfile.NamedTemporaryFile('wb', delete=False,
+					dir=os.path.dirname(os.path.realpath(self.path)))
+
+			tmpname = f.name
+
+			try:
+				f = codecs.getwriter('utf8')(f)
+				f.write(data)
+				f.close()
 
 				try:
-					f = codecs.getwriter('utf8')(f)
-					f.write(data)
-					f.close()
+					shutil.copy2(self.path, backup)
+				except IOError:
+					backup = None
+				shutil.move(tmpname, self.path)
+			except Exception:
+				os.unlink(tmpname)
+				raise
 
-					try:
-						shutil.copy2(self.path, backup)
-					except IOError:
-						backup = None
-					shutil.move(tmpname, self.path)
-				except Exception:
-					os.unlink(tmpname)
-					raise
+			if backup is not None:
+				shutil.copymode(backup, self.path)
+			else:
+				umask = os.umask(0o22)
+				os.umask(umask)
+				os.chmod(self.path, 0o666 & ~umask)
 
-				if backup is not None:
-					shutil.copymode(backup, self.path)
-				else:
-					umask = os.umask(0o22)
-					os.umask(umask)
-					os.chmod(self.path, 0o666 & ~umask)
+		for e in self:
+			e.modified = False
+		self.modified = False
 
-			for e in self:
-				e.modified = False
-			self.modified = False
 
+class PackageFileSet(object):
 	def __init__(self, path):
 		if not isinstance(path, tuple) and not isinstance(path, list):
 			path = (path,)
@@ -366,7 +370,7 @@ class PackageFileSet(object):
 				files = [fn]
 
 			for path in files:
-				self._files.append(self.PackageFile(path))
+				self._files.append(PackageFile(path))
 
 	def write(self):
 		if not self._files:
@@ -379,8 +383,8 @@ class PackageFileSet(object):
 
 	def append(self, pkg):
 		f = self.files[-1]
-		if not isinstance(pkg, f.PackageEntry):
-			pkg = f.PackageEntry(pkg)
+		if not isinstance(pkg, PackageEntry):
+			pkg = PackageEntry(pkg)
 		pkg.modified = True
 		f.append(pkg)
 		return pkg
