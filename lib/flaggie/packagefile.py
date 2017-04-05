@@ -141,7 +141,7 @@ class PackageFileSet(object):
 						flag = self.PackageFlag(flag)
 					else:
 						assert flag.startswith(group.name.lower() + '_')
-						flag = self.PackageFlag(flag[len(group.name)+1:], group.name)
+						flag = self.PackageFlag(flag[len(group.name) + 1:], group.name)
 				else:
 					if group is not None:
 						raise NotImplementedError(
