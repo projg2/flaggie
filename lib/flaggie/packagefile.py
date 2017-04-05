@@ -4,6 +4,7 @@
 # Released under the terms of the 2-clause BSD license.
 
 import codecs
+import itertools
 import os
 import os.path
 import re
@@ -25,13 +26,14 @@ class PackageFileSet(object):
 				pass
 
 			class PackageFlag(object):
-				def __init__(self, s):
+				def __init__(self, s, group_name=None):
 					if s[0] in ('-', '+'):
 						self._modifier = s[0]
-						self.name = s[1:]
+						self._name = s[1:]
 					else:
 						self._modifier = ''
-						self.name = s
+						self._name = s
+					self.group_name = group_name
 
 				@property
 				def modifier(self):
@@ -41,11 +43,55 @@ class PackageFileSet(object):
 				def modifier(self, val):
 					self._modifier = val
 
+				@property
+				def name(self):
+					if self.group_name is not None:
+						return '%s_%s' % (self.group_name.lower(), self._name)
+					else:
+						return self._name
+
 				def __lt__(self, other):
 					return self.name < other.name
 
 				def toString(self):
 					return '%s%s' % (self.modifier, self.name)
+
+				def subToString(self):
+					return '%s%s' % (self.modifier, self._name)
+
+			class PackageFlagGroup(object):
+				def __init__(self, name):
+					self.name = name
+					self.flags = []
+					self.modified = False
+
+				def append(self, flag):
+					self.flags.append(flag)
+					self.modified = True
+
+				def remove(self, flag):
+					self.flags.remove(flag)
+					self.modified = True
+
+				def __iter__(self):
+					for f in self.flags:
+						yield f
+
+				def __lt__(self, other):
+					# always sort after all 'loose' flags
+					if isinstance(other, PackageFlag):
+						return False
+					return self.name < other.name
+
+				def toString(self):
+					return '%s: %s' % (self.name, ' '.join(
+						x.subToString() for x in self.flags))
+
+				def sort(self):
+					newflags = sorted(self.flags)
+					if newflags != self.flags:
+						self.flags = newflags
+						self.modified = True
 
 			def __init__(self, l, whitespace=[]):
 				sl = l.split()
@@ -57,11 +103,19 @@ class PackageFileSet(object):
 				self.modified = False
 				self.package = sl.pop(0)
 				self.flags = []
+				self.flag_groups = []
 
+				group = self.flags
+				group_name = None
 				for x in sl:
 					if x.startswith('#'):
 						break
-					self.flags.append(self.PackageFlag(x))
+					if x.endswith(':'):  # USE_EXPAND group
+						group_name = x[:-1]
+						group = self.PackageFlagGroup(group_name)
+						self.flag_groups.append(group)
+					else:
+						group.append(self.PackageFlag(x, group_name))
 
 				m = comment_regexp.search(l)
 				if m:
@@ -75,11 +129,13 @@ class PackageFileSet(object):
 					ret += self.as_str
 				else:
 					ret += '%s %s%s' % (self.package,
-						' '.join(x.toString() for x in self.flags),
+						' '.join(x.toString() for x
+							in itertools.chain(self.flags, self.flag_groups)),
 						self.trailing_whitespace)
 				return ret
 
 			def append(self, flag):
+				# TODO: use groups as appropriate
 				if not isinstance(flag, self.PackageFlag):
 					flag = self.PackageFlag(flag)
 				self.flags.append(flag)
@@ -87,6 +143,13 @@ class PackageFileSet(object):
 				return flag
 
 			def remove(self, flag):
+				for g in self.flag_groups:
+					if flag in g:
+						g.remove(flag)
+						self.modified = True
+						return
+
+				# this will intentionally throw if it does not exist
 				self.flags.remove(flag)
 				self.modified = True
 
@@ -96,11 +159,19 @@ class PackageFileSet(object):
 					self.flags = newflags
 					self.modified = True
 
+				for fg in self.flag_groups:
+					fg.sort()
+					if fg.modified:
+						self.modified = True
+
 			def __lt__(self, other):
 				return self.package < other.package
 
 			def __iter__(self):
 				""" Iterate over all flags in the entry. """
+				for f in reversed(self.flag_groups):
+					for sf in reversed(f.flags):
+						yield sf
 				for f in reversed(self.flags):
 					yield f
 
