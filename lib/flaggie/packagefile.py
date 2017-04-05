@@ -79,7 +79,8 @@ class PackageFileSet(object):
 
 				def __lt__(self, other):
 					# always sort after all 'loose' flags
-					if isinstance(other, PackageFlag):
+					if isinstance(other,
+							PackageFileSet.PackageFile.PackageEntry.PackageFlag):
 						return False
 					return self.name < other.name
 
