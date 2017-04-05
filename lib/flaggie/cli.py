@@ -19,7 +19,6 @@ from .action import Action, ActionSet, ParserError, ParserWarning
 from .cache import Caches
 from .cleanup import (DropIneffective, DropUnmatchedPkgs,
 		DropUnmatchedFlags, SortEntries, SortFlags, MigrateFiles)
-from .makeconf import MakeConf
 from .packagefile import PackageFiles
 
 
@@ -200,16 +199,11 @@ format as taken by emerge).\n''' % os.path.basename(argv[0]))
 
 	confroot = porttree.settings['PORTAGE_CONFIGROOT']
 	usercpath = os.path.join(confroot, 'etc', 'portage')
-	mkconf = MakeConf(
-		(os.path.join(confroot, 'etc', 'make.conf'),
-			os.path.join(usercpath, 'make.conf')),
-		porttree, cache)
-	pfiles = PackageFiles(usercpath, porttree, mkconf)
+	pfiles = PackageFiles(usercpath, porttree)
 
 	for actset in act:
 		actset(pfiles)
 
 	pfiles.write()
-	mkconf.write()
 
 	return 0

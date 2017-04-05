@@ -392,19 +392,11 @@ class PackageFileSet(object):
 		""" Get package entries for a package in order of effectiveness
 			(the last declarations in the file are effective, and those
 			will be returned first).
-
-			If pkg is None and PackageFileSet has self.makeconfvar set,
-			calling self[None] will return the MakeConfVariable instance.
 		"""
 
 		if pkg is None:
-			if self.makeconfvar is not None:
-				for e in self.makeconfvar:
-					yield e
-			else:
-				raise KeyError(
-					'PackageFileSet[None] requested but no MakeConfVariable assigned.')
-			return
+			raise NotImplementedError(
+				'Global var manipulations temporarily removed')
 
 		for e in self:
 			if pkg == e.package:
@@ -420,8 +412,6 @@ class PackageFileSet(object):
 			for e in entries:
 				f.remove(e)
 			f.modified = True
-
-	makeconfvar = None
 
 
 class PackageKeywordsFileSet(PackageFileSet):
@@ -476,7 +466,7 @@ class PackageEnvFileSet(PackageFileSet):
 
 
 class PackageFiles(object):
-	def __init__(self, basedir, dbapi, mkconf=None):
+	def __init__(self, basedir, dbapi):
 		def p(x):
 			return os.path.join(basedir, x)
 
@@ -490,10 +480,6 @@ class PackageFiles(object):
 			'lic': PackageFileSet(p('package.license')),
 			'env': PackageEnvFileSet(p('package.env'))
 		}
-
-		if mkconf:
-			for k, f in self.files.items():
-				f.makeconfvar = mkconf[k]
 
 	def __getitem__(self, k):
 		return self.files[k]
