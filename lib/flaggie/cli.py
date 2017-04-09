@@ -15,7 +15,7 @@ from portage.dep import Atom
 from portage.exception import AmbiguousPackageName, InvalidAtom
 
 from . import PV
-from .action import Action, ActionSet, ParserError, ParserWarning
+from .action import Action, ActionSet, NotAnAction, ParserError, ParserWarning
 from .cache import Caches
 from .cleanup import (DropIneffective, DropUnmatchedPkgs,
 		DropUnmatchedFlags, SortEntries, SortFlags, MigrateFiles)
@@ -33,7 +33,7 @@ def parse_actions(args, dbapi, cache, quiet=False, strict=False,
 		try:
 			try:
 				act = Action(a, output=dataout)
-			except Action.NotAnAction:
+			except NotAnAction:
 				try:
 					atom = dep_expand(a, mydb=dbapi, settings=dbapi.settings)
 					if atom.startswith('null/'):

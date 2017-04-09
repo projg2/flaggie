@@ -218,6 +218,10 @@ class OutputAction(BaseAction):
 				print(' '.join(l))
 
 
+class NotAnAction(Exception):
+	pass
+
+
 class Action(object):
 	mapping = {
 		'+': EnableAction,
@@ -227,16 +231,13 @@ class Action(object):
 	}
 	order = (EnableAction, DisableAction, ResetAction, OutputAction)
 
-	class NotAnAction(Exception):
-		pass
-
 	def __new__(cls, *args, **kwargs):
 		a = args[0]
 		if a[0] in cls.mapping:
 			newargs = (a[1:], a[0]) + args[1:]
 			return cls.mapping[a[0]](*newargs, **kwargs)
 		else:
-			raise cls.NotAnAction
+			raise NotAnAction()
 
 
 class ActionSet(list):
