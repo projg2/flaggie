@@ -5,7 +5,7 @@
 
 from portage.exception import AmbiguousPackageName, InvalidAtom
 
-from .action import BaseAction
+from flaggie.action import BaseAction
 
 
 class BaseCleanupAction(BaseAction):
