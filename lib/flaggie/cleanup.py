@@ -5,10 +5,10 @@
 
 from portage.exception import AmbiguousPackageName, InvalidAtom
 
-from .action import Action
+from .action import BaseAction
 
 
-class BaseCleanupAction(Action.BaseAction):
+class BaseCleanupAction(BaseAction):
 	def __init__(self, dbapi):
 		self._dbapi = dbapi
 
