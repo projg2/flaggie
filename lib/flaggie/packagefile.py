@@ -4,6 +4,7 @@
 # Released under the terms of the 2-clause BSD license.
 
 import codecs
+import errno
 import itertools
 import os
 import os.path
@@ -273,9 +274,10 @@ class PackageFile(list):
 		backup = self.path + '~'
 		if not data:
 			try:
-				shutil.move(self.path, backup)
-			except IOError:
-				os.unlink(self.path)
+				os.rename(self.path, backup)
+			except OSError as e:
+				if e.errno != errno.ENOENT:
+					raise
 		else:
 			if not os.path.isdir(os.path.dirname(self.path)):
 				try:
@@ -293,8 +295,10 @@ class PackageFile(list):
 				f.close()
 
 				try:
-					shutil.copy2(self.path, backup)
-				except IOError:
+					os.rename(self.path, backup)
+				except OSError as e:
+					if e.errno != errno.ENOENT:
+						raise
 					backup = None
 				shutil.move(tmpname, self.path)
 			except Exception:
