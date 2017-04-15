@@ -295,6 +295,7 @@ class PackageFile(list):
 				f.close()
 
 				try:
+					backup_stat = os.stat(self.path)
 					os.rename(self.path, backup)
 				except OSError as e:
 					if e.errno != errno.ENOENT:
@@ -306,8 +307,11 @@ class PackageFile(list):
 				raise
 
 			if backup is not None:
-				shutil.copymode(backup, self.path)
+				# TODO: ACLs?
+				os.chmod(self.path, backup_stat.st_mode)
+				os.chown(self.path, backup_stat.st_uid, backup_stat.st_gid)
 			else:
+				# enforce user's umask (tempfile forces 0o77)
 				umask = os.umask(0o22)
 				os.umask(umask)
 				os.chmod(self.path, 0o666 & ~umask)
