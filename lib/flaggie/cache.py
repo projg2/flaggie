@@ -14,7 +14,7 @@ from portage.versions import best
 def grab_use_desc(path, prefix=''):
 	flags = {}
 	try:
-		f = open(path, 'r')
+		f = open(path, 'r', encoding="utf-8")
 	except IOError:
 		pass
 	else:
