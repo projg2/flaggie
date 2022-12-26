@@ -1,0 +1,48 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "flaggie"
+authors = [{name = "Michał Górny", email = "mgorny@gentoo.org"}]
+license = {file = "COPYING"}
+classifiers = ["License :: OSI Approved :: MIT License"]
+dynamic = ["version", "description"]
+requires-python = ">=3.9"
+dependencies = [
+]
+
+[project.optional-dependencies]
+pretty-log = ["rich"]
+test = [
+    "pytest",
+]
+
+[project.scripts]
+pycargoebuild = "flaggie.__main__:entry_point"
+
+[project.urls]
+Homepage = "https://github.com/projg2/flaggie/"
+
+[tool.mypy]
+disallow_untyped_defs = true
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = [
+    "test.*",
+]
+# requiring explicit types for all test methods would be cumbersome
+disallow_untyped_defs = false
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "rich.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = [
+    "test",
+]
