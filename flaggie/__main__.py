@@ -9,7 +9,14 @@ import sys
 
 def main(prog_name: str, *argv: str) -> int:
     argp = argparse.ArgumentParser(prog=os.path.basename(prog_name))
+    argp.add_argument("--debug",
+                      action="store_true",
+                      help="Enable debug output")
     args = argp.parse_args(argv)
+
+    if args.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
+
     return 0
 
 
