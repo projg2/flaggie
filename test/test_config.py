@@ -14,6 +14,11 @@ from flaggie.config import TokenType, find_config_files
      (["package.use/a/foo.conf", "package.use/b/foo.conf"], None),
      # even though "a+" sorts before "a/", directories take precedence
      (["package.use/a/foo.conf", "package.use/a+"], None),
+     # hidden and backup files should be ignored
+     (["package.use/.foo", "package.use/foo.conf", "package.use/foo.conf~"],
+      ["package.use/foo.conf"]),
+     # corner case: package.use yielding no valid files
+     (["package.use/.foo"], ["package.use/99local.conf"]),
      ])
 def test_find_config(tmp_path, layout, expected):
     confdir = tmp_path / "etc/portage"
