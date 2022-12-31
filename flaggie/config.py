@@ -19,8 +19,11 @@ CONFIG_FILENAMES = {
 
 def find_config_files(config_root: Path, token_type: TokenType) -> list[Path]:
     """
-    Find all configuration files of given type and return a list of paths
-    sorted in the same order as they are read by Portage.
+    Find all configuration files of given type
+
+    Find all configuration files of type `token_type` inside root
+    `config_root` (usually "/").  Returns a list of paths sorted in the same
+    order as they are read by Portage.
     """
 
     path = config_root / "etc/portage" / CONFIG_FILENAMES[token_type]
