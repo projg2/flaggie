@@ -98,3 +98,21 @@ def parse_config_file(lines: list[str]
             flat_flags=groups[0][1],
             grouped_flags=groups[1:],
             comment=comment_m.group(1) if comment_m is not None else None)
+
+
+def dump_config_line(line: ConfigLine) -> str:
+    """
+    Convert ConfigLine back into str
+    """
+
+    def inner() -> typing.Generator[str, None, None]:
+        if line.package is not None:
+            yield line.package
+        yield from line.flat_flags
+        for group, flags in line.grouped_flags:
+            yield f"{group}:"
+            yield from flags
+        if line.comment is not None:
+            yield f"#{line.comment}"
+
+    return " ".join(inner()) + "\n"

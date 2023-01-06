@@ -4,7 +4,7 @@
 import pytest
 
 from flaggie.config import (TokenType, ConfigLine, find_config_files,
-                            parse_config_file,
+                            parse_config_file, dump_config_line,
                             )
 
 
@@ -35,18 +35,19 @@ def test_find_config(tmp_path, layout, expected):
                              ) == [confdir / x for x in expected]
 
 
-def test_parse_config_file():
-    config = [
-        "#initial comment\n",
-        "  # comment with whitespace\n",
-        "\n",
-        "*/* foo bar baz # global flags\n",
-        "*/* FROBNICATE_TARGETS: frob1 frob2\n",
-        "  dev-foo/bar weird#flag other # actual comment # more comment\n",
-        "dev-foo/baz mixed LONG: too EMPTY:\n"
-    ]
+TEST_CONFIG_FILE = [
+    "#initial comment\n",
+    "  # comment with whitespace\n",
+    "\n",
+    "*/* foo bar baz # global flags\n",
+    "*/* FROBNICATE_TARGETS: frob1 frob2\n",
+    "  dev-foo/bar weird#flag other # actual comment # more comment\n",
+    "dev-foo/baz mixed LONG: too EMPTY:\n"
+]
 
-    assert list(parse_config_file(config)) == [
+
+def test_parse_config_file():
+    assert list(parse_config_file(TEST_CONFIG_FILE)) == [
         ConfigLine(comment="initial comment"),
         ConfigLine(comment=" comment with whitespace"),
         ConfigLine(),
@@ -58,3 +59,8 @@ def test_parse_config_file():
         ConfigLine("dev-foo/baz", ["mixed"],
                    [("LONG", ["too"]), ("EMPTY", [])]),
     ]
+
+
+def test_dump_config_line():
+    assert [dump_config_line(x) for x in parse_config_file(TEST_CONFIG_FILE)
+            ] == [x.lstrip(" ") for x in TEST_CONFIG_FILE]
