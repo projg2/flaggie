@@ -2,6 +2,7 @@
 # Released under the terms of the MIT license
 
 import enum
+import logging
 import os
 import re
 import typing
@@ -138,13 +139,14 @@ def dump_config_line(line: ConfigLine) -> str:
     return " ".join(inner()) + "\n"
 
 
-def read_config_files(paths: list[Path]
+def read_config_files(paths: typing.Iterable[Path]
                       ) -> typing.Generator[ConfigFile, None, None]:
     """
     Read and parse data from config files passed in.
     """
 
     for path in paths:
+        logging.debug(f"Loading config file {path}")
         with open(path, "r") as f:
             raw_lines = f.readlines()
         yield ConfigFile(path, raw_lines, list(parse_config_file(raw_lines)))
