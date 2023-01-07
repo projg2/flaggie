@@ -43,6 +43,7 @@ module = [
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
+addopts = "--log-level=debug"
 testpaths = [
     "test",
 ]
