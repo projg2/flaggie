@@ -8,7 +8,9 @@ import sys
 
 from pathlib import Path
 
-from flaggie.config import TokenType, find_config_files, read_config_files
+from flaggie.config import (TokenType, find_config_files, read_config_files,
+                            save_config_files,
+                            )
 
 
 def main(prog_name: str, *argv: str) -> int:
@@ -26,8 +28,8 @@ def main(prog_name: str, *argv: str) -> int:
         k: list(read_config_files(find_config_files(config_root, k)))
         for k in TokenType}
 
-    # silence pyflakes
-    _ = all_configs
+    for config_files in all_configs.values():
+        save_config_files(config_files)
 
     return 0
 

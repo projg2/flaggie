@@ -5,6 +5,8 @@ import enum
 import logging
 import os
 import re
+import shutil
+import tempfile
 import typing
 
 from pathlib import Path
@@ -151,3 +153,34 @@ def read_config_files(paths: typing.Iterable[Path]
         with open(path, "r") as f:
             raw_lines = f.readlines()
         yield ConfigFile(path, raw_lines, list(parse_config_file(raw_lines)))
+
+
+def save_config_files(config_files: typing.Iterable[ConfigFile]) -> None:
+    """
+    Update raw data in modified config files and write them back.
+    """
+
+    for config_file in config_files:
+        if not config_file.modified_lines:
+            continue
+
+        logging.debug(f"Writing config file {config_file.path} "
+                      f"({len(config_file.modified_lines)} lines modified)")
+
+        for line_no in config_file.modified_lines:
+            config_file.raw_lines[line_no] = (
+                dump_config_line(config_file.parsed_lines[line_no]))
+        config_file.modified_lines.clear()
+
+        try:
+            with tempfile.NamedTemporaryFile(mode="w",
+                                             dir=config_file.path.parent,
+                                             delete=False) as f:
+                # typeshed is missing fd support in shutil.copymode()
+                # https://github.com/python/typeshed/issues/9288
+                shutil.copymode(config_file.path, f.fileno())  # type: ignore
+                f.write("".join(config_file.raw_lines))
+        except Exception:
+            Path(f.name).unlink()
+            raise
+        Path(f.name).rename(config_file.path)

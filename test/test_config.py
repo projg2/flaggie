@@ -1,11 +1,14 @@
 # (c) 2022-2023 Michał Górny
 # Released under the terms of the MIT license
 
+import os
+import stat
+
 import pytest
 
 from flaggie.config import (TokenType, ConfigLine, find_config_files,
                             parse_config_file, dump_config_line,
-                            ConfigFile, read_config_files,
+                            ConfigFile, read_config_files, save_config_files,
                             )
 
 
@@ -79,3 +82,30 @@ def test_read_config_files(tmp_path):
                    PARSED_TEST_CONFIG_FILE),
         ConfigFile(tmp_path / "config2", [], []),
     ]
+
+
+def test_save_config_files_no_modification(tmp_path):
+    config_files = [
+        ConfigFile(tmp_path / "config", TEST_CONFIG_FILE,
+                   PARSED_TEST_CONFIG_FILE),
+        ConfigFile(tmp_path / "config2", [], []),
+    ]
+
+    save_config_files(config_files)
+    assert all(not config_file.path.exists() for config_file in config_files)
+
+
+def test_save_config_files(tmp_path):
+    config_files = [
+        ConfigFile(tmp_path / "config", TEST_CONFIG_FILE,
+                   PARSED_TEST_CONFIG_FILE, {1, 5}),
+        ConfigFile(tmp_path / "config2", [], []),
+    ]
+
+    config_files[0].path.touch(mode=0o400)
+    save_config_files(config_files)
+
+    assert config_files[0].path.read_text() == (
+        "".join(x.lstrip(" ") for x in TEST_CONFIG_FILE))
+    assert stat.S_IMODE(os.stat(config_files[0].path).st_mode) == 0o400
+    assert not config_files[1].path.exists()
