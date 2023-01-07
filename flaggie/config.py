@@ -11,6 +11,11 @@ from pathlib import Path
 
 class TokenType(enum.IntEnum):
     USE_FLAG = enum.auto()
+    KEYWORD = enum.auto()
+    LICENSE = enum.auto()
+    PROPERTY = enum.auto()
+    RESTRICT = enum.auto()
+    ENV_FILE = enum.auto()
 
 
 class ConfigLine(typing.NamedTuple):
@@ -28,6 +33,11 @@ class ConfigFile(typing.NamedTuple):
 
 CONFIG_FILENAMES = {
     TokenType.USE_FLAG: "package.use",
+    TokenType.KEYWORD: "package.accept_keywords",
+    TokenType.LICENSE: "package.license",
+    TokenType.PROPERTY: "package.properties",
+    TokenType.RESTRICT: "package.accept_restrict",
+    TokenType.ENV_FILE: "package.env",
 }
 
 COMMENT_RE = re.compile(r"(?<!\S)#(.*)$")
