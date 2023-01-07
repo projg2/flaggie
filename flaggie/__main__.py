@@ -6,6 +6,10 @@ import logging
 import os.path
 import sys
 
+from pathlib import Path
+
+from flaggie.config import TokenType, find_config_files, read_config_files
+
 
 def main(prog_name: str, *argv: str) -> int:
     argp = argparse.ArgumentParser(prog=os.path.basename(prog_name))
@@ -16,6 +20,14 @@ def main(prog_name: str, *argv: str) -> int:
 
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
+
+    config_root = Path("/")  # TODO
+    all_configs = {
+        k: list(read_config_files(find_config_files(config_root, k)))
+        for k in TokenType}
+
+    # silence pyflakes
+    _ = all_configs
 
     return 0
 
