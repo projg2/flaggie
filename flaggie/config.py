@@ -20,6 +20,12 @@ class ConfigLine(typing.NamedTuple):
     comment: typing.Optional[str] = None
 
 
+class ConfigFile(typing.NamedTuple):
+    path: Path
+    raw_lines: list[str]
+    parsed_lines: list[ConfigLine]
+
+
 CONFIG_FILENAMES = {
     TokenType.USE_FLAG: "package.use",
 }
@@ -116,3 +122,15 @@ def dump_config_line(line: ConfigLine) -> str:
             yield f"#{line.comment}"
 
     return " ".join(inner()) + "\n"
+
+
+def read_config_files(paths: list[Path]
+                      ) -> typing.Generator[ConfigFile, None, None]:
+    """
+    Read and parse data from config files passed in.
+    """
+
+    for path in paths:
+        with open(path, "r") as f:
+            raw_lines = f.readlines()
+        yield ConfigFile(path, raw_lines, list(parse_config_file(raw_lines)))

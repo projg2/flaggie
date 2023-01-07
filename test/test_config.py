@@ -5,6 +5,7 @@ import pytest
 
 from flaggie.config import (TokenType, ConfigLine, find_config_files,
                             parse_config_file, dump_config_line,
+                            ConfigFile, read_config_files,
                             )
 
 
@@ -45,22 +46,36 @@ TEST_CONFIG_FILE = [
     "dev-foo/baz mixed LONG: too EMPTY:\n"
 ]
 
+PARSED_TEST_CONFIG_FILE = [
+    ConfigLine(comment="initial comment"),
+    ConfigLine(comment=" comment with whitespace"),
+    ConfigLine(),
+    ConfigLine("*/*", ["foo", "bar", "baz"], [], " global flags"),
+    ConfigLine("*/*", [], [("FROBNICATE_TARGETS", ["frob1", "frob2"])]),
+    ConfigLine("dev-foo/bar", ["weird#flag", "other"], [],
+               " actual comment # more comment"),
+    ConfigLine("dev-foo/baz", ["mixed"], [("LONG", ["too"]), ("EMPTY", [])]),
+]
+
 
 def test_parse_config_file():
-    assert list(parse_config_file(TEST_CONFIG_FILE)) == [
-        ConfigLine(comment="initial comment"),
-        ConfigLine(comment=" comment with whitespace"),
-        ConfigLine(),
-        ConfigLine("*/*", ["foo", "bar", "baz"], [], " global flags"),
-        ConfigLine("*/*",
-                   grouped_flags=[("FROBNICATE_TARGETS", ["frob1", "frob2"])]),
-        ConfigLine("dev-foo/bar", ["weird#flag", "other"], [],
-                   " actual comment # more comment"),
-        ConfigLine("dev-foo/baz", ["mixed"],
-                   [("LONG", ["too"]), ("EMPTY", [])]),
-    ]
+    assert list(parse_config_file(TEST_CONFIG_FILE)) == PARSED_TEST_CONFIG_FILE
 
 
 def test_dump_config_line():
     assert [dump_config_line(x) for x in parse_config_file(TEST_CONFIG_FILE)
             ] == [x.lstrip(" ") for x in TEST_CONFIG_FILE]
+
+
+def test_read_config_files(tmp_path):
+    with open(tmp_path / "config", "w") as f:
+        f.write("".join(TEST_CONFIG_FILE))
+    with open(tmp_path / "config2", "w") as f:
+        pass
+
+    assert list(read_config_files([tmp_path / "config", tmp_path / "config2"])
+                ) == [
+        ConfigFile(tmp_path / "config", TEST_CONFIG_FILE,
+                   PARSED_TEST_CONFIG_FILE),
+        ConfigFile(tmp_path / "config2", [], []),
+    ]
