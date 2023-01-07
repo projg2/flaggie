@@ -21,7 +21,7 @@ def mangle_flag(config_files: list[ConfigFile],
 
     def try_inplace() -> bool:
         for config_file in reversed(config_files):
-            for line_no, line in enumerate(reversed(config_file.parsed_lines)):
+            for rev_no, line in enumerate(reversed(config_file.parsed_lines)):
                 if line.package is None:
                     continue
 
@@ -45,15 +45,18 @@ def mangle_flag(config_files: list[ConfigFile],
                     # FIXME: package files only support '*' after '_'
                     # (or in group)
                     if fnmatch.fnmatch(name, line_flag):
+                        # 1-based
+                        line_no = len(config_file.parsed_lines) - rev_no
                         debug_common = (
-                            f"Match found: {config_file.path}, "
-                            f"line {len(config_file.parsed_lines) - line_no}, "
+                            f"Match found: {config_file.path}:{line_no} "
                             f"{line.package} {line.flat_flags[index]}")
                         # if this was an exact match, we can mangle it in place
                         if line.package == package and line_flag == name:
                             logging.debug(f"{debug_common}, updating in place")
                             line.flat_flags[index] = (
                                 name if new_state else f"-{name}")
+                            # 0-based
+                            config_file.modified_lines.add(line_no - 1)
                             return True
                         logging.debug(
                             f"{debug_common}, cannot update in place")

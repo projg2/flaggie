@@ -21,11 +21,14 @@ def test_toggle_flag(old, new):
                          "",
                          f"dev-foo/foo {old} bar",
                          "dev-foo/bar foo",
+                         "dev-foo/foo baz",
                          ])
     mangle_flag(config, "dev-foo/foo", None, "foo", new)
+    assert config[0].modified_lines == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
         ConfigLine(),
         ConfigLine("dev-foo/foo", ["foo" if new else "-foo", "bar"]),
         ConfigLine("dev-foo/bar", ["foo"]),
+        ConfigLine("dev-foo/foo", ["baz"]),
     ]

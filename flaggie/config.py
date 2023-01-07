@@ -30,6 +30,7 @@ class ConfigFile(typing.NamedTuple):
     path: Path
     raw_lines: list[str]
     parsed_lines: list[ConfigLine]
+    modified_lines: set[int] = set()
 
 
 CONFIG_FILENAMES = {
