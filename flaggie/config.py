@@ -71,13 +71,17 @@ def find_config_files(config_root: Path, token_type: TokenType) -> list[Path]:
         all_files = sorted(_get_all_paths_recursively(path))
         if all_files:
             return all_files
-        return [path / "99local.conf"]
+        path /= "99local.conf"
+        path.touch()
+        return [path]
 
     # if it does not exist yet, create a new directory and put a `local.conf`
     # in there
     if not path.exists():
         path.mkdir(parents=True)
-        return [path / "99local.conf"]
+        path /= "99local.conf"
+        path.touch()
+        return [path]
 
     # otherwise (presumably it's a file), use the path directly
     return [path]
