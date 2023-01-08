@@ -32,6 +32,7 @@ def match_packages(config_files: list[ConfigFile],
             if exact_match:
                 if line.package == package:
                     continue
+            # FIXME: fnmatch() is more permissive than package.* files
             elif not fnmatch.fnmatch(package, line.package):
                 continue
 
