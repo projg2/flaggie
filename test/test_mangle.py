@@ -5,8 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from flaggie.config import ConfigFile, ConfigLine, parse_config_file
+from flaggie.config import ConfigFile, parse_config_file
 from flaggie.mangle import mangle_flag
+
+from test.test_config import CL
 
 
 def get_config(raw_data: list[str]) -> list[ConfigFile]:
@@ -26,11 +28,11 @@ def test_toggle_flag(old, new):
     mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
     assert config[0].modified_lines == {2}
     assert config[0].parsed_lines == [
-        ConfigLine("*/*", ["foo"]),
-        ConfigLine(),
-        ConfigLine("dev-foo/foo", [new, "bar"]),
-        ConfigLine("dev-foo/bar", ["foo"]),
-        ConfigLine("dev-foo/foo", ["baz"]),
+        CL("*/*", ["foo"]),
+        CL(),
+        CL("dev-foo/foo", [new, "bar"]),
+        CL("dev-foo/bar", ["foo"]),
+        CL("dev-foo/foo", ["baz"]),
     ]
 
 
@@ -45,11 +47,11 @@ def test_toggle_flag_append(new):
     mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
     assert config[0].modified_lines == {4}
     assert config[0].parsed_lines == [
-        ConfigLine("*/*", ["foo"]),
-        ConfigLine(),
-        ConfigLine("dev-foo/foo", ["bar"]),
-        ConfigLine("dev-foo/bar", ["foo"]),
-        ConfigLine("dev-foo/foo", ["baz", new]),
+        CL("*/*", ["foo"]),
+        CL(),
+        CL("dev-foo/foo", ["bar"]),
+        CL("dev-foo/bar", ["foo"]),
+        CL("dev-foo/foo", ["baz", new]),
     ]
 
 
@@ -61,9 +63,9 @@ def test_toggle_flag_new_entry(new):
     mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
     assert config[0].modified_lines == {2}
     assert config[0].parsed_lines == [
-        ConfigLine("*/*", ["foo"]),
-        ConfigLine("dev-foo/bar", ["foo"]),
-        ConfigLine("dev-foo/foo", [new]),
+        CL("*/*", ["foo"]),
+        CL("dev-foo/bar", ["foo"]),
+        CL("dev-foo/foo", [new]),
     ]
 
 
@@ -76,10 +78,10 @@ def test_toggle_flag_new_entry_because_of_group(new):
     mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
     assert config[0].modified_lines == {3}
     assert config[0].parsed_lines == [
-        ConfigLine("*/*", ["foo"]),
-        ConfigLine("dev-foo/bar", ["foo"]),
-        ConfigLine("dev-foo/foo", [], [("GROUP", ["baz"])]),
-        ConfigLine("dev-foo/foo", [new]),
+        CL("*/*", ["foo"]),
+        CL("dev-foo/bar", ["foo"]),
+        CL("dev-foo/foo", [], [("GROUP", ["baz"])]),
+        CL("dev-foo/foo", [new]),
     ]
 
 
@@ -95,11 +97,11 @@ def test_toggle_flag_in_group(old, new):
     mangle_flag(config, "dev-foo/foo", "group", "foo", not new.startswith("-"))
     assert config[0].modified_lines == {2}
     assert config[0].parsed_lines == [
-        ConfigLine("*/*", ["foo"]),
-        ConfigLine(),
-        ConfigLine("dev-foo/foo", [new, "group_bar"]),
-        ConfigLine("dev-foo/bar", ["foo"]),
-        ConfigLine("dev-foo/foo", [], [("GROUP", ["baz"])]),
+        CL("*/*", ["foo"]),
+        CL(),
+        CL("dev-foo/foo", [new, "group_bar"]),
+        CL("dev-foo/bar", ["foo"]),
+        CL("dev-foo/foo", [], [("GROUP", ["baz"])]),
     ]
 
 
@@ -116,9 +118,9 @@ def test_toggle_flag_in_group_verbose(old, new, group):
     mangle_flag(config, "dev-foo/foo", "group", "foo", not new.startswith("-"))
     assert config[0].modified_lines == {2}
     assert config[0].parsed_lines == [
-        ConfigLine("*/*", ["foo"]),
-        ConfigLine(),
-        ConfigLine("dev-foo/foo", [], [(group, [new, "bar"])]),
-        ConfigLine("dev-foo/bar", ["foo"]),
-        ConfigLine("dev-foo/foo", ["group_baz"]),
+        CL("*/*", ["foo"]),
+        CL(),
+        CL("dev-foo/foo", [], [(group, [new, "bar"])]),
+        CL("dev-foo/bar", ["foo"]),
+        CL("dev-foo/foo", ["group_baz"]),
     ]
