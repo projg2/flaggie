@@ -53,6 +53,36 @@ def test_toggle_flag_append(new):
     ]
 
 
+@pytest.mark.parametrize("new", ["-foo", "foo"])
+def test_toggle_flag_new_entry(new):
+    config = get_config(["*/* foo",
+                         "dev-foo/bar foo",
+                         ])
+    mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
+    assert config[0].modified_lines == {2}
+    assert config[0].parsed_lines == [
+        ConfigLine("*/*", ["foo"]),
+        ConfigLine("dev-foo/bar", ["foo"]),
+        ConfigLine("dev-foo/foo", [new]),
+    ]
+
+
+@pytest.mark.parametrize("new", ["-foo", "foo"])
+def test_toggle_flag_new_entry_because_of_group(new):
+    config = get_config(["*/* foo",
+                         "dev-foo/bar foo",
+                         "dev-foo/foo GROUP: baz",
+                         ])
+    mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
+    assert config[0].modified_lines == {3}
+    assert config[0].parsed_lines == [
+        ConfigLine("*/*", ["foo"]),
+        ConfigLine("dev-foo/bar", ["foo"]),
+        ConfigLine("dev-foo/foo", [], [("GROUP", ["baz"])]),
+        ConfigLine("dev-foo/foo", [new]),
+    ]
+
+
 @pytest.mark.parametrize("old", ["-group_foo", "group_foo"])
 @pytest.mark.parametrize("new", ["-group_foo", "group_foo"])
 def test_toggle_flag_in_group(old, new):

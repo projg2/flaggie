@@ -127,7 +127,7 @@ def mangle_flag(config_files: list[ConfigFile],
             # if the line contains grouped flags, we need to create a new one
             if line.grouped_flags:
                 logging.debug(
-                    f"{debug_common}, ends with flag groups, cannot append")
+                    f"{debug_common}, ends with flag group, cannot append")
                 return False
 
             line.flat_flags.append(new_state_sym + full_name)
@@ -136,6 +136,11 @@ def mangle_flag(config_files: list[ConfigFile],
         return False
 
     def try_new_entry() -> bool:
-        assert False, "not implemented yet"
+        assert prefix is None, "TODO"
+        config_file = config_files[-1]
+        config_file.parsed_lines.append(
+            ConfigLine(package, [new_state_sym + name], []))
+        config_file.modified_lines.add(len(config_file.parsed_lines) - 1)
+        return True
 
     try_inplace() or try_appending() or try_new_entry()
