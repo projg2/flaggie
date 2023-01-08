@@ -108,7 +108,25 @@ def mangle_flag(config_files: list[ConfigFile],
                 return False
         return False
 
-    if try_inplace():
-        return
+    def try_appending() -> bool:
+        assert prefix is None, "TODO"
+        for config_file, line_no, line in match_packages(config_files, package,
+                                                         pkg_is_wildcard):
+            # require an exact package match, we don't want to update some
+            # wildcard entry
+            if line.package != package:
+                return False
 
-    assert False, "not implemented yet"
+            # if the line contains grouped flags, we need to create a new one
+            if line.grouped_flags:
+                return False
+
+            line.flat_flags.append(new_state_sym + full_name)
+            config_file.modified_lines.add(line_no - 1)
+            return True
+        return False
+
+    def try_new_entry() -> bool:
+        assert False, "not implemented yet"
+
+    try_inplace() or try_appending() or try_new_entry()
