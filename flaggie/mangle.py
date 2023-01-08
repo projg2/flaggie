@@ -110,7 +110,6 @@ def mangle_flag(config_files: list[ConfigFile],
         return False
 
     def try_appending() -> bool:
-        assert prefix is None, "TODO"
         for config_file, line_no, line in match_packages(config_files, package,
                                                          pkg_is_wildcard):
             debug_common = (
@@ -124,13 +123,25 @@ def mangle_flag(config_files: list[ConfigFile],
                     f"{debug_common}, non-exact match, cannot append")
                 return False
 
-            # if the line contains grouped flags, we need to create a new one
-            if line.grouped_flags:
-                logging.debug(
-                    f"{debug_common}, ends with flag group, cannot append")
-                return False
+            if prefix is None:
+                # if the line contains grouped flags, we need to create
+                # a new line for the flat flag
+                if line.grouped_flags:
+                    logging.debug(
+                        f"{debug_common}, ends with flag group, looking "
+                        "further")
+                    continue
+                line.flat_flags.append(new_state_sym + full_name)
+            else:
+                for group, flags in line.grouped_flags:
+                    if group.lower() == prefix.lower():
+                        flags.append(new_state_sym + name)
+                        break
+                else:
+                    logging.debug(
+                        f"{debug_common}, prefix unmatched, looking further")
+                    continue
 
-            line.flat_flags.append(new_state_sym + full_name)
             config_file.modified_lines.add(line_no - 1)
             return True
         return False

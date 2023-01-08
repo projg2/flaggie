@@ -43,6 +43,7 @@ def test_toggle_flag_append(new):
                          "dev-foo/foo bar",
                          "dev-foo/bar foo",
                          "dev-foo/foo baz",
+                         "dev-foo/foo GROUP: other",
                          ])
     mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
     assert config[0].modified_lines == {4}
@@ -52,6 +53,26 @@ def test_toggle_flag_append(new):
         CL("dev-foo/foo", ["bar"]),
         CL("dev-foo/bar", ["foo"]),
         CL("dev-foo/foo", ["baz", new]),
+        CL("dev-foo/foo", [], [("GROUP", ["other"])]),
+    ]
+
+
+@pytest.mark.parametrize("new", ["-foo", "foo"])
+def test_toggle_flag_append_to_group(new):
+    config = get_config(["*/* foo",
+                         "",
+                         "dev-foo/foo GROUP: bar",
+                         "dev-foo/bar foo",
+                         "dev-foo/foo group_baz",
+                         ])
+    mangle_flag(config, "dev-foo/foo", "group", "foo", not new.startswith("-"))
+    assert config[0].modified_lines == {2}
+    assert config[0].parsed_lines == [
+        CL("*/*", ["foo"]),
+        CL(),
+        CL("dev-foo/foo", [], [("GROUP", ["bar", new])]),
+        CL("dev-foo/bar", ["foo"]),
+        CL("dev-foo/foo", ["group_baz"]),
     ]
 
 
