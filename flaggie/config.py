@@ -32,7 +32,7 @@ class ConfigFile(typing.NamedTuple):
     path: Path
     raw_lines: list[str]
     parsed_lines: list[ConfigLine]
-    modified_lines: set[int] = set()
+    modified_lines: set[int]
 
 
 CONFIG_FILENAMES = {
@@ -152,7 +152,8 @@ def read_config_files(paths: typing.Iterable[Path]
         logging.debug(f"Loading config file {path}")
         with open(path, "r") as f:
             raw_lines = f.readlines()
-        yield ConfigFile(path, raw_lines, list(parse_config_file(raw_lines)))
+        yield ConfigFile(path, raw_lines, list(parse_config_file(raw_lines)),
+                         set())
 
 
 def save_config_files(config_files: typing.Iterable[ConfigFile]) -> None:
