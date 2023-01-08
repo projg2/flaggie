@@ -102,7 +102,8 @@ def mangle_flag(config_files: list[ConfigFile],
                     # 0-based
                     config_file.modified_lines.add(line_no - 1)
                     return True
-                logging.debug(f"{debug_common}, cannot update in place")
+                logging.debug(
+                    f"{debug_common}, non-exact match, cannot update in place")
                 # otherwise, we can't update in-place -- we need to add
                 # after this wildcard
                 return False
@@ -112,13 +113,21 @@ def mangle_flag(config_files: list[ConfigFile],
         assert prefix is None, "TODO"
         for config_file, line_no, line in match_packages(config_files, package,
                                                          pkg_is_wildcard):
+            debug_common = (
+                f"Package entry found: {config_file.path}:{line_no} "
+                f"{line.package}")
+
             # require an exact package match, we don't want to update some
             # wildcard entry
             if line.package != package:
+                logging.debug(
+                    f"{debug_common}, non-exact match, cannot append")
                 return False
 
             # if the line contains grouped flags, we need to create a new one
             if line.grouped_flags:
+                logging.debug(
+                    f"{debug_common}, ends with flag groups, cannot append")
                 return False
 
             line.flat_flags.append(new_state_sym + full_name)
