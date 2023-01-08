@@ -147,10 +147,14 @@ def mangle_flag(config_files: list[ConfigFile],
         return False
 
     def try_new_entry() -> bool:
-        assert prefix is None, "TODO"
         config_file = config_files[-1]
-        config_file.parsed_lines.append(
-            ConfigLine(package, [new_state_sym + name], []))
+        new_flag = new_state_sym + name
+        if prefix is None:
+            config_file.parsed_lines.append(
+                ConfigLine(package, [new_flag], []))
+        else:
+            config_file.parsed_lines.append(
+                ConfigLine(package, [], [(prefix.upper(), [new_flag])]))
         config_file.modified_lines.add(len(config_file.parsed_lines) - 1)
         return True
 

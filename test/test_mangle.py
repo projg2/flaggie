@@ -106,6 +106,20 @@ def test_toggle_flag_new_entry_because_of_group(new):
     ]
 
 
+@pytest.mark.parametrize("new", ["-foo", "foo"])
+def test_toggle_flag_new_entry_group(new):
+    config = get_config(["*/* foo",
+                         "dev-foo/foo group_baz",
+                         ])
+    mangle_flag(config, "dev-foo/foo", "group", "foo", not new.startswith("-"))
+    assert config[0].modified_lines == {2}
+    assert config[0].parsed_lines == [
+        CL("*/*", ["foo"]),
+        CL("dev-foo/foo", ["group_baz"]),
+        CL("dev-foo/foo", [], [("GROUP", [new])]),
+    ]
+
+
 @pytest.mark.parametrize("old", ["-group_foo", "group_foo"])
 @pytest.mark.parametrize("new", ["-group_foo", "group_foo"])
 def test_toggle_flag_in_group(old, new):
