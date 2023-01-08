@@ -15,7 +15,7 @@ def get_config(raw_data: list[str]) -> list[ConfigFile]:
 
 
 @pytest.mark.parametrize("old", ["-foo", "foo"])
-@pytest.mark.parametrize("new", [False, True])
+@pytest.mark.parametrize("new", ["-foo", "foo"])
 def test_toggle_flag(old, new):
     config = get_config(["*/* foo",
                          "",
@@ -23,12 +23,12 @@ def test_toggle_flag(old, new):
                          "dev-foo/bar foo",
                          "dev-foo/foo baz",
                          ])
-    mangle_flag(config, "dev-foo/foo", None, "foo", new)
+    mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
     assert config[0].modified_lines == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
         ConfigLine(),
-        ConfigLine("dev-foo/foo", ["foo" if new else "-foo", "bar"]),
+        ConfigLine("dev-foo/foo", [new, "bar"]),
         ConfigLine("dev-foo/bar", ["foo"]),
         ConfigLine("dev-foo/foo", ["baz"]),
     ]
