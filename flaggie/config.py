@@ -168,7 +168,9 @@ def save_config_files(config_files: typing.Iterable[ConfigFile]) -> None:
         logging.debug(f"Writing config file {config_file.path} "
                       f"({len(config_file.modified_lines)} lines modified)")
 
-        for line_no in config_file.modified_lines:
+        for line_no in sorted(config_file.modified_lines):
+            if len(config_file.raw_lines) == line_no:
+                config_file.raw_lines.append("")
             config_file.raw_lines[line_no] = (
                 dump_config_line(config_file.parsed_lines[line_no]))
         config_file.modified_lines.clear()
