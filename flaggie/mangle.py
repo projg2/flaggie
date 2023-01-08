@@ -132,10 +132,15 @@ def mangle_flag(config_files: list[ConfigFile],
                         "further")
                     continue
                 line.flat_flags.append(new_state_sym + full_name)
+                logging.debug(
+                    f"{debug_common}, appending {new_state_sym}{full_name}")
             else:
                 for group, flags in line.grouped_flags:
                     if group.lower() == prefix.lower():
                         flags.append(new_state_sym + name)
+                        logging.debug(
+                            f"{debug_common}, group {group}, appending "
+                            f"{new_state_sym}{full_name}")
                         break
                 else:
                     logging.debug(
@@ -155,6 +160,9 @@ def mangle_flag(config_files: list[ConfigFile],
         else:
             config_file.parsed_lines.append(
                 ConfigLine(package, [], [(prefix.upper(), [new_flag])]))
+        logging.debug(
+            f"Appending new entry to {config_file.path}: "
+            f"{package}, group: {prefix}, {new_flag}")
         config_file.modified_lines.add(len(config_file.parsed_lines) - 1)
         return True
 
