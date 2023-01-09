@@ -99,8 +99,7 @@ def mangle_flag(config_files: list[ConfigFile],
                 if line.package == package and matched_flag == full_name:
                     logging.debug(f"{debug_common}, updating in place")
                     flag_list[index] = new_state_sym + matched_name
-                    # 0-based
-                    config_file.modified_lines.add(line_no - 1)
+                    line.invalidate()
                     config_file.modified = True
                     return True
                 logging.debug(
@@ -148,7 +147,7 @@ def mangle_flag(config_files: list[ConfigFile],
                         f"{debug_common}, prefix unmatched, looking further")
                     continue
 
-            config_file.modified_lines.add(line_no - 1)
+            line.invalidate()
             config_file.modified = True
             return True
         return False
@@ -165,7 +164,6 @@ def mangle_flag(config_files: list[ConfigFile],
         logging.debug(
             f"Appending new entry to {config_file.path}: "
             f"{package}, group: {prefix}, {new_flag}")
-        config_file.modified_lines.add(len(config_file.parsed_lines) - 1)
         config_file.modified = True
         return True
 

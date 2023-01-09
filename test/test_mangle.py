@@ -1,6 +1,8 @@
 # (c) 2023 Michał Górny
 # Released under the terms of the MIT license
 
+import typing
+
 from pathlib import Path
 
 import pytest
@@ -13,6 +15,16 @@ def get_config(raw_data: list[str]) -> list[ConfigFile]:
     return [ConfigFile(Path("test.conf"), list(parse_config_file(raw_data)))]
 
 
+def get_modified_line_nos(config_file: ConfigFile) -> frozenset[int]:
+    def inner() -> typing.Generator[int, None, None]:
+        for line_no, line in enumerate(config_file.parsed_lines):
+            if line._raw_line is None:
+                yield line_no
+
+    assert config_file.modified
+    return frozenset(inner())
+
+
 @pytest.mark.parametrize("old", ["-foo", "foo"])
 @pytest.mark.parametrize("new", ["-foo", "foo"])
 def test_toggle_flag(old, new):
@@ -23,8 +35,7 @@ def test_toggle_flag(old, new):
                          "dev-foo/foo baz",
                          ])
     mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
-    assert config[0].modified
-    assert config[0].modified_lines == {2}
+    assert get_modified_line_nos(config[0]) == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
         ConfigLine(),
@@ -44,8 +55,7 @@ def test_toggle_flag_append(new):
                          "dev-foo/foo GROUP: other",
                          ])
     mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
-    assert config[0].modified
-    assert config[0].modified_lines == {4}
+    assert get_modified_line_nos(config[0]) == {4}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
         ConfigLine(),
@@ -65,8 +75,7 @@ def test_toggle_flag_append_to_group(new):
                          "dev-foo/foo group_baz",
                          ])
     mangle_flag(config, "dev-foo/foo", "group", "foo", not new.startswith("-"))
-    assert config[0].modified
-    assert config[0].modified_lines == {2}
+    assert get_modified_line_nos(config[0]) == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
         ConfigLine(),
@@ -82,8 +91,7 @@ def test_toggle_flag_new_entry(new):
                          "dev-foo/bar foo",
                          ])
     mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
-    assert config[0].modified
-    assert config[0].modified_lines == {2}
+    assert get_modified_line_nos(config[0]) == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
         ConfigLine("dev-foo/bar", ["foo"]),
@@ -98,8 +106,7 @@ def test_toggle_flag_new_entry_because_of_group(new):
                          "dev-foo/foo GROUP: baz",
                          ])
     mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
-    assert config[0].modified
-    assert config[0].modified_lines == {3}
+    assert get_modified_line_nos(config[0]) == {3}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
         ConfigLine("dev-foo/bar", ["foo"]),
@@ -114,8 +121,7 @@ def test_toggle_flag_new_entry_group(new):
                          "dev-foo/foo group_baz",
                          ])
     mangle_flag(config, "dev-foo/foo", "group", "foo", not new.startswith("-"))
-    assert config[0].modified
-    assert config[0].modified_lines == {2}
+    assert get_modified_line_nos(config[0]) == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
         ConfigLine("dev-foo/foo", ["group_baz"]),
@@ -133,8 +139,7 @@ def test_toggle_flag_in_group(old, new):
                          "dev-foo/foo GROUP: baz",
                          ])
     mangle_flag(config, "dev-foo/foo", "group", "foo", not new.startswith("-"))
-    assert config[0].modified
-    assert config[0].modified_lines == {2}
+    assert get_modified_line_nos(config[0]) == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
         ConfigLine(),
@@ -155,8 +160,7 @@ def test_toggle_flag_in_group_verbose(old, new, group):
                          "dev-foo/foo group_baz",
                          ])
     mangle_flag(config, "dev-foo/foo", "group", "foo", not new.startswith("-"))
-    assert config[0].modified
-    assert config[0].modified_lines == {2}
+    assert get_modified_line_nos(config[0]) == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
         ConfigLine(),

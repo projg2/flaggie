@@ -1,6 +1,7 @@
 # (c) 2022-2023 Michał Górny
 # Released under the terms of the MIT license
 
+import dataclasses
 import os
 import stat
 
@@ -61,7 +62,7 @@ PARSED_TEST_CONFIG_FILE = [
 ]
 
 for raw_line, line in zip(TEST_CONFIG_FILE, PARSED_TEST_CONFIG_FILE):
-    line.raw_line = raw_line
+    line._raw_line = raw_line
 
 
 def test_parse_config_file():
@@ -96,12 +97,23 @@ def test_save_config_files_no_modification(tmp_path):
     assert all(not config_file.path.exists() for config_file in config_files)
 
 
+def invalidate_config_lines(lines: list[ConfigLine],
+                            *line_nos: int,
+                            ) -> list[ConfigLine]:
+    out = list(lines)
+    for x in line_nos:
+        out[x] = dataclasses.replace(out[x])
+        out[x].invalidate()
+    return out
+
+
 def test_save_config_files(tmp_path):
     config_files = [
-        ConfigFile(tmp_path / "config", PARSED_TEST_CONFIG_FILE, {1, 5},
+        ConfigFile(tmp_path / "config",
+                   invalidate_config_lines(PARSED_TEST_CONFIG_FILE, 1, 5),
                    modified=True),
         ConfigFile(tmp_path / "config2",
-                   [ConfigLine("dev-foo/bar", ["new"], [])], {0},
+                   [ConfigLine("dev-foo/bar", ["new"], [])],
                    modified=True),
         ConfigFile(tmp_path / "config3", []),
     ]

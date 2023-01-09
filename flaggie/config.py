@@ -30,15 +30,24 @@ class ConfigLine:
                         ] = dataclasses.field(default_factory=list)
     comment: typing.Optional[str] = None
 
-    raw_line: typing.Optional[str] = dataclasses.field(default=None,
-                                                       compare=False)
+    _raw_line: typing.Optional[str] = dataclasses.field(default=None,
+                                                        compare=False)
+
+    def invalidate(self) -> None:
+        """Mark the ConfigLine as modified"""
+        self._raw_line = None
+
+    @property
+    def raw_line(self) -> str:
+        if self._raw_line is None:
+            self._raw_line = dump_config_line(self)
+        return self._raw_line
 
 
 @dataclasses.dataclass
 class ConfigFile:
     path: Path
     parsed_lines: list[ConfigLine]
-    modified_lines: set[int] = dataclasses.field(default_factory=set)
     modified: bool = False
 
 
@@ -129,7 +138,7 @@ def parse_config_file(lines: list[str]
             flat_flags=groups[0][1],
             grouped_flags=groups[1:],
             comment=comment_m.group(1) if comment_m is not None else None,
-            raw_line=raw_line)
+            _raw_line=raw_line)
 
 
 def dump_config_line(line: ConfigLine) -> str:
@@ -171,13 +180,7 @@ def save_config_files(config_files: typing.Iterable[ConfigFile]) -> None:
         if not config_file.modified:
             continue
 
-        logging.debug(f"Writing config file {config_file.path} "
-                      f"({len(config_file.modified_lines)} lines modified)")
-
-        for line_no in sorted(config_file.modified_lines):
-            line = config_file.parsed_lines[line_no]
-            line.raw_line = dump_config_line(line)
-        config_file.modified_lines.clear()
+        logging.debug(f"Writing config file {config_file.path}")
 
         try:
             with tempfile.NamedTemporaryFile(mode="w",
