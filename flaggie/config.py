@@ -1,6 +1,7 @@
 # (c) 2022-2023 Michał Górny
 # Released under the terms of the MIT license
 
+import dataclasses
 import enum
 import logging
 import os
@@ -21,10 +22,12 @@ class TokenType(enum.IntEnum):
     ENV_FILE = enum.auto()
 
 
-class ConfigLine(typing.NamedTuple):
+@dataclasses.dataclass
+class ConfigLine:
     package: typing.Optional[str] = None
-    flat_flags: list[str] = []
-    grouped_flags: list[tuple[str, list[str]]] = []
+    flat_flags: list[str] = dataclasses.field(default_factory=list)
+    grouped_flags: list[tuple[str, list[str]]
+                        ] = dataclasses.field(default_factory=list)
     comment: typing.Optional[str] = None
 
 
