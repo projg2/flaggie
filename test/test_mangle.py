@@ -10,7 +10,7 @@ from flaggie.mangle import mangle_flag
 
 
 def get_config(raw_data: list[str]) -> list[ConfigFile]:
-    return [ConfigFile(Path("test.conf"), raw_data,
+    return [ConfigFile(Path("test.conf"),
                        list(parse_config_file(raw_data)), set())]
 
 

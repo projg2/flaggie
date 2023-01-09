@@ -30,10 +30,12 @@ class ConfigLine:
                         ] = dataclasses.field(default_factory=list)
     comment: typing.Optional[str] = None
 
+    raw_line: typing.Optional[str] = dataclasses.field(default=None,
+                                                       compare=False)
+
 
 class ConfigFile(typing.NamedTuple):
     path: Path
-    raw_lines: list[str]
     parsed_lines: list[ConfigLine]
     modified_lines: set[int]
 
@@ -103,8 +105,8 @@ def parse_config_file(lines: list[str]
     of corresponding ConfigLine objects.
     """
 
-    for line in lines:
-        line = line.rstrip()
+    for raw_line in lines:
+        line = raw_line.rstrip()
         comment_m = COMMENT_RE.search(line)
         if comment_m is not None:
             line = line[:comment_m.start()]
@@ -124,7 +126,8 @@ def parse_config_file(lines: list[str]
             package=split[0] if split else None,
             flat_flags=groups[0][1],
             grouped_flags=groups[1:],
-            comment=comment_m.group(1) if comment_m is not None else None)
+            comment=comment_m.group(1) if comment_m is not None else None,
+            raw_line=raw_line)
 
 
 def dump_config_line(line: ConfigLine) -> str:
@@ -154,9 +157,8 @@ def read_config_files(paths: typing.Iterable[Path]
     for path in paths:
         logging.debug(f"Loading config file {path}")
         with open(path, "r") as f:
-            raw_lines = f.readlines()
-        yield ConfigFile(path, raw_lines, list(parse_config_file(raw_lines)),
-                         set())
+            yield ConfigFile(path, list(parse_config_file(f.readlines())),
+                             set())
 
 
 def save_config_files(config_files: typing.Iterable[ConfigFile]) -> None:
@@ -172,10 +174,8 @@ def save_config_files(config_files: typing.Iterable[ConfigFile]) -> None:
                       f"({len(config_file.modified_lines)} lines modified)")
 
         for line_no in sorted(config_file.modified_lines):
-            if len(config_file.raw_lines) == line_no:
-                config_file.raw_lines.append("")
-            config_file.raw_lines[line_no] = (
-                dump_config_line(config_file.parsed_lines[line_no]))
+            line = config_file.parsed_lines[line_no]
+            line.raw_line = dump_config_line(line)
         config_file.modified_lines.clear()
 
         try:
@@ -185,7 +185,8 @@ def save_config_files(config_files: typing.Iterable[ConfigFile]) -> None:
                 # typeshed is missing fd support in shutil.copymode()
                 # https://github.com/python/typeshed/issues/9288
                 shutil.copymode(config_file.path, f.fileno())  # type: ignore
-                f.write("".join(config_file.raw_lines))
+                f.write("".join(line.raw_line
+                                for line in config_file.parsed_lines))
         except Exception:
             Path(f.name).unlink()
             raise
