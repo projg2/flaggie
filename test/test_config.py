@@ -81,15 +81,15 @@ def test_read_config_files(tmp_path):
 
     assert list(read_config_files([tmp_path / "config", tmp_path / "config2"])
                 ) == [
-        ConfigFile(tmp_path / "config", PARSED_TEST_CONFIG_FILE, set()),
-        ConfigFile(tmp_path / "config2", [], set()),
+        ConfigFile(tmp_path / "config", PARSED_TEST_CONFIG_FILE),
+        ConfigFile(tmp_path / "config2", []),
     ]
 
 
 def test_save_config_files_no_modification(tmp_path):
     config_files = [
-        ConfigFile(tmp_path / "config", PARSED_TEST_CONFIG_FILE, set()),
-        ConfigFile(tmp_path / "config2", [], set()),
+        ConfigFile(tmp_path / "config", PARSED_TEST_CONFIG_FILE),
+        ConfigFile(tmp_path / "config2", []),
     ]
 
     save_config_files(config_files)
@@ -101,7 +101,7 @@ def test_save_config_files(tmp_path):
         ConfigFile(tmp_path / "config", PARSED_TEST_CONFIG_FILE, {1, 5}),
         ConfigFile(tmp_path / "config2",
                    [ConfigLine("dev-foo/bar", ["new"], [])], {0}),
-        ConfigFile(tmp_path / "config3", [], set()),
+        ConfigFile(tmp_path / "config3", []),
     ]
 
     config_files[0].path.touch(mode=0o400)
