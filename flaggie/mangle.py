@@ -152,19 +152,42 @@ def mangle_flag(config_files: list[ConfigFile],
             return True
         return False
 
-    def try_new_entry() -> bool:
+    def try_new_entry_after(new_line: ConfigLine) -> bool:
+        for config_file, line_no, line in match_packages(config_files, package,
+                                                         pkg_is_wildcard):
+            debug_common = (
+                f"Package entry found: {config_file.path}:{line_no} "
+                f"{line.package}")
+
+            # again, let's not append after wildcards
+            if line.package != package:
+                logging.debug(
+                    f"{debug_common}, non-exact match, not appending here")
+                return False
+
+            logging.debug(
+                f"Inserting new entry to {config_file.path}, "
+                f"after line {line_no}: {new_line}")
+            config_file.parsed_lines.insert(line_no, new_line)
+            config_file.modified = True
+            return True
+        return False
+
+    def try_new_entry(new_line: ConfigLine) -> bool:
         config_file = config_files[-1]
-        new_flag = new_state_sym + name
-        if prefix is None:
-            config_file.parsed_lines.append(
-                ConfigLine(package, [new_flag], []))
-        else:
-            config_file.parsed_lines.append(
-                ConfigLine(package, [], [(prefix.upper(), [new_flag])]))
         logging.debug(
-            f"Appending new entry to {config_file.path}: "
-            f"{package}, group: {prefix}, {new_flag}")
+            f"Appending new entry to {config_file.path}: {new_line}")
+        config_file.parsed_lines.append(new_line)
         config_file.modified = True
         return True
 
-    try_inplace() or try_appending() or try_new_entry()
+    if try_inplace() or try_appending():
+        return
+
+    new_flag = new_state_sym + name
+    if prefix is None:
+        new_line = ConfigLine(package, [new_flag], [])
+    else:
+        new_line = ConfigLine(package, [], [(prefix.upper(), [new_flag])])
+
+    try_new_entry_after(new_line) or try_new_entry(new_line)
