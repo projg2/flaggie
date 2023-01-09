@@ -23,6 +23,7 @@ def test_toggle_flag(old, new):
                          "dev-foo/foo baz",
                          ])
     mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
+    assert config[0].modified
     assert config[0].modified_lines == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
@@ -43,6 +44,7 @@ def test_toggle_flag_append(new):
                          "dev-foo/foo GROUP: other",
                          ])
     mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
+    assert config[0].modified
     assert config[0].modified_lines == {4}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
@@ -63,6 +65,7 @@ def test_toggle_flag_append_to_group(new):
                          "dev-foo/foo group_baz",
                          ])
     mangle_flag(config, "dev-foo/foo", "group", "foo", not new.startswith("-"))
+    assert config[0].modified
     assert config[0].modified_lines == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
@@ -79,6 +82,7 @@ def test_toggle_flag_new_entry(new):
                          "dev-foo/bar foo",
                          ])
     mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
+    assert config[0].modified
     assert config[0].modified_lines == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
@@ -94,6 +98,7 @@ def test_toggle_flag_new_entry_because_of_group(new):
                          "dev-foo/foo GROUP: baz",
                          ])
     mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
+    assert config[0].modified
     assert config[0].modified_lines == {3}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
@@ -109,6 +114,7 @@ def test_toggle_flag_new_entry_group(new):
                          "dev-foo/foo group_baz",
                          ])
     mangle_flag(config, "dev-foo/foo", "group", "foo", not new.startswith("-"))
+    assert config[0].modified
     assert config[0].modified_lines == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
@@ -127,6 +133,7 @@ def test_toggle_flag_in_group(old, new):
                          "dev-foo/foo GROUP: baz",
                          ])
     mangle_flag(config, "dev-foo/foo", "group", "foo", not new.startswith("-"))
+    assert config[0].modified
     assert config[0].modified_lines == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
@@ -148,6 +155,7 @@ def test_toggle_flag_in_group_verbose(old, new, group):
                          "dev-foo/foo group_baz",
                          ])
     mangle_flag(config, "dev-foo/foo", "group", "foo", not new.startswith("-"))
+    assert config[0].modified
     assert config[0].modified_lines == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),

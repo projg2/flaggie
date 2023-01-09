@@ -39,6 +39,7 @@ class ConfigFile:
     path: Path
     parsed_lines: list[ConfigLine]
     modified_lines: set[int] = dataclasses.field(default_factory=set)
+    modified: bool = False
 
 
 CONFIG_FILENAMES = {
@@ -167,7 +168,7 @@ def save_config_files(config_files: typing.Iterable[ConfigFile]) -> None:
     """
 
     for config_file in config_files:
-        if not config_file.modified_lines:
+        if not config_file.modified:
             continue
 
         logging.debug(f"Writing config file {config_file.path} "

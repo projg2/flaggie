@@ -98,9 +98,11 @@ def test_save_config_files_no_modification(tmp_path):
 
 def test_save_config_files(tmp_path):
     config_files = [
-        ConfigFile(tmp_path / "config", PARSED_TEST_CONFIG_FILE, {1, 5}),
+        ConfigFile(tmp_path / "config", PARSED_TEST_CONFIG_FILE, {1, 5},
+                   modified=True),
         ConfigFile(tmp_path / "config2",
-                   [ConfigLine("dev-foo/bar", ["new"], [])], {0}),
+                   [ConfigLine("dev-foo/bar", ["new"], [])], {0},
+                   modified=True),
         ConfigFile(tmp_path / "config3", []),
     ]
 

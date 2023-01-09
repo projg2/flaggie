@@ -101,6 +101,7 @@ def mangle_flag(config_files: list[ConfigFile],
                     flag_list[index] = new_state_sym + matched_name
                     # 0-based
                     config_file.modified_lines.add(line_no - 1)
+                    config_file.modified = True
                     return True
                 logging.debug(
                     f"{debug_common}, non-exact match, cannot update in place")
@@ -148,6 +149,7 @@ def mangle_flag(config_files: list[ConfigFile],
                     continue
 
             config_file.modified_lines.add(line_no - 1)
+            config_file.modified = True
             return True
         return False
 
@@ -164,6 +166,7 @@ def mangle_flag(config_files: list[ConfigFile],
             f"Appending new entry to {config_file.path}: "
             f"{package}, group: {prefix}, {new_flag}")
         config_file.modified_lines.add(len(config_file.parsed_lines) - 1)
+        config_file.modified = True
         return True
 
     try_inplace() or try_appending() or try_new_entry()
