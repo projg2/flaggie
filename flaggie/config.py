@@ -22,9 +22,9 @@ class TokenType(enum.IntEnum):
 
 
 class ConfigLine(typing.NamedTuple):
-    package: typing.Optional[str]
-    flat_flags: list[str]
-    grouped_flags: list[tuple[str, list[str]]]
+    package: typing.Optional[str] = None
+    flat_flags: list[str] = []
+    grouped_flags: list[tuple[str, list[str]]] = []
     comment: typing.Optional[str] = None
 
 

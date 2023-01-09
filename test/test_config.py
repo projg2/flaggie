@@ -3,7 +3,6 @@
 
 import os
 import stat
-import typing
 
 import pytest
 
@@ -40,14 +39,6 @@ def test_find_config(tmp_path, layout, expected):
                              ) == [confdir / x for x in expected]
 
 
-def CL(package: typing.Optional[str] = None,
-       flat_flags: list[str] = [],
-       grouped_flags: list[tuple[str, list[str]]] = [],
-       comment: typing.Optional[str] = None,
-       ) -> ConfigLine:
-    return ConfigLine(package, flat_flags, grouped_flags, comment)
-
-
 TEST_CONFIG_FILE = [
     "#initial comment\n",
     "  # comment with whitespace\n",
@@ -59,14 +50,14 @@ TEST_CONFIG_FILE = [
 ]
 
 PARSED_TEST_CONFIG_FILE = [
-    CL(comment="initial comment"),
-    CL(comment=" comment with whitespace"),
-    CL(),
-    CL("*/*", ["foo", "bar", "baz"], [], " global flags"),
-    CL("*/*", [], [("FROBNICATE_TARGETS", ["frob1", "frob2"])]),
-    CL("dev-foo/bar", ["weird#flag", "other"], [],
-       " actual comment # more comment"),
-    CL("dev-foo/baz", ["mixed"], [("LONG", ["too"]), ("EMPTY", [])]),
+    ConfigLine(comment="initial comment"),
+    ConfigLine(comment=" comment with whitespace"),
+    ConfigLine(),
+    ConfigLine("*/*", ["foo", "bar", "baz"], [], " global flags"),
+    ConfigLine("*/*", [], [("FROBNICATE_TARGETS", ["frob1", "frob2"])]),
+    ConfigLine("dev-foo/bar", ["weird#flag", "other"], [],
+               " actual comment # more comment"),
+    ConfigLine("dev-foo/baz", ["mixed"], [("LONG", ["too"]), ("EMPTY", [])]),
 ]
 
 
