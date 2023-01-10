@@ -136,40 +136,42 @@ def test_toggle_flag_new_entry_group(new):
 
 @pytest.mark.parametrize("old", ["-group_foo", "group_foo"])
 @pytest.mark.parametrize("new", ["-group_foo", "group_foo"])
-def test_toggle_flag_in_group(old, new):
+@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*"])
+def test_toggle_flag_in_group(old, new, package):
     config = get_config(["*/* foo",
                          "",
-                         f"dev-foo/foo {old} group_bar",
+                         f"{package} {old} group_bar",
                          "dev-foo/bar foo",
-                         "dev-foo/foo GROUP: baz",
+                         f"{package} GROUP: baz",
                          ])
-    mangle_flag(config, "dev-foo/foo", "group", "foo", not new.startswith("-"))
+    mangle_flag(config, package, "group", "foo", not new.startswith("-"))
     assert get_modified_line_nos(config[0]) == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
         ConfigLine(),
-        ConfigLine("dev-foo/foo", [new, "group_bar"]),
+        ConfigLine(package, [new, "group_bar"]),
         ConfigLine("dev-foo/bar", ["foo"]),
-        ConfigLine("dev-foo/foo", [], [("GROUP", ["baz"])]),
+        ConfigLine(package, [], [("GROUP", ["baz"])]),
     ]
 
 
 @pytest.mark.parametrize("old", ["-foo", "foo"])
 @pytest.mark.parametrize("new", ["-foo", "foo"])
 @pytest.mark.parametrize("group", ["Group", "GROUP"])
-def test_toggle_flag_in_group_verbose(old, new, group):
+@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*"])
+def test_toggle_flag_in_group_verbose(old, new, group, package):
     config = get_config(["*/* foo",
                          "",
-                         f"dev-foo/foo {group}: {old} bar",
+                         f"{package} {group}: {old} bar",
                          "dev-foo/bar foo",
-                         "dev-foo/foo group_baz",
+                         f"{package} group_baz",
                          ])
-    mangle_flag(config, "dev-foo/foo", "group", "foo", not new.startswith("-"))
+    mangle_flag(config, package, "group", "foo", not new.startswith("-"))
     assert get_modified_line_nos(config[0]) == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
         ConfigLine(),
-        ConfigLine("dev-foo/foo", [], [(group, [new, "bar"])]),
+        ConfigLine(package, [], [(group, [new, "bar"])]),
         ConfigLine("dev-foo/bar", ["foo"]),
-        ConfigLine("dev-foo/foo", ["group_baz"]),
+        ConfigLine(package, ["group_baz"]),
     ]
