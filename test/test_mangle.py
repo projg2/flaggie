@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from flaggie.config import ConfigFile, ConfigLine, parse_config_file
-from flaggie.mangle import mangle_flag
+from flaggie.mangle import mangle_flag, WildcardEntryError
 
 
 def get_config(raw_data: list[str]) -> list[ConfigFile]:
@@ -100,6 +100,26 @@ def test_toggle_flag_new_entry(new):
         ConfigLine("dev-foo/bar", ["foo"]),
         ConfigLine("dev-foo/foo", [new]),
     ]
+
+
+@pytest.mark.parametrize("new", ["-foo", "foo"])
+def test_toggle_flag_new_entry_global(new):
+    config = get_config(["dev-foo/bar foo",
+                         ])
+    mangle_flag(config, "*/*", None, "foo", not new.startswith("-"))
+    assert get_modified_line_nos(config[0]) == {0}
+    assert config[0].parsed_lines == [
+        ConfigLine("*/*", [new]),
+        ConfigLine("dev-foo/bar", ["foo"]),
+    ]
+
+
+@pytest.mark.parametrize("new", ["-foo", "foo"])
+def test_toggle_flag_new_entry_wildcard(new):
+    config = get_config(["dev-foo/bar foo",
+                         ])
+    with pytest.raises(WildcardEntryError):
+        mangle_flag(config, "dev-foo/*", None, "foo", not new.startswith("-"))
 
 
 @pytest.mark.parametrize("new", ["-foo", "foo"])

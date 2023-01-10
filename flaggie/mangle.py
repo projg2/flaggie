@@ -75,6 +75,14 @@ def match_flags(line: ConfigLine,
                 yield (group_lc, flags, index)
 
 
+class WildcardEntryError(Exception):
+    """Exception raised when trying to add a new wildcard entry"""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Adding wildcard entries other than */* is not supported")
+
+
 def mangle_flag(config_files: list[ConfigFile],
                 package: str,
                 prefix: typing.Optional[str],
@@ -174,10 +182,19 @@ def mangle_flag(config_files: list[ConfigFile],
         return False
 
     def try_new_entry(new_line: ConfigLine) -> bool:
-        config_file = config_files[-1]
-        logging.debug(
-            f"Appending new entry to {config_file.path}: {new_line}")
-        config_file.parsed_lines.append(new_line)
+        assert new_line.package is not None
+        if new_line.package == "*/*":
+            config_file = config_files[0]
+            logging.debug(
+                f"Prepending new entry to {config_file.path}: {new_line}")
+            config_file.parsed_lines.insert(0, new_line)
+        elif "*" in new_line.package:
+            raise WildcardEntryError()
+        else:
+            config_file = config_files[-1]
+            logging.debug(
+                f"Appending new entry to {config_file.path}: {new_line}")
+            config_file.parsed_lines.append(new_line)
         config_file.modified = True
         return True
 
