@@ -1,6 +1,7 @@
 # (c) 2023 Michał Górny
 # Released under the terms of the MIT license
 
+import itertools
 import typing
 
 from pathlib import Path
@@ -25,9 +26,24 @@ def get_modified_line_nos(config_file: ConfigFile) -> frozenset[int]:
     return frozenset(inner())
 
 
-@pytest.mark.parametrize("old", ["-foo", "foo"])
-@pytest.mark.parametrize("new", ["-foo", "foo"])
-@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*", "*/*"])
+def param_new() -> pytest.MarkDecorator:
+    return pytest.mark.parametrize("new", ["-foo", "foo"])
+
+
+def param_old_new(*, prefix: str = "") -> pytest.MarkDecorator:
+    return pytest.mark.parametrize(
+        "old,new",
+        itertools.product([f"-{prefix}foo", f"{prefix}foo"], repeat=2))
+
+
+def param_pkg(include_global: bool = False) -> pytest.MarkDecorator:
+    return pytest.mark.parametrize(
+        "package", ["dev-foo/foo", "dev-bar/*"] +
+        (["*/*"] if include_global else []))
+
+
+@param_old_new()
+@param_pkg(include_global=True)
 def test_toggle_flag(old, new, package):
     config = get_config(["*/* foo",
                          "",
@@ -35,7 +51,8 @@ def test_toggle_flag(old, new, package):
                          "dev-foo/bar foo",
                          f"{package} baz",
                          ])
-    mangle_flag(config, package, None, "foo", not new.startswith("-"))
+    mangle_flag(config, package, None, new.lstrip("-"),
+                not new.startswith("-"))
     assert get_modified_line_nos(config[0]) == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
@@ -46,8 +63,8 @@ def test_toggle_flag(old, new, package):
     ]
 
 
-@pytest.mark.parametrize("new", ["-foo", "foo"])
-@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*"])
+@param_new()
+@param_pkg()
 def test_toggle_flag_append(new, package):
     config = get_config(["*/* foo",
                          "",
@@ -56,7 +73,8 @@ def test_toggle_flag_append(new, package):
                          f"{package} baz",
                          f"{package} GROUP: other",
                          ])
-    mangle_flag(config, package, None, "foo", not new.startswith("-"))
+    mangle_flag(config, package, None, new.lstrip("-"),
+                not new.startswith("-"))
     assert get_modified_line_nos(config[0]) == {4}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
@@ -68,8 +86,8 @@ def test_toggle_flag_append(new, package):
     ]
 
 
-@pytest.mark.parametrize("new", ["-foo", "foo"])
-@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*", "*/*"])
+@param_new()
+@param_pkg(include_global=True)
 def test_toggle_flag_append_to_group(new, package):
     config = get_config(["*/* foo",
                          "",
@@ -77,7 +95,8 @@ def test_toggle_flag_append_to_group(new, package):
                          "dev-foo/bar foo",
                          f"{package} group_baz",
                          ])
-    mangle_flag(config, package, "group", "foo", not new.startswith("-"))
+    mangle_flag(config, package, "group", new.lstrip("-"),
+                not new.startswith("-"))
     assert get_modified_line_nos(config[0]) == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
@@ -88,12 +107,13 @@ def test_toggle_flag_append_to_group(new, package):
     ]
 
 
-@pytest.mark.parametrize("new", ["-foo", "foo"])
+@param_new()
 def test_toggle_flag_new_entry(new):
     config = get_config(["*/* foo",
                          "dev-foo/bar foo",
                          ])
-    mangle_flag(config, "dev-foo/foo", None, "foo", not new.startswith("-"))
+    mangle_flag(config, "dev-foo/foo", None, new.lstrip("-"),
+                not new.startswith("-"))
     assert get_modified_line_nos(config[0]) == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
@@ -102,11 +122,12 @@ def test_toggle_flag_new_entry(new):
     ]
 
 
-@pytest.mark.parametrize("new", ["-foo", "foo"])
+@param_new()
 def test_toggle_flag_new_entry_global(new):
     config = get_config(["dev-foo/bar foo",
                          ])
-    mangle_flag(config, "*/*", None, "foo", not new.startswith("-"))
+    mangle_flag(config, "*/*", None, new.lstrip("-"),
+                not new.startswith("-"))
     assert get_modified_line_nos(config[0]) == {0}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", [new]),
@@ -114,21 +135,23 @@ def test_toggle_flag_new_entry_global(new):
     ]
 
 
-@pytest.mark.parametrize("new", ["-foo", "foo"])
+@param_new()
 def test_toggle_flag_new_entry_wildcard(new):
     config = get_config(["dev-foo/bar foo",
                          ])
     with pytest.raises(WildcardEntryError):
-        mangle_flag(config, "dev-foo/*", None, "foo", not new.startswith("-"))
+        mangle_flag(config, "dev-foo/*", None, new.lstrip("-"),
+                    not new.startswith("-"))
 
 
-@pytest.mark.parametrize("new", ["-foo", "foo"])
-@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*", "*/*"])
+@param_new()
+@param_pkg(include_global=True)
 def test_toggle_flag_new_entry_because_of_group(new, package):
     config = get_config([f"{package} GROUP: baz",
                          "dev-foo/bar foo",
                          ])
-    mangle_flag(config, package, None, "foo", not new.startswith("-"))
+    mangle_flag(config, package, None, new.lstrip("-"),
+                not new.startswith("-"))
     assert get_modified_line_nos(config[0]) == {1}
     assert config[0].parsed_lines == [
         ConfigLine(package, [], [("GROUP", ["baz"])]),
@@ -137,13 +160,14 @@ def test_toggle_flag_new_entry_because_of_group(new, package):
     ]
 
 
-@pytest.mark.parametrize("new", ["-foo", "foo"])
-@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*", "*/*"])
+@param_new()
+@param_pkg(include_global=True)
 def test_toggle_flag_new_entry_group(new, package):
     config = get_config([f"{package} group_baz",
                          "dev-foo/bar foo",
                          ])
-    mangle_flag(config, package, "group", "foo", not new.startswith("-"))
+    mangle_flag(config, package, "group", new.lstrip("-"),
+                not new.startswith("-"))
     assert get_modified_line_nos(config[0]) == {1}
     assert config[0].parsed_lines == [
         ConfigLine(package, ["group_baz"]),
@@ -152,9 +176,8 @@ def test_toggle_flag_new_entry_group(new, package):
     ]
 
 
-@pytest.mark.parametrize("old", ["-group_foo", "group_foo"])
-@pytest.mark.parametrize("new", ["-group_foo", "group_foo"])
-@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*", "*/*"])
+@param_old_new(prefix="group_")
+@param_pkg(include_global=True)
 def test_toggle_flag_in_group(old, new, package):
     config = get_config(["*/* foo",
                          "",
@@ -162,7 +185,9 @@ def test_toggle_flag_in_group(old, new, package):
                          "dev-foo/bar foo",
                          f"{package} GROUP: baz",
                          ])
-    mangle_flag(config, package, "group", "foo", not new.startswith("-"))
+    assert new.lstrip("-").startswith("group_")
+    mangle_flag(config, package, "group", new.lstrip("-")[6:],
+                not new.startswith("-"))
     assert get_modified_line_nos(config[0]) == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
@@ -173,10 +198,9 @@ def test_toggle_flag_in_group(old, new, package):
     ]
 
 
-@pytest.mark.parametrize("old", ["-foo", "foo"])
-@pytest.mark.parametrize("new", ["-foo", "foo"])
+@param_old_new()
 @pytest.mark.parametrize("group", ["Group", "GROUP"])
-@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*", "*/*"])
+@param_pkg(include_global=True)
 def test_toggle_flag_in_group_verbose(old, new, group, package):
     config = get_config(["*/* foo",
                          "",
@@ -184,7 +208,8 @@ def test_toggle_flag_in_group_verbose(old, new, group, package):
                          "dev-foo/bar foo",
                          f"{package} group_baz",
                          ])
-    mangle_flag(config, package, "group", "foo", not new.startswith("-"))
+    mangle_flag(config, package, "group", new.lstrip("-"),
+                not new.startswith("-"))
     assert get_modified_line_nos(config[0]) == {2}
     assert config[0].parsed_lines == [
         ConfigLine("*/*", ["foo"]),
