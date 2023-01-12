@@ -54,25 +54,27 @@ def match_flags(line: ConfigLine,
     Yields a tuple of (matched group name, list instance, list index).
     """
 
-    for rev_index, line_flag in enumerate(reversed(line.flat_flags)):
-        line_flag = line_flag.lstrip("-")
-        # FIXME: package files only support '*' after '_'
-        # (or in group)
-        if fnmatch.fnmatch(full_name, line_flag):
-            # 0-based
-            index = len(line.flat_flags) - rev_index - 1
-            yield (None, line.flat_flags, index)
-
     for group, flags in reversed(line.grouped_flags):
         group_lc = group.lower()
         for rev_index, group_flag in enumerate(reversed(flags)):
             group_flag = f"{group_lc}_{group_flag.lstrip('-')}"
             # FIXME: package files only support '*' after '_'
             # (or in group)
-            if fnmatch.fnmatch(full_name, group_flag):
+            if fnmatch.fnmatch(full_name, group_flag
+                               ) or fnmatch.fnmatch(group_flag, full_name):
                 # 0-based
                 index = len(flags) - rev_index - 1
                 yield (group_lc, flags, index)
+
+    for rev_index, line_flag in enumerate(reversed(line.flat_flags)):
+        line_flag = line_flag.lstrip("-")
+        # FIXME: package files only support '*' after '_'
+        # (or in group)
+        if fnmatch.fnmatch(full_name, line_flag
+                           ) or fnmatch.fnmatch(line_flag, full_name):
+            # 0-based
+            index = len(line.flat_flags) - rev_index - 1
+            yield (None, line.flat_flags, index)
 
 
 class WildcardEntryError(Exception):

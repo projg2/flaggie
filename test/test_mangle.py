@@ -30,10 +30,11 @@ def param_new() -> pytest.MarkDecorator:
     return pytest.mark.parametrize("new", ["-foo", "foo"])
 
 
-def param_old_new(*, prefix: str = "") -> pytest.MarkDecorator:
+def param_old_new(*, prefix: str = "", flag: str = "foo",
+                  ) -> pytest.MarkDecorator:
     return pytest.mark.parametrize(
         "old,new",
-        itertools.product([f"-{prefix}foo", f"{prefix}foo"], repeat=2))
+        itertools.product([f"-{prefix}{flag}", f"{prefix}{flag}"], repeat=2))
 
 
 def param_pkg(include_global: bool = False) -> pytest.MarkDecorator:
@@ -217,4 +218,127 @@ def test_toggle_flag_in_group_verbose(old, new, group, package):
         ConfigLine(package, [], [(group, [new, "bar"])]),
         ConfigLine("dev-foo/bar", ["foo"]),
         ConfigLine(package, ["group_baz"]),
+    ]
+
+
+@param_old_new(flag="*")
+@param_pkg()
+def test_toggle_wildcard_flag(old, new, package):
+    config = get_config(["*/* foo",
+                         "",
+                         f"{package} {old}",
+                         ])
+    mangle_flag(config, package, None, new.lstrip("-"),
+                not new.startswith("-"))
+    assert get_modified_line_nos(config[0]) == {2}
+    assert config[0].parsed_lines == [
+        ConfigLine("*/*", ["foo"]),
+        ConfigLine(),
+        ConfigLine(package, [new]),
+    ]
+
+
+@param_old_new(prefix="group_", flag="*")
+@param_pkg()
+def test_toggle_wildcard_flag_group(old, new, package):
+    config = get_config(["*/* foo",
+                         "",
+                         f"{package} {old}",
+                         ])
+    mangle_flag(config, package, "group", new.lstrip("-")[6:],
+                not new.startswith("-"))
+    assert get_modified_line_nos(config[0]) == {2}
+    assert config[0].parsed_lines == [
+        ConfigLine("*/*", ["foo"]),
+        ConfigLine(),
+        ConfigLine(package, [new]),
+    ]
+
+
+@param_old_new(flag="*")
+@param_pkg()
+def test_toggle_wildcard_flag_group_verbose(old, new, package):
+    config = get_config(["*/* foo",
+                         "",
+                         f"{package} GROUP: {old}",
+                         ])
+    mangle_flag(config, package, "group", new.lstrip("-"),
+                not new.startswith("-"))
+    assert get_modified_line_nos(config[0]) == {2}
+    assert config[0].parsed_lines == [
+        ConfigLine("*/*", ["foo"]),
+        ConfigLine(),
+        ConfigLine(package, [], [("GROUP", [new])]),
+    ]
+
+
+@param_old_new(flag="*")
+@pytest.mark.parametrize("other", ["bar", "group_foo"])
+@param_pkg()
+def test_toggle_wildcard_flag_non_final(old, new, other, package):
+    config = get_config(["*/* foo",
+                         "",
+                         f"{package} {old} {other}",
+                         ])
+    mangle_flag(config, package, None, new.lstrip("-"),
+                not new.startswith("-"))
+    assert get_modified_line_nos(config[0]) == {2}
+    assert config[0].parsed_lines == [
+        ConfigLine("*/*", ["foo"]),
+        ConfigLine(),
+        ConfigLine(package, [old, other, new]),
+    ]
+
+
+@param_old_new(flag="*")
+@param_pkg()
+def test_toggle_wildcard_flag_non_final_because_of_group(old, new, package):
+    config = get_config(["*/* foo",
+                         "",
+                         f"{package} {old} GROUP: bar",
+                         ])
+    mangle_flag(config, package, None, new.lstrip("-"),
+                not new.startswith("-"))
+    assert get_modified_line_nos(config[0]) == {3}
+    assert config[0].parsed_lines == [
+        ConfigLine("*/*", ["foo"]),
+        ConfigLine(),
+        ConfigLine(package, [old], [("GROUP", ["bar"])]),
+        ConfigLine(package, [new]),
+    ]
+
+
+@param_old_new(prefix="group_", flag="*")
+@param_pkg()
+def test_toggle_wildcard_flag_group_non_final(old, new, package):
+    config = get_config(["*/* foo",
+                         "",
+                         f"{package} {old} bar",
+                         ])
+    mangle_flag(config, package, "group", new.lstrip("-")[6:],
+                not new.startswith("-"))
+    assert get_modified_line_nos(config[0]) == {2}
+    assert config[0].parsed_lines == [
+        ConfigLine("*/*", ["foo"]),
+        ConfigLine(),
+        ConfigLine(package, [new, "bar"]),
+    ]
+
+
+@param_old_new(flag="*")
+@param_pkg()
+def test_toggle_wildcard_flag_group_verbose_non_final(old, new, package):
+    config = get_config(["*/* foo",
+                         "",
+                         f"{package} GROUP: {old}",
+                         f"{package} bar",
+                         ])
+    mangle_flag(config, package, "group", new.lstrip("-"),
+                not new.startswith("-"))
+    assert get_modified_line_nos(config[0]) == {2}
+    assert config[0].parsed_lines == [
+        ConfigLine("*/*", ["foo"]),
+        ConfigLine(),
+        ConfigLine(package, [], [("GROUP", [new])]),
+        ConfigLine(package, ["bar"]),
     ]
