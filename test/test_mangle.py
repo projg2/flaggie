@@ -27,7 +27,7 @@ def get_modified_line_nos(config_file: ConfigFile) -> frozenset[int]:
 
 @pytest.mark.parametrize("old", ["-foo", "foo"])
 @pytest.mark.parametrize("new", ["-foo", "foo"])
-@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*"])
+@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*", "*/*"])
 def test_toggle_flag(old, new, package):
     config = get_config(["*/* foo",
                          "",
@@ -69,7 +69,7 @@ def test_toggle_flag_append(new, package):
 
 
 @pytest.mark.parametrize("new", ["-foo", "foo"])
-@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*"])
+@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*", "*/*"])
 def test_toggle_flag_append_to_group(new, package):
     config = get_config(["*/* foo",
                          "",
@@ -154,7 +154,7 @@ def test_toggle_flag_new_entry_group(new, package):
 
 @pytest.mark.parametrize("old", ["-group_foo", "group_foo"])
 @pytest.mark.parametrize("new", ["-group_foo", "group_foo"])
-@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*"])
+@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*", "*/*"])
 def test_toggle_flag_in_group(old, new, package):
     config = get_config(["*/* foo",
                          "",
@@ -176,7 +176,7 @@ def test_toggle_flag_in_group(old, new, package):
 @pytest.mark.parametrize("old", ["-foo", "foo"])
 @pytest.mark.parametrize("new", ["-foo", "foo"])
 @pytest.mark.parametrize("group", ["Group", "GROUP"])
-@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*"])
+@pytest.mark.parametrize("package", ["dev-foo/foo", "dev-bar/*", "*/*"])
 def test_toggle_flag_in_group_verbose(old, new, group, package):
     config = get_config(["*/* foo",
                          "",
