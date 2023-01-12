@@ -1,11 +1,20 @@
 # (c) 2023 Michał Górny
 # Released under the terms of the MIT license
 
-import fnmatch
+import functools
 import logging
+import re
 import typing
 
 from flaggie.config import ConfigFile, ConfigLine
+
+
+@functools.cache
+def package_pattern_to_re(pattern: str) -> re.Pattern[str]:
+    """Compile regular expression from wildcard package pattern"""
+    re_str = ".*".join(re.escape(x) for x in pattern.split("*"))
+    logging.debug(f"Pattern {pattern!r} translated into regex {re_str!r}")
+    return re.compile(re_str)
 
 
 def match_packages(config_files: list[ConfigFile],
@@ -32,8 +41,7 @@ def match_packages(config_files: list[ConfigFile],
             if exact_match:
                 if line.package != package:
                     continue
-            # FIXME: fnmatch() is more permissive than package.* files
-            elif not fnmatch.fnmatch(package, line.package):
+            elif package_pattern_to_re(line.package).match(package) is None:
                 continue
 
             # 1-based
@@ -54,24 +62,27 @@ def match_flags(line: ConfigLine,
     Yields a tuple of (matched group name, list instance, list index).
     """
 
+    # FIXME: package files only support '*' after '_' (or in group)
+    full_name_re = package_pattern_to_re(full_name)
+
     for group, flags in reversed(line.grouped_flags):
         group_lc = group.lower()
         for rev_index, group_flag in enumerate(reversed(flags)):
             group_flag = f"{group_lc}_{group_flag.lstrip('-')}"
-            # FIXME: package files only support '*' after '_'
-            # (or in group)
-            if fnmatch.fnmatch(full_name, group_flag
-                               ) or fnmatch.fnmatch(group_flag, full_name):
+            # FIXME: as above
+            match = (
+                package_pattern_to_re(group_flag).match(full_name) is not None)
+            if match or full_name_re.match(group_flag) is not None:
                 # 0-based
                 index = len(flags) - rev_index - 1
                 yield (group_lc, flags, index)
 
     for rev_index, line_flag in enumerate(reversed(line.flat_flags)):
         line_flag = line_flag.lstrip("-")
-        # FIXME: package files only support '*' after '_'
-        # (or in group)
-        if fnmatch.fnmatch(full_name, line_flag
-                           ) or fnmatch.fnmatch(line_flag, full_name):
+        # FIXME: as above
+        match = (
+            package_pattern_to_re(line_flag).match(full_name) is not None)
+        if match or full_name_re.match(line_flag) is not None:
             # 0-based
             index = len(line.flat_flags) - rev_index - 1
             yield (None, line.flat_flags, index)

@@ -9,7 +9,9 @@ from pathlib import Path
 import pytest
 
 from flaggie.config import ConfigFile, ConfigLine, parse_config_file
-from flaggie.mangle import mangle_flag, WildcardEntryError
+from flaggie.mangle import (mangle_flag, WildcardEntryError,
+                            package_pattern_to_re,
+                            )
 
 
 def get_config(raw_data: list[str]) -> list[ConfigFile]:
@@ -342,3 +344,17 @@ def test_toggle_wildcard_flag_group_verbose_non_final(old, new, package):
         ConfigLine(package, [], [("GROUP", [new])]),
         ConfigLine(package, ["bar"]),
     ]
+
+
+@pytest.mark.parametrize(
+    "pattern,expected",
+    [("dev-foo/bar", r"dev\-foo/bar"),
+     ("dev-*/bar", r"dev\-.*/bar"),
+     ("*/*", r".*/.*"),
+     ("*/foo", r".*/foo"),
+     ("x11-libs/gtk+", r"x11\-libs/gtk\+"),
+     ("[0-9]+", r"\[0\-9\]\+"),
+     ("?*?", r"\?.*\?"),
+     ])
+def test_package_pattern_to_re(pattern, expected):
+    assert package_pattern_to_re(pattern).pattern == expected
