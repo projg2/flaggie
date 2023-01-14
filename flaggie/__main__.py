@@ -15,6 +15,7 @@ from pathlib import Path
 from flaggie.config import (TokenType, find_config_files, read_config_files,
                             save_config_files,
                             )
+from flaggie.mangle import mangle_flag
 
 
 def split_arg_sets(argp: argparse.ArgumentParser, args: list[str]
@@ -162,6 +163,20 @@ def main(prog_name: str, *argv: str) -> int:
             token_type, group = namespace_into_token_group(ns)
             logging.debug(
                 f"Namespace mapped into {token_type.name}, group: {group}")
+
+            if not flag:
+                argp.error(f"{op}: flag name required")
+
+            config_file = all_configs[token_type]
+            for package in packages:
+                if operator == "+":
+                    assert flag
+                    mangle_flag(config_file, package, group, flag, True)
+                elif operator == "-":
+                    assert flag
+                    mangle_flag(config_file, package, group, flag, False)
+                else:
+                    argp.error(f"{op}: incorrect operation")
 
     for config_files in all_configs.values():
         save_config_files(config_files, write=not args.pretend)
