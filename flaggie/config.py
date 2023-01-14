@@ -188,18 +188,19 @@ def save_config_files(config_files: typing.Iterable[ConfigFile],
 
         logging.debug(f"Writing config file {config_file.path}")
 
-        try:
-            with tempfile.NamedTemporaryFile(mode="w",
-                                             dir=config_file.path.parent,
-                                             delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w",
+                                         dir=config_file.path.parent,
+                                         delete=False) as f:
+            try:
                 # typeshed is missing fd support in shutil.copymode()
                 # https://github.com/python/typeshed/issues/9288
                 shutil.copymode(config_file.path, f.fileno())  # type: ignore
                 f.write("".join(line.raw_line
                                 for line in config_file.parsed_lines))
-        except Exception:
-            Path(f.name).unlink()
-            raise
+            except Exception:
+                Path(f.name).unlink()
+                raise
+
         if write:
             Path(f.name).rename(config_file.path)
         else:
