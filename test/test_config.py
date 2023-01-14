@@ -123,7 +123,8 @@ def test_save_config_files(tmp_path, write):
         with open(conf.path, "w") as f:
             os.fchmod(f.fileno(), 0o400)
             f.write("<original content>")
-    save_config_files(config_files, write=write)
+    save_config_files(config_files,
+                      confirm_cb=lambda orig_file, temp_file: write)
 
     expected = ["<original content>" for _ in config_files]
     if write:

@@ -172,14 +172,16 @@ def read_config_files(paths: typing.Iterable[Path]
 
 
 def save_config_files(config_files: typing.Iterable[ConfigFile],
-                      write: bool = True,
+                      confirm_cb: typing.Callable[[Path, Path], bool] =
+                      lambda orig_file, temp_file: True,
                       ) -> None:
     """
     Update raw data in modified config files and write them back
 
-    If write is True, the modified data is actually written back
-    into the config file.  Otherwise, it is only written into
-    a temporary file and then discarded (pretend mode).
+    confirm_cb specifies a callback function that is called with
+    the path to the original config file and the path to the temporary
+    file with the new config.  If it returns True, the config file
+    is replaced.  Otherwise, the new config is discarded.
     """
 
     for config_file in config_files:
@@ -189,8 +191,9 @@ def save_config_files(config_files: typing.Iterable[ConfigFile],
         with tempfile.NamedTemporaryFile(mode="w",
                                          dir=config_file.path.parent,
                                          delete=False) as f:
+            temp_path = Path(f.name)
             logging.debug(
-                f"Writing config file {config_file.path} as {f.name}")
+                f"Writing config file {config_file.path} as {temp_path}")
 
             try:
                 # typeshed is missing fd support in shutil.copymode()
@@ -199,11 +202,11 @@ def save_config_files(config_files: typing.Iterable[ConfigFile],
                 f.write("".join(line.raw_line
                                 for line in config_file.parsed_lines))
             except Exception:
-                Path(f.name).unlink()
+                Path(temp_path).unlink()
                 raise
 
-        if write:
+        if confirm_cb(config_file.path, temp_path):
             logging.debug(f"Replacing {config_file.path}")
-            Path(f.name).rename(config_file.path)
+            temp_path.rename(config_file.path)
         else:
-            Path(f.name).unlink()
+            temp_path.unlink()

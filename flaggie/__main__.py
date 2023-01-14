@@ -179,7 +179,9 @@ def main(prog_name: str, *argv: str) -> int:
                     argp.error(f"{op}: incorrect operation")
 
     for config_files in all_configs.values():
-        save_config_files(config_files, write=not args.pretend)
+        save_config_files(
+            config_files,
+            confirm_cb=lambda orig_file, temp_file: not args.pretend)
 
     return 0
 
