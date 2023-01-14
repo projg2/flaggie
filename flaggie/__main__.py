@@ -4,7 +4,9 @@
 import argparse
 import logging
 import os.path
+import shlex
 import shutil
+import subprocess
 import sys
 import textwrap
 import typing
@@ -102,6 +104,9 @@ can either be a USE_EXPAND name or one of the special values:
 """
 
 
+DIFF_DEFAULT = "git --no-pager diff --no-index --word-diff --"
+
+
 def main(prog_name: str, *argv: str) -> int:
     # same as argparse default, enforce for consistency
     help_width = shutil.get_terminal_size().columns - 2
@@ -125,6 +130,15 @@ def main(prog_name: str, *argv: str) -> int:
     argp.add_argument("--debug",
                       action="store_true",
                       help="Enable debug output")
+    argp.add_argument("--diff",
+                      default=DIFF_DEFAULT,
+                      help="Program used to diff configs "
+                           f"(default: {DIFF_DEFAULT})")
+    argp.add_argument("--no-diff",
+                      action="store_const",
+                      const=None,
+                      dest="diff",
+                      help="Do not diff configs")
     argp.add_argument("--pretend",
                       action="store_true",
                       help="Do not write any changes to the original files")
@@ -178,10 +192,15 @@ def main(prog_name: str, *argv: str) -> int:
                 else:
                     argp.error(f"{op}: incorrect operation")
 
+    diff_prog = shlex.split(args.diff) if args.diff is not None else None
+
+    def confirm_cb(orig_file: Path, temp_file: Path) -> bool:
+        if diff_prog is not None:
+            subprocess.run(diff_prog + [str(orig_file), str(temp_file)])
+        return not args.pretend
+
     for config_files in all_configs.values():
-        save_config_files(
-            config_files,
-            confirm_cb=lambda orig_file, temp_file: not args.pretend)
+        save_config_files(config_files, confirm_cb=confirm_cb)
 
     return 0
 
