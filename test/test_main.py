@@ -5,7 +5,7 @@ import argparse
 
 import pytest
 
-from flaggie.__main__ import split_arg_sets
+from flaggie.__main__ import split_arg_sets, split_op
 
 
 @pytest.mark.parametrize(
@@ -32,3 +32,13 @@ def test_split_arg_sets_invalid(args):
     argp = argparse.ArgumentParser()
     with pytest.raises(SystemExit):
         list(split_arg_sets(argp, args))
+
+
+@pytest.mark.parametrize(
+    "op,expected",
+    [("+foo", ("+", None, "foo")),
+     ("-use::foo", ("-", "use", "foo")),
+     ("%", ("%", None, None)),
+     ])
+def test_split_op(op, expected):
+    assert split_op(op) == expected

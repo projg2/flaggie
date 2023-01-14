@@ -42,6 +42,17 @@ def split_arg_sets(argp: argparse.ArgumentParser, args: list[str]
     yield (packages, ops)
 
 
+def split_op(op: str,
+             ) -> tuple[str, typing.Optional[str], typing.Optional[str]]:
+    """Split operation argument into (operation, namespace, flag)"""
+
+    operator = op[0]
+    split = op[1:].split("::", 1)
+    ns = split[0] if len(split) == 2 else None
+    flag = split[-1] or None
+    return (operator, ns, flag)
+
+
 REQUEST_HELP = """
 Every request consists of zero or more packages, followed by one or more \
 flag changes, i.e.:
@@ -114,6 +125,9 @@ def main(prog_name: str, *argv: str) -> int:
         if not packages:
             packages.append("*/*")
         logging.debug(f"Request: packages = {packages}, ops = {ops}")
+        for op in ops:
+            operator, ns, flag = split_op(op)
+            logging.debug(f"Operation: {operator}, ns: {ns}, flag: {flag}")
 
     for config_files in all_configs.values():
         save_config_files(config_files)
