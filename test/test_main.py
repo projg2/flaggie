@@ -5,7 +5,10 @@ import argparse
 
 import pytest
 
-from flaggie.__main__ import split_arg_sets, split_op
+from flaggie.__main__ import (split_arg_sets, split_op,
+                              namespace_into_token_group,
+                              )
+from flaggie.config import TokenType
 
 
 @pytest.mark.parametrize(
@@ -42,3 +45,13 @@ def test_split_arg_sets_invalid(args):
      ])
 def test_split_op(op, expected):
     assert split_op(op) == expected
+
+
+@pytest.mark.parametrize(
+    "arg,expected",
+    [("use", (TokenType.USE_FLAG, None)),
+     ("kw", (TokenType.KEYWORD, None)),
+     ("PYTHON_TARGETS", (TokenType.USE_FLAG, "PYTHON_TARGETS")),
+     ])
+def test_namespace_into_token_group(arg, expected):
+    assert namespace_into_token_group(arg) == expected

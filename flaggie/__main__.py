@@ -53,6 +53,26 @@ def split_op(op: str,
     return (operator, ns, flag)
 
 
+NAMESPACE_MAP = {
+    "use": TokenType.USE_FLAG,
+    "kw": TokenType.KEYWORD,
+    "lic": TokenType.LICENSE,
+    "prop": TokenType.PROPERTY,
+    "restrict": TokenType.RESTRICT,
+    "env": TokenType.ENV_FILE,
+}
+
+
+def namespace_into_token_group(ns: str) -> tuple[TokenType,
+                                                 typing.Optional[str]]:
+    """Map namespace into a tuple of (token type, group name)"""
+
+    token_type = NAMESPACE_MAP.get(ns)
+    if token_type is not None:
+        return (token_type, None)
+    return (TokenType.USE_FLAG, ns)
+
+
 REQUEST_HELP = """
 Every request consists of zero or more packages, followed by one or more \
 flag changes, i.e.:
@@ -85,6 +105,7 @@ def main(prog_name: str, *argv: str) -> int:
     # same as argparse default, enforce for consistency
     help_width = shutil.get_terminal_size().columns - 2
 
+    # FIXME: handle "-"-arguments cleanly without "--"
     argp = argparse.ArgumentParser(
         prog=os.path.basename(prog_name),
         epilog="\n".join(textwrap.fill(x,
@@ -128,6 +149,16 @@ def main(prog_name: str, *argv: str) -> int:
         for op in ops:
             operator, ns, flag = split_op(op)
             logging.debug(f"Operation: {operator}, ns: {ns}, flag: {flag}")
+            if ns in (None, "auto"):
+                # FIXME
+                argp.error(
+                    f"{op}: Flag type guessing is not supported yet")
+            # FIXME: workaround for mypy, may become unnecessary once auto
+            # is implemented
+            assert ns is not None
+            token_type, group = namespace_into_token_group(ns)
+            logging.debug(
+                f"Namespace mapped into {token_type.name}, group: {group}")
 
     for config_files in all_configs.values():
         save_config_files(config_files)
