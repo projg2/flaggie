@@ -107,7 +107,8 @@ def invalidate_config_lines(lines: list[ConfigLine],
     return out
 
 
-def test_save_config_files(tmp_path):
+@pytest.mark.parametrize("write", [False, True])
+def test_save_config_files(tmp_path, write):
     config_files = [
         ConfigFile(tmp_path / "config",
                    invalidate_config_lines(PARSED_TEST_CONFIG_FILE, 1, 5),
@@ -118,12 +119,19 @@ def test_save_config_files(tmp_path):
         ConfigFile(tmp_path / "config3", []),
     ]
 
-    config_files[0].path.touch(mode=0o400)
-    config_files[1].path.touch(mode=0o400)
-    save_config_files(config_files)
+    for conf in config_files:
+        with open(conf.path, "w") as f:
+            os.fchmod(f.fileno(), 0o400)
+            f.write("<original content>")
+    save_config_files(config_files, write=write)
 
-    assert config_files[0].path.read_text() == (
-        "".join(x.lstrip(" ") for x in TEST_CONFIG_FILE))
-    assert stat.S_IMODE(os.stat(config_files[0].path).st_mode) == 0o400
-    assert config_files[1].path.read_text() == "dev-foo/bar new\n"
-    assert stat.S_IMODE(os.stat(config_files[1].path).st_mode) == 0o400
+    expected = ["<original content>" for _ in config_files]
+    if write:
+        expected[:2] = [
+            "".join(x.lstrip(" ") for x in TEST_CONFIG_FILE),
+            "dev-foo/bar new\n",
+        ]
+
+    assert [conf.path.read_text() for conf in config_files] == expected
+    assert [stat.S_IMODE(os.stat(conf.path).st_mode) for conf in config_files
+            ] == [0o400 for _ in config_files]

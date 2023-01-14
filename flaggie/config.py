@@ -171,9 +171,15 @@ def read_config_files(paths: typing.Iterable[Path]
             yield ConfigFile(path, list(parse_config_file(f.readlines())))
 
 
-def save_config_files(config_files: typing.Iterable[ConfigFile]) -> None:
+def save_config_files(config_files: typing.Iterable[ConfigFile],
+                      write: bool = True,
+                      ) -> None:
     """
-    Update raw data in modified config files and write them back.
+    Update raw data in modified config files and write them back
+
+    If write is True, the modified data is actually written back
+    into the config file.  Otherwise, it is only written into
+    a temporary file and then discarded (pretend mode).
     """
 
     for config_file in config_files:
@@ -194,4 +200,7 @@ def save_config_files(config_files: typing.Iterable[ConfigFile]) -> None:
         except Exception:
             Path(f.name).unlink()
             raise
-        Path(f.name).rename(config_file.path)
+        if write:
+            Path(f.name).rename(config_file.path)
+        else:
+            Path(f.name).unlink()

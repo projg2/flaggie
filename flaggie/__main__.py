@@ -124,6 +124,9 @@ def main(prog_name: str, *argv: str) -> int:
     argp.add_argument("--debug",
                       action="store_true",
                       help="Enable debug output")
+    argp.add_argument("--pretend",
+                      action="store_true",
+                      help="Do not write any changes to the original files")
     argp.add_argument("request",
                       nargs="+",
                       help="Requested operations (see description)")
@@ -161,7 +164,7 @@ def main(prog_name: str, *argv: str) -> int:
                 f"Namespace mapped into {token_type.name}, group: {group}")
 
     for config_files in all_configs.values():
-        save_config_files(config_files)
+        save_config_files(config_files, write=not args.pretend)
 
     return 0
 
