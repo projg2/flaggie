@@ -117,6 +117,7 @@ def main(prog_name: str, *argv: str) -> int:
     # FIXME: handle "-"-arguments cleanly without "--"
     argp = argparse.ArgumentParser(
         prog=os.path.basename(prog_name),
+        usage="%(prog)s [options] request ...",
         epilog="\n".join(textwrap.fill(x,
                                        width=help_width,
                                        drop_whitespace=False,
@@ -154,13 +155,12 @@ def main(prog_name: str, *argv: str) -> int:
     argp.add_argument("--pretend",
                       action="store_true",
                       help="Do not write any changes to the original files")
-    argp.add_argument("request",
-                      nargs="+",
-                      help="Requested operations (see description)")
-    args = argp.parse_args(argv)
+    args, request = argp.parse_known_args(argv)
 
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
+    if not request:
+        argp.error("No request specified")
 
     pm = None
     if not args.no_package_manager:
@@ -177,7 +177,7 @@ def main(prog_name: str, *argv: str) -> int:
         k: list(read_config_files(find_config_files(args.config_root, k)))
         for k in TokenType}
 
-    for packages, ops in split_arg_sets(argp, args.request):
+    for packages, ops in split_arg_sets(argp, request):
         if not packages:
             packages.append("*/*")
         logging.debug(f"Request: packages = {packages}, ops = {ops}")
