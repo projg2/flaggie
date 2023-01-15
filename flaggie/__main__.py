@@ -18,6 +18,7 @@ from flaggie.config import (TokenType, find_config_files, read_config_files,
                             save_config_files,
                             )
 from flaggie.mangle import mangle_flag
+from flaggie.pm import match_package
 
 
 def split_arg_sets(argp: argparse.ArgumentParser, args: list[str]
@@ -134,11 +135,20 @@ def main(prog_name: str, *argv: str) -> int:
                       default=DIFF_DEFAULT,
                       help="Program used to diff configs "
                            f"(default: {DIFF_DEFAULT})")
+    argp.add_argument("--force",
+                      action="store_true",
+                      help="Force performing the action even if arguments "
+                           "are invalid")
     argp.add_argument("--no-diff",
                       action="store_const",
                       const=None,
                       dest="diff",
                       help="Do not diff configs")
+    argp.add_argument("--no-package-manager",
+                      action="store_true",
+                      help="Disable package manager interaction and features "
+                           "requiring it (category and argument type "
+                           "guessing, validation)")
     argp.add_argument("--pretend",
                       action="store_true",
                       help="Do not write any changes to the original files")
@@ -149,6 +159,11 @@ def main(prog_name: str, *argv: str) -> int:
 
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
+
+    pm = None
+    if not args.no_package_manager:
+        import gentoopm
+        pm = gentoopm.get_package_manager()
 
     portage_dir = args.config_root / "etc/portage"
     if not portage_dir.is_dir():
@@ -164,6 +179,19 @@ def main(prog_name: str, *argv: str) -> int:
         if not packages:
             packages.append("*/*")
         logging.debug(f"Request: packages = {packages}, ops = {ops}")
+
+        def expand_package(pkg: str) -> str:
+            try:
+                return match_package(pm, pkg)
+            except Exception as err:
+                if not args.force:
+                    argp.error(f"Package {pkg!r} invalid: {err}")
+                else:
+                    logging.warning(f"Package {pkg!r} invalid: {err}")
+                return pkg
+
+        packages = list(map(expand_package, packages))
+
         for op in ops:
             operator, ns, flag = split_op(op)
             logging.debug(f"Operation: {operator}, ns: {ns}, flag: {flag}")
