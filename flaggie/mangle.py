@@ -13,7 +13,6 @@ from flaggie.config import ConfigFile, ConfigLine
 def package_pattern_to_re(pattern: str) -> re.Pattern[str]:
     """Compile regular expression from wildcard package pattern"""
     re_str = ".*".join(re.escape(x) for x in pattern.split("*"))
-    logging.debug(f"Pattern {pattern!r} translated into regex {re_str!r}")
     return re.compile(re_str)
 
 
