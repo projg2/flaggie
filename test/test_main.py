@@ -19,6 +19,10 @@ from flaggie.config import TokenType
       [(["dev-foo/bar", "baz"], ["-foo"])]),
      (["+foo", "dev-foo/*", "-foo"],
       [([], ["+foo"]), (["dev-foo/*"], ["-foo"])]),
+     ([">=dev-foo/bar-11-r1", "+foo"], [([">=dev-foo/bar-11-r1"], ["+foo"])]),
+     (["<bar-11", "+foo"], [(["<bar-11"], ["+foo"])]),
+     (["~dev-foo/bar-21", "+foo"], [(["~dev-foo/bar-21"], ["+foo"])]),
+     (["=bar-14*", "+foo"], [(["=bar-14*"], ["+foo"])]),
      ])
 def test_split_arg_sets(args, expected):
     argp = argparse.ArgumentParser()

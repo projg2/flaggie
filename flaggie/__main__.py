@@ -31,14 +31,16 @@ def split_arg_sets(argp: argparse.ArgumentParser, args: list[str]
     for arg in args:
         if not arg:
             argp.error("Empty string in requests")
-        if arg[0].isidentifier():
-            if ops:
-                yield (packages, ops)
-                packages = []
-                ops = []
-            packages.append(arg)
-        else:
+        # TODO: replace the inline list when action handling is rewritten
+        # in main()
+        if arg[0] in ("+", "-"):
             ops.append(arg)
+            continue
+        if ops:
+            yield (packages, ops)
+            packages = []
+            ops = []
+        packages.append(arg)
     if not ops:
         argp.error(
             f"Packages ({' '.join(packages)}) with no operations specified "
