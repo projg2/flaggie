@@ -18,7 +18,7 @@ from flaggie.config import (TokenType, find_config_files, read_config_files,
                             save_config_files,
                             )
 from flaggie.mangle import mangle_flag
-from flaggie.pm import match_package
+from flaggie.pm import match_package, get_valid_values
 
 
 def split_arg_sets(argp: argparse.ArgumentParser, args: list[str]
@@ -212,7 +212,22 @@ def main(prog_name: str, *argv: str) -> int:
                 argp.error(f"{op}: flag name required")
 
             config_file = all_configs[token_type]
+            if token_type == TokenType.USE_FLAG and pm is not None:
+                # TODO: detect USE_EXPAND and split group from flag
+                pass
+
             for package in packages:
+                if pm is not None:
+                    valid_values = get_valid_values(pm, package, token_type,
+                                                    group)
+                    if valid_values is not None and flag not in valid_values:
+                        if not args.force:
+                            argp.error(
+                                f"{op}: argument incorrect for {package}")
+                        else:
+                            logging.warning(
+                                f"{op}: argument incorrect for {package}")
+
                 if operator == "+":
                     assert flag
                     mangle_flag(config_file, package, group, flag, True)

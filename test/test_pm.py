@@ -3,7 +3,8 @@
 
 import typing
 
-from flaggie.pm import match_package
+from flaggie.config import TokenType
+from flaggie.pm import match_package, get_valid_values
 
 import pytest
 
@@ -41,12 +42,33 @@ class MockedPM:
                 return self._key("app-foo", "bar")
             return self._key(None, "bar")
 
+        @property
+        def keywords(self):
+            if self._atom == "=app-foo/bar-1":
+                return frozenset(["-*", "amd64"])
+            elif self._atom == "=app-foo/bar-2":
+                return frozenset(["~amd64", "~riscv"])
+            return frozenset([])
+
+        @property
+        def use(self):
+            return frozenset(["foo", "bar", "targets_frobnicate"])
+
     class stack:
         @staticmethod
         def select(atom: "MockedPM.Atom") -> "MockedPM.Atom":
             if "bar" not in atom._atom:
                 raise ValueError("ENOENT")
             return MockedPM.Atom("app-foo/bar")
+
+        @staticmethod
+        def filter(atom: str) -> list["MockedPM.Atom"]:
+            if atom.startswith("="):
+                return [MockedPM.Atom(atom)]
+            return [
+                MockedPM.Atom(f"={atom}-1"),
+                MockedPM.Atom(f"={atom}-2"),
+            ]
 
 
 @pytest.mark.parametrize("package", VALID_SPECS)
@@ -70,3 +92,23 @@ def test_match_package_expand_raise():
 def test_match_package_no_pm_no_category(package):
     with pytest.raises(ValueError):
         match_package(None, package)
+
+
+@pytest.mark.parametrize(
+    "package,token_type,group,expected",
+    [("app-foo/bar", TokenType.USE_FLAG, None,
+      ["*", "targets_frobnicate", "foo", "bar"]),
+     ("app-foo/bar", TokenType.USE_FLAG, "TARGETS",
+      ["*", "frobnicate"]),
+     ("app-foo/bar", TokenType.KEYWORD, None,
+      ["*", "~*", "**", "~amd64", "amd64", "~riscv"]),
+     ("=app-foo/bar-1", TokenType.KEYWORD, None,
+      ["*", "**", "amd64"]),
+     ("=app-foo/bar-2", TokenType.KEYWORD, None,
+      ["~*", "**", "~amd64", "~riscv"]),
+     ("=app-foo/live-1", TokenType.KEYWORD, None,
+      ["**"]),
+     ])
+def test_get_valid_values_pkg(package, token_type, group, expected):
+    assert (get_valid_values(MockedPM(), package, token_type, group) ==
+            frozenset(expected))

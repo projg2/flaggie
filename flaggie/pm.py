@@ -1,7 +1,11 @@
 # (c) 2023 Michał Górny
 # Released under the terms of the MIT license
 
+import logging
 import typing
+
+from flaggie.config import TokenType
+
 
 if typing.TYPE_CHECKING:
     import gentoopm
@@ -36,3 +40,63 @@ def match_package(pm: typing.Optional["gentoopm.basepm.PMBase"],
                                     str(match.key))
 
     return package_spec
+
+
+def get_valid_values(pm: "gentoopm.basepm.PMBase",
+                     package_spec: str,
+                     token_type: TokenType,
+                     group: typing.Optional[str],
+                     ) -> typing.Optional[set[str]]:
+    """Get a list of valid values for (package, token type, group)"""
+
+    # env files are global by design
+    if token_type == TokenType.ENV_FILE:
+        # TODO
+        return None
+
+    # TODO: support global values
+    if package_spec == "*/*":
+        return None
+
+    # wildcard packages not supported
+    # FIXME: this catches =app-foo/bar-11*
+    if "*" in package_spec:
+        return None
+
+    group_match = ""
+    group_len = 0
+    if group is not None:
+        group_match = group.lower() + "_"
+        group_len = len(group_match)
+
+    values = set()
+    values.add("**" if token_type == TokenType.KEYWORD else "*")
+    if token_type == TokenType.LICENSE:
+        # TODO: add license groups
+        pass
+
+    for pkg in pm.stack.filter(package_spec):
+        if token_type == TokenType.USE_FLAG:
+            for flag in pkg.use:
+                if flag.lower().startswith(group_match):
+                    values.add(flag[group_len:])
+        elif token_type == TokenType.KEYWORD:
+            for keyword in pkg.keywords:
+                if keyword.startswith("-"):
+                    continue
+                values.add("~*" if keyword.startswith("~") else "*")
+                values.add(keyword)
+        elif token_type == TokenType.LICENSE:
+            # TODO: implement in gentoopm
+            return None
+        elif token_type == TokenType.PROPERTY:
+            # TODO: implement in gentoopm
+            return None
+        elif token_type == TokenType.RESTRICT:
+            # TODO: implement in gentoopm
+            return None
+
+    logging.debug(
+        f"Valid values for {package_spec} {token_type.name} group: {group}: "
+        f"{values}")
+    return values
