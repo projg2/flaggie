@@ -56,6 +56,18 @@ class MockedPM:
             return frozenset([])
 
         @property
+        def license(self):
+            return [["Apache-2.0", "MIT"], "BSD"]
+
+        @property
+        def properties(self):
+            return ["live"]
+
+        @property
+        def restrict(self):
+            return ["fetch", "mirror", ["test"]]
+
+        @property
         def use(self):
             return frozenset(["foo", "-bar", "+targets_frobnicate"])
 
@@ -113,6 +125,12 @@ def test_match_package_no_pm_no_category(package):
       ["~*", "**", "~amd64", "~riscv"]),
      ("=app-foo/live-1", TokenType.KEYWORD, None,
       ["**"]),
+     ("=app-foo/live-1", TokenType.LICENSE, None,
+      ["*", "Apache-2.0", "BSD", "MIT"]),
+     ("=app-foo/live-1", TokenType.PROPERTY, None,
+      ["*", "live"]),
+     ("=app-foo/live-1", TokenType.RESTRICT, None,
+      ["*", "fetch", "mirror", "test"]),
      ])
 def test_get_valid_values_pkg(package, token_type, group, expected):
     assert (get_valid_values(MockedPM(), package, token_type, group) ==

@@ -6,6 +6,8 @@ import typing
 
 from pathlib import Path
 
+import more_itertools
+
 from flaggie.config import TokenType
 from flaggie.mangle import is_wildcard_package
 
@@ -95,14 +97,11 @@ def get_valid_values(pm: "gentoopm.basepm.PMBase",
                 values.add("~*" if keyword.startswith("~") else "*")
                 values.add(keyword)
         elif token_type == TokenType.LICENSE:
-            # TODO: implement in gentoopm
-            return None
+            values.update(more_itertools.collapse(pkg.license))
         elif token_type == TokenType.PROPERTY:
-            # TODO: implement in gentoopm
-            return None
+            values.update(more_itertools.collapse(pkg.properties))
         elif token_type == TokenType.RESTRICT:
-            # TODO: implement in gentoopm
-            return None
+            values.update(more_itertools.collapse(pkg.restrict))
 
     logging.debug(
         f"Valid values for {package_spec} {token_type.name} group: {group}: "
