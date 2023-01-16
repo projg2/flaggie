@@ -4,6 +4,8 @@
 import logging
 import typing
 
+from pathlib import Path
+
 from flaggie.config import TokenType
 from flaggie.mangle import is_wildcard_package
 
@@ -51,8 +53,14 @@ def get_valid_values(pm: "gentoopm.basepm.PMBase",
 
     # env files are global by design
     if token_type == TokenType.ENV_FILE:
-        # TODO
-        return None
+        env_dir = Path(pm.config_root or "/") / "etc/portage/env"
+        if not env_dir.is_dir():
+            logging.debug(f"{env_dir} is not a directory, no valid "
+                          f"{token_type.name} values")
+            return None
+        values = set(path.name for path in env_dir.iterdir() if path.is_file())
+        logging.debug(f"Valid values for {token_type.name}: {values}")
+        return values
 
     # TODO: support global values
     if package_spec == "*/*":

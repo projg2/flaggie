@@ -3,6 +3,8 @@
 
 import typing
 
+from pathlib import Path
+
 from flaggie.config import TokenType
 from flaggie.pm import match_package, get_valid_values
 
@@ -24,6 +26,9 @@ SHORT_SPECS = [
 
 
 class MockedPM:
+    def __init__(self, config_root: typing.Optional[Path] = None):
+        self.config_root = config_root
+
     class Atom:
         class _key(typing.NamedTuple):
             category: typing.Optional[str]
@@ -112,3 +117,13 @@ def test_match_package_no_pm_no_category(package):
 def test_get_valid_values_pkg(package, token_type, group, expected):
     assert (get_valid_values(MockedPM(), package, token_type, group) ==
             frozenset(expected))
+
+
+def test_get_valid_values_env(tmp_path):
+    env_dir = tmp_path / "etc/portage/env"
+    env_dir.mkdir(parents=True)
+    expected = frozenset(["foo", "bar", "baz"])
+    for filename in expected:
+        (env_dir / filename).touch()
+    assert get_valid_values(MockedPM(tmp_path), "dev-foo/bar",
+                            TokenType.ENV_FILE, None) == expected
