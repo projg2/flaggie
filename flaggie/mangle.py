@@ -16,6 +16,14 @@ def package_pattern_to_re(pattern: str) -> re.Pattern[str]:
     return re.compile(re_str)
 
 
+def is_wildcard_package(package: str) -> bool:
+    """Check if specified package spec is a wildcard category/package name"""
+    # strip the trailing * from =dev-foo/bar-11*
+    if package.startswith("="):
+        package = package.rstrip("*")
+    return "*" in package
+
+
 def match_packages(config_files: list[ConfigFile],
                    package: str,
                    exact_match: bool,
@@ -101,7 +109,7 @@ def mangle_flag(config_files: list[ConfigFile],
                 name: str,
                 new_state: bool,
                 ) -> None:
-    pkg_is_wildcard = "*" in package
+    pkg_is_wildcard = is_wildcard_package(package)
     full_name = name if prefix is None else f"{prefix.lower()}_{name}"
     new_state_sym = "" if new_state else "-"
 
@@ -200,7 +208,7 @@ def mangle_flag(config_files: list[ConfigFile],
             logging.debug(
                 f"Prepending new entry to {config_file.path}: {new_line}")
             config_file.parsed_lines.insert(0, new_line)
-        elif "*" in new_line.package:
+        elif is_wildcard_package(new_line.package):
             raise WildcardEntryError()
         else:
             config_file = config_files[-1]

@@ -5,6 +5,7 @@ import logging
 import typing
 
 from flaggie.config import TokenType
+from flaggie.mangle import is_wildcard_package
 
 
 if typing.TYPE_CHECKING:
@@ -22,8 +23,7 @@ def match_package(pm: typing.Optional["gentoopm.basepm.PMBase"],
     package specification or raises an exception.
     """
 
-    # FIXME: this catches =app-foo/bar-11*
-    if pm is None or "*" in package_spec:
+    if pm is None or is_wildcard_package(package_spec):
         # if PM is not available or we're dealing with wildcards,
         # just perform basic validation
         # TODO: better validation?
@@ -59,8 +59,7 @@ def get_valid_values(pm: "gentoopm.basepm.PMBase",
         return None
 
     # wildcard packages not supported
-    # FIXME: this catches =app-foo/bar-11*
-    if "*" in package_spec:
+    if is_wildcard_package(package_spec):
         return None
 
     group_match = ""

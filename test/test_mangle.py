@@ -10,7 +10,7 @@ import pytest
 
 from flaggie.config import ConfigFile, ConfigLine, parse_config_file
 from flaggie.mangle import (mangle_flag, WildcardEntryError,
-                            package_pattern_to_re,
+                            package_pattern_to_re, is_wildcard_package,
                             )
 
 
@@ -358,3 +358,14 @@ def test_toggle_wildcard_flag_group_verbose_non_final(old, new, package):
      ])
 def test_package_pattern_to_re(pattern, expected):
     assert package_pattern_to_re(pattern).pattern == expected
+
+
+@pytest.mark.parametrize(
+    "package,expected",
+    [("dev-foo/bar", False),
+     ("dev-foo/*", True),
+     ("*/*", True),
+     ("=dev-foo/bar-11*", False),
+     ])
+def test_is_wildcard_package(package, expected):
+    assert is_wildcard_package(package) == expected
