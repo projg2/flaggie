@@ -57,7 +57,7 @@ class MockedPM:
 
         @property
         def use(self):
-            return frozenset(["foo", "bar", "targets_frobnicate"])
+            return frozenset(["foo", "-bar", "+targets_frobnicate"])
 
     class stack:
         @staticmethod

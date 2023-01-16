@@ -85,6 +85,7 @@ def get_valid_values(pm: "gentoopm.basepm.PMBase",
     for pkg in pm.stack.filter(package_spec):
         if token_type == TokenType.USE_FLAG:
             for flag in pkg.use:
+                flag = flag.lstrip("+-")
                 if flag.lower().startswith(group_match):
                     values.add(flag[group_len:])
         elif token_type == TokenType.KEYWORD:
