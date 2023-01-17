@@ -64,12 +64,8 @@ def get_valid_values(pm: "gentoopm.basepm.PMBase",
         logging.debug(f"Valid values for {token_type.name}: {values}")
         return values
 
-    # TODO: support global values
-    if package_spec == "*/*":
-        return None
-
     # wildcard packages not supported
-    if is_wildcard_package(package_spec):
+    if package_spec != "*/*" and is_wildcard_package(package_spec):
         return None
 
     group_match = ""
@@ -84,24 +80,44 @@ def get_valid_values(pm: "gentoopm.basepm.PMBase",
         # TODO: add license groups
         pass
 
-    for pkg in pm.stack.filter(package_spec):
+    if package_spec == "*/*":
         if token_type == TokenType.USE_FLAG:
-            for flag in pkg.use:
-                flag = flag.lstrip("+-")
-                if flag.lower().startswith(group_match):
-                    values.add(flag[group_len:])
-        elif token_type == TokenType.KEYWORD:
-            for keyword in pkg.keywords:
-                if keyword.startswith("-"):
-                    continue
-                values.add("~*" if keyword.startswith("~") else "*")
-                values.add(keyword)
-        elif token_type == TokenType.LICENSE:
-            values.update(more_itertools.collapse(pkg.license))
-        elif token_type == TokenType.PROPERTY:
-            values.update(more_itertools.collapse(pkg.properties))
-        elif token_type == TokenType.RESTRICT:
-            values.update(more_itertools.collapse(pkg.restrict))
+            if group is not None:
+                use_expand = pm.stack.use_expand.get(group)
+                if use_expand is None:
+                    logging.debug(
+                        f"{token_type.name} group: {group} is not valid")
+                    return set()
+                if not use_expand.prefixed:
+                    logging.debug(
+                        f"{token_type.name} group: {group} is not prefixed")
+                    return set()
+                values.update(use_expand.values)
+            else:
+                # NB: we deliberately ignore use_expand, as flaggie
+                # is expected to have detected it and set the group
+                values.update(pm.stack.global_use)
+        else:
+            return None
+    else:
+        for pkg in pm.stack.filter(package_spec):
+            if token_type == TokenType.USE_FLAG:
+                for flag in pkg.use:
+                    flag = flag.lstrip("+-")
+                    if flag.lower().startswith(group_match):
+                        values.add(flag[group_len:])
+            elif token_type == TokenType.KEYWORD:
+                for keyword in pkg.keywords:
+                    if keyword.startswith("-"):
+                        continue
+                    values.add("~*" if keyword.startswith("~") else "*")
+                    values.add(keyword)
+            elif token_type == TokenType.LICENSE:
+                values.update(more_itertools.collapse(pkg.license))
+            elif token_type == TokenType.PROPERTY:
+                values.update(more_itertools.collapse(pkg.properties))
+            elif token_type == TokenType.RESTRICT:
+                values.update(more_itertools.collapse(pkg.restrict))
 
     logging.debug(
         f"Valid values for {package_spec} {token_type.name} group: {group}: "

@@ -25,6 +25,13 @@ SHORT_SPECS = [
 ]
 
 
+class UseExpand(typing.NamedTuple):
+    name: str
+    prefixed: bool
+    visible: bool
+    values: dict[str, typing.Any]
+
+
 class MockedPM:
     def __init__(self, config_root: typing.Optional[Path] = None):
         self.config_root = config_root
@@ -87,6 +94,23 @@ class MockedPM:
                 MockedPM.Atom(f"={atom}-2"),
             ]
 
+        global_use = {"baz": None, "fjord": None}
+        use_expand = {
+            "GLOBAL": UseExpand(name="GLOBAL",
+                                prefixed=True,
+                                visible=True,
+                                values={"val1": None,
+                                        "val2": None,
+                                        "val3": None,
+                                        }),
+            "UNPREFIXED": UseExpand(name="UNPREFIXED",
+                                    prefixed=False,
+                                    visible=True,
+                                    values={"val1": None,
+                                            "val2": None,
+                                            }),
+        }
+
 
 @pytest.mark.parametrize("package", VALID_SPECS)
 @pytest.mark.parametrize("pm", [None, MockedPM()])
@@ -131,6 +155,12 @@ def test_match_package_no_pm_no_category(package):
       ["*", "live"]),
      ("=app-foo/live-1", TokenType.RESTRICT, None,
       ["*", "fetch", "mirror", "test"]),
+     ("*/*", TokenType.USE_FLAG, None,
+      ["*", "baz", "fjord"]),
+     ("*/*", TokenType.USE_FLAG, "GLOBAL",
+      ["*", "val1", "val2", "val3"]),
+     ("*/*", TokenType.USE_FLAG, "INVALID", []),
+     ("*/*", TokenType.USE_FLAG, "UNPREFIXED", []),
      ])
 def test_get_valid_values_pkg(package, token_type, group, expected):
     assert (get_valid_values(MockedPM(), package, token_type, group) ==
