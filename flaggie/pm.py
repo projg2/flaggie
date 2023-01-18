@@ -103,6 +103,8 @@ def get_valid_values(pm: "gentoopm.basepm.PMBase",
             values.update(f"~{arch.name}" for arch in arches)
             values.update(arch.name for arch in arches
                           if arch.stability != "testing")
+        elif token_type == TokenType.LICENSE:
+            values.update(pm.stack.licenses)
         else:
             return None
     else:

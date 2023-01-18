@@ -106,6 +106,10 @@ class MockedPM:
             "riscv-linux": ArchDesc(name="riscv-linux", stability=None),
         }
         global_use = {"baz": None, "fjord": None}
+        licenses = {
+            "Apache-2.0": None,
+            "BSD": None,
+        }
         use_expand = {
             "GLOBAL": UseExpand(name="GLOBAL",
                                 prefixed=True,
@@ -175,6 +179,8 @@ def test_match_package_no_pm_no_category(package):
      ("*/*", TokenType.KEYWORD, None,
       ["*", "~*", "**", "~amd64", "amd64", "~loong", "riscv", "~riscv",
        "riscv-linux", "~riscv-linux"]),
+     ("*/*", TokenType.LICENSE, None,
+      ["*", "Apache-2.0", "BSD"]),
      ])
 def test_get_valid_values_pkg(package, token_type, group, expected):
     assert (get_valid_values(MockedPM(), package, token_type, group) ==
