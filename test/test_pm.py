@@ -6,7 +6,8 @@ import typing
 from pathlib import Path
 
 from flaggie.config import TokenType
-from flaggie.pm import match_package, get_valid_values
+from flaggie.pm import (match_package, get_valid_values, split_use_expand,
+                        )
 
 import pytest
 
@@ -199,3 +200,13 @@ def test_get_valid_values_env(tmp_path):
         (env_dir / filename).touch()
     assert get_valid_values(MockedPM(tmp_path), "dev-foo/bar",
                             TokenType.ENV_FILE, None) == expected
+
+
+@pytest.mark.parametrize(
+    "flag,expected",
+    [("foo", (None, "foo")),
+     ("global_foo", ("GLOBAL", "foo")),
+     ("unprefixed_foo", (None, "unprefixed_foo")),
+     ])
+def test_split_use_expand(flag, expected):
+    assert split_use_expand(MockedPM(), flag) == expected

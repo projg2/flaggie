@@ -149,3 +149,21 @@ def get_valid_values(pm: "gentoopm.basepm.PMBase",
         f"Valid values for {package_spec} {token_type.name} group: {group}: "
         f"{values}")
     return values
+
+
+def split_use_expand(pm: typing.Optional["gentoopm.basepm.PMBase"],
+                     flag: str,
+                     ) -> tuple[typing.Optional[str], str]:
+    """Split given flag into (group, name) using USE_EXPAND"""
+
+    if pm is not None:
+        flag_uc = flag.upper()
+        # start with longest first, in case they overlap
+        for group in sorted((group.name
+                             for group in pm.stack.use_expand.values()
+                             if group.prefixed),
+                            key=lambda x: -len(x)):
+            if flag_uc.startswith(f"{group}_"):
+                return (group, flag[len(group)+1:])
+
+    return (None, flag)
