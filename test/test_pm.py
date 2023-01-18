@@ -106,6 +106,10 @@ class MockedPM:
             "riscv-linux": ArchDesc(name="riscv-linux", stability=None),
         }
         global_use = {"baz": None, "fjord": None}
+        license_groups = {
+            "FSF-APPROVED": None,
+            "OSI-APPROVED": None,
+        }
         licenses = {
             "Apache-2.0": None,
             "BSD": None,
@@ -165,7 +169,7 @@ def test_match_package_no_pm_no_category(package):
      ("=app-foo/live-1", TokenType.KEYWORD, None,
       ["**"]),
      ("=app-foo/live-1", TokenType.LICENSE, None,
-      ["*", "Apache-2.0", "BSD", "MIT"]),
+      ["*", "@FSF-APPROVED", "@OSI-APPROVED", "Apache-2.0", "BSD", "MIT"]),
      ("=app-foo/live-1", TokenType.PROPERTY, None,
       ["*", "live"]),
      ("=app-foo/live-1", TokenType.RESTRICT, None,
@@ -180,7 +184,7 @@ def test_match_package_no_pm_no_category(package):
       ["*", "~*", "**", "~amd64", "amd64", "~loong", "riscv", "~riscv",
        "riscv-linux", "~riscv-linux"]),
      ("*/*", TokenType.LICENSE, None,
-      ["*", "Apache-2.0", "BSD"]),
+      ["*", "@FSF-APPROVED", "@OSI-APPROVED", "Apache-2.0", "BSD"]),
      ])
 def test_get_valid_values_pkg(package, token_type, group, expected):
     assert (get_valid_values(MockedPM(), package, token_type, group) ==

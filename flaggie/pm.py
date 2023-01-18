@@ -77,8 +77,7 @@ def get_valid_values(pm: "gentoopm.basepm.PMBase",
     values = set()
     values.add("**" if token_type == TokenType.KEYWORD else "*")
     if token_type == TokenType.LICENSE:
-        # TODO: add license groups
-        pass
+        values.update(f"@{name}" for name in pm.stack.license_groups)
 
     if package_spec == "*/*":
         if token_type == TokenType.USE_FLAG:
