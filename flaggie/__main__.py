@@ -164,8 +164,15 @@ def main(prog_name: str, *argv: str) -> int:
 
     pm = None
     if not args.no_package_manager:
-        import gentoopm
-        pm = gentoopm.get_package_manager()
+        try:
+            import gentoopm
+            pm = gentoopm.get_package_manager()
+        except Exception:
+            logging.warning(
+                "Package manager API init failed. You can disable package "
+                "manager integration using --no-package-manager, at the cost "
+                "of losing category and argument type guessing and validation")
+            raise
 
     portage_dir = args.config_root / "etc/portage"
     if not portage_dir.is_dir():
