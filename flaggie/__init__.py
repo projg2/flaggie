@@ -1,3 +1,3 @@
 """CLI mangler for Portage package.* configuration files"""
 
-__version__ = "0.99"
+__version__ = "0.99.0"
