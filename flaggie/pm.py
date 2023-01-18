@@ -16,6 +16,10 @@ if typing.TYPE_CHECKING:
     import gentoopm
 
 
+class MatchError(RuntimeError):
+    pass
+
+
 def match_package(pm: typing.Optional["gentoopm.basepm.PMBase"],
                   package_spec: str,
                   ) -> str:
@@ -36,12 +40,17 @@ def match_package(pm: typing.Optional["gentoopm.basepm.PMBase"],
         return package_spec
 
     parsed = pm.Atom(package_spec)
-    match = pm.stack.select(parsed)
+    matched = frozenset(str(pkg.key) for pkg in pm.stack.filter(parsed))
+    if not matched:
+        raise MatchError(f"{package_spec!r} matched no packages")
+    if len(matched) > 1:
+        raise MatchError(
+            f"{package_spec!r} is ambigous, matched {', '.join(matched)}")
+
     if parsed.key.category is None:
         # if user did not specify the category, copy it from the match
         # TODO: have gentoopm provide a better API for modifying atoms?
-        return package_spec.replace(str(parsed.key.package),
-                                    str(match.key))
+        return package_spec.replace(str(parsed.key.package), str(*matched))
 
     return package_spec
 

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from flaggie.config import TokenType
 from flaggie.pm import (match_package, get_valid_values, split_use_expand,
+                        MatchError,
                         )
 
 import pytest
@@ -54,11 +55,15 @@ class MockedPM:
             assert "/*" not in atom
             self._atom = atom
 
+        def __str__(self) -> str:
+            return self._atom
+
         @property
         def key(self):
-            if "/" in self._atom:
-                return self._key("app-foo", "bar")
-            return self._key(None, "bar")
+            key = self._atom.lstrip("<>=~").rstrip("-0123456789")
+            if "/" in key:
+                return self._key(*key.split("/", 1))
+            return self._key(None, key)
 
         @property
         def keywords(self):
@@ -86,15 +91,21 @@ class MockedPM:
 
     class stack:
         @staticmethod
-        def select(atom: "MockedPM.Atom") -> "MockedPM.Atom":
-            if "bar" not in atom._atom:
-                raise ValueError("ENOENT")
-            return MockedPM.Atom("app-foo/bar")
-
-        @staticmethod
-        def filter(atom: str) -> list["MockedPM.Atom"]:
+        def filter(atom: typing.Union["MockedPM.Atom", str],
+                   ) -> list["MockedPM.Atom"]:
+            atom = str(atom)
             if atom.startswith("="):
                 return [MockedPM.Atom(atom)]
+            if atom == "enoent":
+                return []
+            if atom == "multiple":
+                return [
+                    MockedPM.Atom("app-foo/multi"),
+                    MockedPM.Atom("app-bar/multi"),
+                ]
+            atom = atom.lstrip("<>=").rstrip("-0123456789")
+            if "/" not in atom:
+                atom = f"app-foo/{atom}"
             return [
                 MockedPM.Atom(f"={atom}-1"),
                 MockedPM.Atom(f"={atom}-2"),
@@ -144,9 +155,10 @@ def test_match_package_expand(package):
             package.replace("bar", "app-foo/bar"))
 
 
-def test_match_package_expand_raise():
-    with pytest.raises(ValueError):
-        match_package(MockedPM(), "nonexistent")
+@pytest.mark.parametrize("pkg", ["enoent", "multiple"])
+def test_match_package_expand_raise(pkg):
+    with pytest.raises(MatchError):
+        match_package(MockedPM(), pkg)
 
 
 @pytest.mark.parametrize("package", SHORT_SPECS + ["*"])

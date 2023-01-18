@@ -19,6 +19,7 @@ from flaggie.config import (TokenType, find_config_files, read_config_files,
                             )
 from flaggie.mangle import mangle_flag
 from flaggie.pm import (match_package, get_valid_values, split_use_expand,
+                        MatchError,
                         )
 
 
@@ -194,11 +195,11 @@ def main(prog_name: str, *argv: str) -> int:
         def expand_package(pkg: str) -> str:
             try:
                 return match_package(pm, pkg)
-            except Exception as err:
+            except MatchError as err:
                 if not args.force:
-                    argp.error(f"Package {pkg!r} invalid: {err}")
+                    argp.error(str(err))
                 else:
-                    logging.warning(f"Package {pkg!r} invalid: {err}")
+                    logging.warning(str(err))
                 return pkg
 
         packages = list(map(expand_package, packages))
