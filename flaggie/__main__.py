@@ -198,11 +198,36 @@ def main(prog_name: str, *argv: str) -> int:
             operator, ns, flag = split_op(op)
             logging.debug(f"Operation: {operator}, ns: {ns}, flag: {flag}")
             if ns in (None, "auto"):
-                # FIXME
-                argp.error(
-                    f"{op}: Flag type guessing is not supported yet")
-            # FIXME: workaround for mypy, may become unnecessary once auto
-            # is implemented
+                if pm is None:
+                    argp.error(
+                        f"{op}: Flag type guessing requires package manager")
+
+                def get_matching_types() -> typing.Generator[
+                                            tuple[str, TokenType], None, None]:
+                    for package in packages:
+                        for ns, token_type in NAMESPACE_MAP.items():
+                            values = get_valid_values(pm, package, token_type,
+                                                      None)
+                            if values is None:
+                                argp.error(
+                                    f"{op}: Flag type guessing not supported "
+                                    f"for {package}")
+                            if flag in values:
+                                yield (ns, token_type)
+
+                matched_types = set(get_matching_types())
+                if not matched_types:
+                    argp.error(
+                        f"{op}: Argument not recognized as any type, pass "
+                        f"e.g. use::{flag} to force one")
+                elif len(matched_types) > 1:
+                    names = sorted(x[0] for x in matched_types)
+                    argp.error(
+                        f"{op}: Argument matches multiple token types: "
+                        f"{', '.join(names)}; pass e.g. {names[0]}::{flag} to "
+                        "disambiguate")
+                ns = next(iter(matched_types))[0]
+
             assert ns is not None
             token_type, group = namespace_into_token_group(ns)
             logging.debug(
