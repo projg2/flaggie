@@ -218,16 +218,14 @@ def main(prog_name: str, *argv: str) -> int:
                     logging.debug(f"Flag remapped into {group}: {flag}")
 
             for package in packages:
-                if pm is not None:
-                    valid_values = get_valid_values(pm, package, token_type,
-                                                    group)
-                    if valid_values is not None and flag not in valid_values:
-                        if not args.force:
-                            argp.error(
-                                f"{op}: argument incorrect for {package}")
-                        else:
-                            logging.warning(
-                                f"{op}: argument incorrect for {package}")
+                valid_values = get_valid_values(pm, package, token_type, group)
+                if valid_values is not None and flag not in valid_values:
+                    if not args.force:
+                        argp.error(
+                            f"{op}: argument incorrect for {package}")
+                    else:
+                        logging.warning(
+                            f"{op}: argument incorrect for {package}")
 
                 if operator == "+":
                     assert flag

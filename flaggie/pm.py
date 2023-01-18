@@ -46,12 +46,15 @@ def match_package(pm: typing.Optional["gentoopm.basepm.PMBase"],
     return package_spec
 
 
-def get_valid_values(pm: "gentoopm.basepm.PMBase",
+def get_valid_values(pm: typing.Optional["gentoopm.basepm.PMBase"],
                      package_spec: str,
                      token_type: TokenType,
                      group: typing.Optional[str],
                      ) -> typing.Optional[set[str]]:
     """Get a list of valid values for (package, token type, group)"""
+
+    if pm is None:
+        return None
 
     # env files are global by design
     if token_type == TokenType.ENV_FILE:
