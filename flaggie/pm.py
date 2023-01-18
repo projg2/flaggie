@@ -64,6 +64,7 @@ def match_package(pm: typing.Optional["gentoopm.basepm.PMBase"],
     return package_spec
 
 
+@functools.cache
 def get_valid_values(pm: typing.Optional["gentoopm.basepm.PMBase"],
                      package_spec: str,
                      token_type: TokenType,
@@ -172,6 +173,7 @@ def get_valid_values(pm: typing.Optional["gentoopm.basepm.PMBase"],
     return values
 
 
+@functools.cache
 def split_use_expand(pm: typing.Optional["gentoopm.basepm.PMBase"],
                      flag: str,
                      ) -> tuple[typing.Optional[str], str]:
