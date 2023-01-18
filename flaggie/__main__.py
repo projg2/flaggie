@@ -207,7 +207,8 @@ def main(prog_name: str, *argv: str) -> int:
             if ns in (None, "auto"):
                 if pm is None:
                     argp.error(
-                        f"{op}: Flag type guessing requires package manager")
+                        f"{op}: Flag type guessing requires package manager, "
+                        f"pass e.g. use::{flag} to specify type")
 
                 def get_matching_types() -> typing.Generator[
                                             tuple[str, TokenType], None, None]:
