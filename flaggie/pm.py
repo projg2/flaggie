@@ -105,8 +105,25 @@ def get_valid_values(pm: "gentoopm.basepm.PMBase",
                           if arch.stability != "testing")
         elif token_type == TokenType.LICENSE:
             values.update(pm.stack.licenses)
+        elif token_type == TokenType.PROPERTY:
+            # The PMs do not keep easily accessible lists of supported
+            # PROPERTIES/RESTRICT values.  We could use *-allowed
+            # from layout.conf but that would limit the available set
+            # to these explicitly supported in ::gentoo.  Hardcoding
+            # the complete set is also easier.
+
+            # PMS-defined values
+            values.update(["interactive", "live", "test_network"])
+        elif token_type == TokenType.RESTRICT:
+            # PMS-defined values
+            values.update(["fetch", "mirror", "strip", "test", "userpriv"])
+            # Additional Portage-defined values
+            values.update(["binchecks", "bindist", "installsources",
+                           "network-sandbox", "preserve-libs", "primaryuri",
+                           "splitdebug",
+                           ])
         else:
-            return None
+            assert False, f"Unhandled token type {token_type.name}"
     else:
         for pkg in pm.stack.filter(package_spec):
             if token_type == TokenType.USE_FLAG:
@@ -126,6 +143,8 @@ def get_valid_values(pm: "gentoopm.basepm.PMBase",
                 values.update(more_itertools.collapse(pkg.properties))
             elif token_type == TokenType.RESTRICT:
                 values.update(more_itertools.collapse(pkg.restrict))
+            else:
+                assert False, f"Unhandled token type {token_type.name}"
 
     logging.debug(
         f"Valid values for {package_spec} {token_type.name} group: {group}: "
