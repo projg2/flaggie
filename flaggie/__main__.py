@@ -108,12 +108,14 @@ can either be a USE_EXPAND name or one of the special values:
 """
 
 
-DIFF_DEFAULT = "git --no-pager diff --no-index --word-diff --"
-
-
 def main(prog_name: str, *argv: str) -> int:
     # same as argparse default, enforce for consistency
     help_width = shutil.get_terminal_size().columns - 2
+
+    if shutil.which("git"):
+        diff_default = "git --no-pager diff --no-index --word-diff --"
+    else:
+        diff_default = "diff -d -u --"
 
     argp = argparse.ArgumentParser(
         prog=os.path.basename(prog_name),
@@ -135,9 +137,9 @@ def main(prog_name: str, *argv: str) -> int:
                       action="store_true",
                       help="Enable debug output")
     argp.add_argument("--diff",
-                      default=DIFF_DEFAULT,
+                      default=diff_default,
                       help="Program used to diff configs "
-                           f"(default: {DIFF_DEFAULT})")
+                           f"(default: {diff_default})")
     argp.add_argument("--force",
                       action="store_true",
                       help="Force performing the action even if arguments "
