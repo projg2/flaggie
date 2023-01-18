@@ -25,7 +25,7 @@ test = [
 ]
 
 [project.scripts]
-pycargoebuild = "flaggie.__main__:entry_point"
+flaggie = "flaggie.__main__:entry_point"
 
 [project.urls]
 Homepage = "https://github.com/projg2/flaggie/"
