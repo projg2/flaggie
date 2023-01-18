@@ -114,7 +114,6 @@ def main(prog_name: str, *argv: str) -> int:
     # same as argparse default, enforce for consistency
     help_width = shutil.get_terminal_size().columns - 2
 
-    # FIXME: handle "-"-arguments cleanly without "--"
     argp = argparse.ArgumentParser(
         prog=os.path.basename(prog_name),
         usage="%(prog)s [options] request ...",
