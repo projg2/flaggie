@@ -1,6 +1,7 @@
 # (c) 2023 Michał Górny
 # Released under the terms of the MIT license
 
+import functools
 import logging
 import typing
 
@@ -18,6 +19,13 @@ if typing.TYPE_CHECKING:
 
 class MatchError(RuntimeError):
     pass
+
+
+@functools.cache
+def _filter_packages(pm: "gentoopm.basepm.PMBase",
+                     query: str,
+                     ) -> list["gentoopm.basepm.pkg.PMPackage"]:
+    return pm.stack.filter(query)
 
 
 def match_package(pm: typing.Optional["gentoopm.basepm.PMBase"],
@@ -40,7 +48,8 @@ def match_package(pm: typing.Optional["gentoopm.basepm.PMBase"],
         return package_spec
 
     parsed = pm.Atom(package_spec)
-    matched = frozenset(str(pkg.key) for pkg in pm.stack.filter(parsed))
+    matched = frozenset(str(pkg.key)
+                        for pkg in _filter_packages(pm, package_spec))
     if not matched:
         raise MatchError(f"{package_spec!r} matched no packages")
     if len(matched) > 1:
@@ -136,7 +145,7 @@ def get_valid_values(pm: typing.Optional["gentoopm.basepm.PMBase"],
         else:
             assert False, f"Unhandled token type {token_type.name}"
     else:
-        for pkg in pm.stack.filter(package_spec):
+        for pkg in _filter_packages(pm, package_spec):
             if token_type == TokenType.USE_FLAG:
                 for flag in pkg.use:
                     flag = flag.lstrip("+-")
