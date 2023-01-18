@@ -32,6 +32,11 @@ class UseExpand(typing.NamedTuple):
     values: dict[str, typing.Any]
 
 
+class ArchDesc(typing.NamedTuple):
+    name: str
+    stability: typing.Optional[str]
+
+
 class MockedPM:
     def __init__(self, config_root: typing.Optional[Path] = None):
         self.config_root = config_root
@@ -94,6 +99,12 @@ class MockedPM:
                 MockedPM.Atom(f"={atom}-2"),
             ]
 
+        arches = {
+            "amd64": ArchDesc(name="amd64", stability="stable"),
+            "loong": ArchDesc(name="loong", stability="testing"),
+            "riscv": ArchDesc(name="riscv", stability="transitional"),
+            "riscv-linux": ArchDesc(name="riscv-linux", stability=None),
+        }
         global_use = {"baz": None, "fjord": None}
         use_expand = {
             "GLOBAL": UseExpand(name="GLOBAL",
@@ -161,6 +172,9 @@ def test_match_package_no_pm_no_category(package):
       ["*", "val1", "val2", "val3"]),
      ("*/*", TokenType.USE_FLAG, "INVALID", []),
      ("*/*", TokenType.USE_FLAG, "UNPREFIXED", []),
+     ("*/*", TokenType.KEYWORD, None,
+      ["*", "~*", "**", "~amd64", "amd64", "~loong", "riscv", "~riscv",
+       "riscv-linux", "~riscv-linux"]),
      ])
 def test_get_valid_values_pkg(package, token_type, group, expected):
     assert (get_valid_values(MockedPM(), package, token_type, group) ==

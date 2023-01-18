@@ -97,6 +97,12 @@ def get_valid_values(pm: "gentoopm.basepm.PMBase",
                 # NB: we deliberately ignore use_expand, as flaggie
                 # is expected to have detected it and set the group
                 values.update(pm.stack.global_use)
+        elif token_type == TokenType.KEYWORD:
+            values.update(["*", "~*"])
+            arches = pm.stack.arches.values()
+            values.update(f"~{arch.name}" for arch in arches)
+            values.update(arch.name for arch in arches
+                          if arch.stability != "testing")
         else:
             return None
     else:
