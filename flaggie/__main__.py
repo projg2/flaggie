@@ -207,6 +207,10 @@ def main(prog_name: str, *argv: str) -> int:
         for op in ops:
             operator, ns, flag = split_op(op)
             logging.debug(f"Operation: {operator}, ns: {ns}, flag: {flag}")
+
+            if not flag:
+                argp.error(f"{op}: flag name required")
+
             if ns in (None, "auto"):
                 if pm is None:
                     argp.error(
@@ -243,9 +247,6 @@ def main(prog_name: str, *argv: str) -> int:
             token_type, group = namespace_into_token_group(ns)
             logging.debug(
                 f"Namespace mapped into {token_type.name}, group: {group}")
-
-            if not flag:
-                argp.error(f"{op}: flag name required")
 
             config_file = all_configs[token_type]
             if token_type == TokenType.USE_FLAG and group is None:
