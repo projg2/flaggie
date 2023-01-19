@@ -22,6 +22,9 @@ from flaggie.pm import (match_package, get_valid_values, split_use_expand,
                         MatchError,
                         )
 
+if typing.TYPE_CHECKING:
+    import gentoopm
+
 
 def split_arg_sets(argp: argparse.ArgumentParser, args: list[str]
                    ) -> typing.Generator[tuple[list[str], list[str]],
@@ -107,6 +110,40 @@ can either be a USE_EXPAND name or one of the special values:
   restrict::          package.accept_restrict entries
   use::               package.use entries
 """
+
+
+def guess_token_type(argp: argparse.ArgumentParser,
+                     pm: typing.Optional["gentoopm.BasePM"],
+                     op: str,
+                     flag: str,
+                     packages: list[str],
+                     ) -> str:
+    if pm is None:
+        argp.error(
+            f"{op}: Flag type guessing requires package manager, "
+            f"pass e.g. use::{flag} to specify type")
+
+    def get_matching_types() -> typing.Generator[tuple[str, TokenType],
+                                                 None, None]:
+        for package in packages:
+            for ns, token_type in NAMESPACE_MAP.items():
+                values = get_valid_values(pm, package, token_type, None)
+                if values is None:
+                    argp.error(f"{op}: Flag type guessing not supported "
+                               f"for {package}")
+                if flag in values:
+                    yield (ns, token_type)
+
+    matched_types = set(get_matching_types())
+    if not matched_types:
+        argp.error(f"{op}: Argument not recognized as any type, pass "
+                   f"e.g. use::{flag} to force one")
+    elif len(matched_types) > 1:
+        names = sorted(x[0] for x in matched_types)
+        argp.error(f"{op}: Argument matches multiple token types: "
+                   f"{', '.join(names)}; pass e.g. {names[0]}::{flag} to "
+                   "disambiguate")
+    return next(iter(matched_types))[0]
 
 
 def main(prog_name: str, *argv: str) -> int:
@@ -212,36 +249,7 @@ def main(prog_name: str, *argv: str) -> int:
                 argp.error(f"{op}: flag name required")
 
             if ns in (None, "auto"):
-                if pm is None:
-                    argp.error(
-                        f"{op}: Flag type guessing requires package manager, "
-                        f"pass e.g. use::{flag} to specify type")
-
-                def get_matching_types() -> typing.Generator[
-                                            tuple[str, TokenType], None, None]:
-                    for package in packages:
-                        for ns, token_type in NAMESPACE_MAP.items():
-                            values = get_valid_values(pm, package, token_type,
-                                                      None)
-                            if values is None:
-                                argp.error(
-                                    f"{op}: Flag type guessing not supported "
-                                    f"for {package}")
-                            if flag in values:
-                                yield (ns, token_type)
-
-                matched_types = set(get_matching_types())
-                if not matched_types:
-                    argp.error(
-                        f"{op}: Argument not recognized as any type, pass "
-                        f"e.g. use::{flag} to force one")
-                elif len(matched_types) > 1:
-                    names = sorted(x[0] for x in matched_types)
-                    argp.error(
-                        f"{op}: Argument matches multiple token types: "
-                        f"{', '.join(names)}; pass e.g. {names[0]}::{flag} to "
-                        "disambiguate")
-                ns = next(iter(matched_types))[0]
+                ns = guess_token_type(argp, pm, op, flag, packages)
 
             assert ns is not None
             token_type, group = namespace_into_token_group(ns)
