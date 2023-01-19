@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from flaggie.config import ConfigFile, ConfigLine, parse_config_file
-from flaggie.mangle import (mangle_flag, WildcardEntryError,
+from flaggie.mangle import (mangle_flag, remove_flag, WildcardEntryError,
                             package_pattern_to_re, is_wildcard_package,
                             )
 
@@ -369,3 +369,81 @@ def test_package_pattern_to_re(pattern, expected):
      ])
 def test_is_wildcard_package(package, expected):
     assert is_wildcard_package(package) == expected
+
+
+@param_pkg()
+def test_remove_flag(package):
+    config = get_config(["*/* foo GROUP: foo",
+                         "",
+                         f"{package} foo bar GROUP: foo",
+                         "dev-foo/bar foo",
+                         f"{package} baz foo group_foo",
+                         f"{package} foo",
+                         ])
+    remove_flag(config, package, None, "foo")
+    assert get_modified_line_nos(config[0]) == {2, 4}
+    assert config[0].parsed_lines == [
+        ConfigLine("*/*", ["foo"], [("GROUP", ["foo"])]),
+        ConfigLine(),
+        ConfigLine(package, ["bar"], [("GROUP", ["foo"])]),
+        ConfigLine("dev-foo/bar", ["foo"]),
+        ConfigLine(package, ["baz", "group_foo"]),
+    ]
+
+
+@param_pkg()
+def test_remove_flag_in_group(package):
+    config = get_config(["*/* foo GROUP: foo",
+                         "",
+                         f"{package} foo bar GROUP: foo bar GROUP: foo",
+                         "dev-foo/bar foo",
+                         f"{package} baz foo group_foo",
+                         f"{package} group_foo GROUP: foo",
+                         ])
+    remove_flag(config, package, "group", "foo")
+    assert get_modified_line_nos(config[0]) == {2, 4}
+    assert config[0].parsed_lines == [
+        ConfigLine("*/*", ["foo"], [("GROUP", ["foo"])]),
+        ConfigLine(),
+        ConfigLine(package, ["foo", "bar"], [("GROUP", ["bar"])]),
+        ConfigLine("dev-foo/bar", ["foo"]),
+        ConfigLine(package, ["baz", "foo"]),
+    ]
+
+
+@param_pkg()
+def test_remove_all_in_group(package):
+    config = get_config(["*/* foo GROUP: foo",
+                         "",
+                         f"{package} foo bar GROUP: foo bar GROUP: foo",
+                         "dev-foo/bar foo",
+                         f"{package} baz foo group_foo",
+                         f"{package} group_foo GROUP: foo",
+                         ])
+    remove_flag(config, package, "group", None)
+    assert get_modified_line_nos(config[0]) == {2, 4}
+    assert config[0].parsed_lines == [
+        ConfigLine("*/*", ["foo"], [("GROUP", ["foo"])]),
+        ConfigLine(),
+        ConfigLine(package, ["foo", "bar"]),
+        ConfigLine("dev-foo/bar", ["foo"]),
+        ConfigLine(package, ["baz", "foo"]),
+    ]
+
+
+@param_pkg()
+def test_remove_all(package):
+    config = get_config(["*/* foo GROUP: foo",
+                         "",
+                         f"{package} foo bar GROUP: foo bar GROUP: foo",
+                         "dev-foo/bar foo",
+                         f"{package} baz foo group_foo",
+                         f"{package} group_foo GROUP: foo",
+                         ])
+    remove_flag(config, package, None, None)
+    assert get_modified_line_nos(config[0]) == set()
+    assert config[0].parsed_lines == [
+        ConfigLine("*/*", ["foo"], [("GROUP", ["foo"])]),
+        ConfigLine(),
+        ConfigLine("dev-foo/bar", ["foo"]),
+    ]

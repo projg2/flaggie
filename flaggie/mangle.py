@@ -41,6 +41,7 @@ def match_packages(config_files: list[ConfigFile],
     """
 
     for config_file in reversed(config_files):
+        initial_len = len(config_file.parsed_lines)
         for rev_no, line in enumerate(reversed(config_file.parsed_lines)):
             if line.package is None:
                 continue
@@ -52,7 +53,7 @@ def match_packages(config_files: list[ConfigFile],
                 continue
 
             # 1-based
-            line_no = len(config_file.parsed_lines) - rev_no
+            line_no = initial_len - rev_no
             yield (config_file, line_no, line)
 
 
@@ -246,3 +247,93 @@ def mangle_flag(config_files: list[ConfigFile],
         new_line = ConfigLine(package, [], [(prefix.upper(), [new_flag])])
 
     try_new_entry_after(new_line) or try_new_entry(new_line)
+
+
+def remove_flag(config_files: list[ConfigFile],
+                package: str,
+                prefix: typing.Optional[str],
+                name: typing.Optional[str],
+                ) -> None:
+    """
+    Remove all entries affecting the specified flag
+
+    config_files specifies the list of open config files to process.
+    package specifies the package name to modify, and can contain `*`
+    wildcards as accepted by package.* files.  prefix specifies the flag
+    group name (if applicable), or None, while name specifies the name
+    within the group, or None.
+
+    If prefix is specified without a name, then all entries affecting
+    the specific group are removed.  If neither prefix nor name are
+    specified, all entries for the specified package are removed.
+
+    Wildcard specifications within package and flag names are not
+    processed, that is only entries specifying exactly the same wildcard
+    are affected.  Therefore, e.g. name="*" will only remove the entry
+    for `*` and not all flags matching it.
+    """
+
+    if prefix is not None:
+        prefix_lc = prefix.lower()
+    if name is not None:
+        full_name = name if prefix is None else f"{prefix_lc}_{name}"
+
+    for config_file, line_no, line in match_packages(config_files, package,
+                                                     True):
+        logging.debug(f"Package entry found: {config_file.path}:{line_no} "
+                      f"{line.package}")
+
+        class shared:
+            matched = False
+
+        def filter_by_full(flag: str) -> bool:
+            if flag == full_name:
+                logging.debug(f"Removing {flag}")
+                shared.matched = True
+                return False
+            return True
+
+        def filter_by_prefix(flag: str) -> bool:
+            if flag.startswith(f"{prefix_lc}_"):
+                logging.debug(f"Removing {flag}")
+                shared.matched = True
+                return False
+            return True
+
+        def filter_by_name(flag: str) -> bool:
+            if flag == name:
+                logging.debug(f"Removing {prefix}: {flag}")
+                shared.matched = True
+                return False
+            return True
+
+        def filter_empty_groups(group: tuple[str, list[str]]) -> bool:
+            return bool(group[1]) or group[0].lower() != prefix_lc
+
+        if name is not None:
+            line.flat_flags = list(filter(filter_by_full, line.flat_flags))
+        elif prefix is not None:
+            line.flat_flags = list(filter(filter_by_prefix, line.flat_flags))
+        else:
+            logging.debug("Removing all flags")
+            line.flat_flags.clear()
+            line.grouped_flags.clear()
+            shared.matched = True
+
+        if prefix is not None:
+            for group, values in line.grouped_flags:
+                if group.lower() == prefix_lc:
+                    if name is not None:
+                        values[:] = list(filter(filter_by_name, values))
+                    else:
+                        values.clear()
+                        shared.matched = True
+            line.grouped_flags = list(filter(filter_empty_groups,
+                                             line.grouped_flags))
+
+        if shared.matched:
+            line.invalidate()
+            config_file.modified = True
+            # remove the lines that are now empty
+            if not line.flat_flags and not line.grouped_flags:
+                del config_file.parsed_lines[line_no - 1]
