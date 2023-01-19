@@ -109,6 +109,24 @@ def mangle_flag(config_files: list[ConfigFile],
                 name: str,
                 new_state: bool,
                 ) -> None:
+    """
+    Change the effective value of the specified flag
+
+    config_files specifies the list of open config files to process.
+    package specifies the package name to modify, and can contain `*`
+    wildcards as accepted by package.* files.  prefix specifies the flag
+    group name (if applicable), or None, while name specifies the name
+    within the group.  new_state specifies the expected state (True for
+    enabled, False for disabled).
+
+    The function tries to do the first possible action from the following:
+
+    1. Modify the existing entry specifying the flag state.
+    2. Append a new flag to the existing entry for the package.
+    3. Append a new entry for the package below the last entry found.
+    4. Append a new entry for the package to the end of the last file.
+    """
+
     pkg_is_wildcard = is_wildcard_package(package)
     full_name = name if prefix is None else f"{prefix.lower()}_{name}"
     new_state_sym = "" if new_state else "-"
