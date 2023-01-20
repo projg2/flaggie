@@ -2,6 +2,7 @@
 # Released under the terms of the MIT license
 
 import argparse
+import functools
 import logging
 import os.path
 import shlex
@@ -15,7 +16,7 @@ from functools import partial
 from pathlib import Path
 
 from flaggie.config import (TokenType, find_config_files, read_config_files,
-                            save_config_files,
+                            save_config_files, ConfigFile,
                             )
 from flaggie.mangle import mangle_flag, remove_flag
 from flaggie.pm import (match_package, get_valid_values, split_use_expand,
@@ -24,6 +25,32 @@ from flaggie.pm import (match_package, get_valid_values, split_use_expand,
 
 if typing.TYPE_CHECKING:
     import gentoopm
+
+
+class Operation(typing.NamedTuple):
+    function: typing.Callable[[list[ConfigFile],  # config_files
+                               str,  # package
+                               typing.Optional[str],  # prefix
+                               typing.Optional[str],  # flag
+                               ], None]
+    flag_required: bool
+    match_multiple_ns: bool
+
+
+OPERATOR_MAP = {
+    "+": Operation(function=functools.partial(mangle_flag, new_state=True),
+                   flag_required=True,
+                   match_multiple_ns=False,
+                   ),
+    "-": Operation(function=functools.partial(mangle_flag, new_state=False),
+                   flag_required=True,
+                   match_multiple_ns=False,
+                   ),
+    "%": Operation(function=remove_flag,
+                   flag_required=False,
+                   match_multiple_ns=True,
+                   ),
+}
 
 
 def split_arg_sets(argp: argparse.ArgumentParser, args: list[str]
@@ -36,9 +63,7 @@ def split_arg_sets(argp: argparse.ArgumentParser, args: list[str]
     for arg in args:
         if not arg:
             argp.error("Empty string in requests")
-        # TODO: replace the inline list when action handling is rewritten
-        # in main()
-        if arg[0] in ("+", "-", "%"):
+        if arg[0] in OPERATOR_MAP:
             ops.append(arg)
             continue
         if ops:
@@ -246,11 +271,16 @@ def main(prog_name: str, *argv: str) -> int:
             operator, arg_ns, flag = split_op(op)
             logging.debug(f"Operation: {operator}, ns: {arg_ns}, flag: {flag}")
 
-            if not flag and operator != "%":
+            try:
+                operation = OPERATOR_MAP[operator]
+            except KeyError:
+                argp.error(f"{op}: incorrect operation")
+
+            if operation.flag_required and not flag:
                 argp.error(f"{op}: flag name required")
 
             if arg_ns is None or arg_ns == "auto":
-                if operator == "%":
+                if operation.match_multiple_ns:
                     namespaces = list(NAMESPACE_MAP)
                 else:
                     assert flag is not None
@@ -286,16 +316,7 @@ def main(prog_name: str, *argv: str) -> int:
                                 logging.warning(
                                     f"{op}: argument incorrect for {package}")
 
-                    if operator == "+":
-                        assert flag
-                        mangle_flag(config_file, package, group, flag, True)
-                    elif operator == "-":
-                        assert flag
-                        mangle_flag(config_file, package, group, flag, False)
-                    elif operator == "%":
-                        remove_flag(config_file, package, group, flag)
-                    else:
-                        argp.error(f"{op}: incorrect operation")
+                    operation.function(config_file, package, group, flag)
 
     diff_prog = shlex.split(args.diff) if args.diff is not None else None
 
