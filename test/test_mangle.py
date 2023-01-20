@@ -11,6 +11,7 @@ import pytest
 from flaggie.config import ConfigFile, ConfigLine, parse_config_file
 from flaggie.mangle import (mangle_flag, remove_flag, WildcardEntryError,
                             package_pattern_to_re, is_wildcard_package,
+                            is_wildcard_flag, insert_sorted,
                             )
 
 
@@ -447,3 +448,37 @@ def test_remove_all(package):
         ConfigLine(),
         ConfigLine("dev-foo/bar", ["foo"]),
     ]
+
+
+@pytest.mark.parametrize(
+    "flag,expected",
+    [("foo", False),
+     ("*", True),
+     ("*foo", False),
+     ("foo*", False),
+     ("foo_*", True),
+     ("**", True),
+     ("~*", True),
+     ])
+def test_is_wildcard_flag(flag: str, expected: bool) -> None:
+    assert is_wildcard_flag(flag) == expected
+
+
+@pytest.mark.parametrize(
+    "flags,new_flag,expected",
+    [(["a", "c", "e"], "b", ["a", "b", "c", "e"]),
+     (["a", "c", "e"], "d", ["a", "c", "d", "e"]),
+     (["a", "c", "e"], "f", ["a", "c", "e", "f"]),
+     (["b", "c", "d"], "a", ["a", "b", "c", "d"]),
+     (["b", "*", "c"], "a", ["b", "*", "a", "c"]),
+     (["b", "*"], "a", ["b", "*", "a"]),
+     (["*"], "a", ["*", "a"]),
+     (["a"], "*", ["a", "*"]),
+     (["*", "a"], "*", ["*", "a", "*"]),
+     ])
+def test_insert_sorted(flags: list[str],
+                       new_flag: str,
+                       expected: list[str],
+                       ) -> None:
+    insert_sorted(flags, new_flag)
+    assert flags == expected

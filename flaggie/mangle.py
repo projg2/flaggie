@@ -24,6 +24,12 @@ def is_wildcard_package(package: str) -> bool:
     return "*" in package
 
 
+def is_wildcard_flag(flag: str) -> bool:
+    """Check if specified flag is a proper wildcard"""
+    # TODO: do we need to distinguish per token type?
+    return flag in ("*", "**", "~*") or flag.endswith("_*")
+
+
 def match_packages(config_files: list[ConfigFile],
                    package: str,
                    exact_match: bool,
@@ -104,6 +110,32 @@ class WildcardEntryError(Exception):
             "Adding wildcard entries other than */* is not supported")
 
 
+def insert_sorted(flags: list[str],
+                  new_flag: str,
+                  ) -> None:
+    """Attempt to insert flag to the list preserving sorting"""
+
+    new_flag_cmp = new_flag.lstrip("-")
+    if new_flag_cmp == "*":
+        flags.append(new_flag)
+        return
+
+    it = enumerate(reversed(flags))
+    prev = flags[-1].lstrip("-")
+    for i, flag in it:
+        flag = flag.lstrip("-")
+        if flag > prev:  # not sorted
+            break
+        elif is_wildcard_flag(flag):  # stop at wildcards
+            break
+        elif new_flag_cmp > flag:  # the flag should go after
+            break
+    else:
+        # insert at position 0
+        i += 1
+    flags.insert(len(flags) - i, new_flag)
+
+
 def mangle_flag(config_files: list[ConfigFile],
                 package: str,
                 prefix: typing.Optional[str],
@@ -156,7 +188,7 @@ def mangle_flag(config_files: list[ConfigFile],
                 return False
         return False
 
-    def try_appending() -> bool:
+    def try_inserting() -> bool:
         for config_file, line_no, line in match_packages(config_files, package,
                                                          pkg_is_wildcard):
             debug_common = (
@@ -167,7 +199,7 @@ def mangle_flag(config_files: list[ConfigFile],
             # wildcard entry
             if line.package != package:
                 logging.debug(
-                    f"{debug_common}, non-exact match, cannot append")
+                    f"{debug_common}, non-exact match, cannot insert")
                 return False
 
             if prefix is None:
@@ -178,15 +210,15 @@ def mangle_flag(config_files: list[ConfigFile],
                         f"{debug_common}, ends with flag group, looking "
                         "further")
                     continue
-                line.flat_flags.append(new_state_sym + full_name)
+                insert_sorted(line.flat_flags, new_state_sym + full_name)
                 logging.debug(
-                    f"{debug_common}, appending {new_state_sym}{full_name}")
+                    f"{debug_common}, inserting {new_state_sym}{full_name}")
             else:
                 for group, flags in line.grouped_flags:
                     if group.lower() == prefix.lower():
-                        flags.append(new_state_sym + name)
+                        insert_sorted(flags, new_state_sym + name)
                         logging.debug(
-                            f"{debug_common}, group {group}, appending "
+                            f"{debug_common}, group {group}, inserting "
                             f"{new_state_sym}{full_name}")
                         break
                 else:
@@ -237,7 +269,7 @@ def mangle_flag(config_files: list[ConfigFile],
         config_file.modified = True
         return True
 
-    if try_inplace() or try_appending():
+    if try_inplace() or try_inserting():
         return
 
     new_flag = new_state_sym + name
