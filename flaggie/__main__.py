@@ -34,20 +34,24 @@ class Operation(typing.NamedTuple):
                                typing.Optional[str],  # flag
                                ], None]
     flag_required: bool
+    verify_flag: bool
     match_multiple_ns: bool
 
 
 OPERATOR_MAP = {
     "+": Operation(function=functools.partial(mangle_flag, new_state=True),
                    flag_required=True,
+                   verify_flag=True,
                    match_multiple_ns=False,
                    ),
     "-": Operation(function=functools.partial(mangle_flag, new_state=False),
                    flag_required=True,
+                   verify_flag=True,
                    match_multiple_ns=False,
                    ),
     "%": Operation(function=remove_flag,
                    flag_required=False,
+                   verify_flag=False,
                    match_multiple_ns=True,
                    ),
 }
@@ -303,7 +307,7 @@ def main(prog_name: str, *argv: str) -> int:
                         logging.debug(f"Flag remapped into {group}: {flag}")
 
                 for package in packages:
-                    if flag is not None:
+                    if flag is not None and operation.verify_flag:
                         valid_values = get_valid_values(pm, package,
                                                         token_type, group)
                         if valid_values is None:
