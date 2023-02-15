@@ -214,6 +214,11 @@ def test_get_valid_values_env(tmp_path):
                             TokenType.ENV_FILE, None) == expected
 
 
+def test_get_valid_values_env_not_exist(tmp_path):
+    assert get_valid_values(MockedPM(tmp_path), "dev-foo/bar",
+                            TokenType.ENV_FILE, None) == set()
+
+
 @pytest.mark.parametrize(
     "flag,expected",
     [("foo", (None, "foo")),

@@ -81,7 +81,7 @@ def get_valid_values(pm: typing.Optional["gentoopm.basepm.PMBase"],
         if not env_dir.is_dir():
             logging.debug(f"{env_dir} is not a directory, no valid "
                           f"{token_type.name} values")
-            return None
+            return set()
         values = set(path.name for path in env_dir.iterdir() if path.is_file())
         logging.debug(f"Valid values for {token_type.name}: {values}")
         return values
