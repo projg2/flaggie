@@ -30,6 +30,12 @@ flaggie = "flaggie.__main__:entry_point"
 [project.urls]
 Homepage = "https://github.com/projg2/flaggie/"
 
+[tool.flit.sdist]
+include = [
+    "test",
+    "tox.ini",
+]
+
 [tool.mypy]
 disallow_untyped_defs = true
 no_implicit_optional = true
