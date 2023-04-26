@@ -179,6 +179,14 @@ def guess_token_type(argp: argparse.ArgumentParser,
 def main(prog_name: str, *argv: str) -> int:
     # same as argparse default, enforce for consistency
     help_width = shutil.get_terminal_size().columns - 2
+    if help_width > 10:
+        epilog = "\n".join(textwrap.fill(x,
+                                         width=help_width,
+                                         drop_whitespace=False,
+                                         replace_whitespace=False)
+                           for x in REQUEST_HELP.splitlines())
+    else:
+        epilog = REQUEST_HELP
 
     if shutil.which("git"):
         diff_default = "git --no-pager diff --no-index --word-diff --"
@@ -188,11 +196,7 @@ def main(prog_name: str, *argv: str) -> int:
     argp = argparse.ArgumentParser(
         prog=os.path.basename(prog_name),
         usage="%(prog)s [options] request ...",
-        epilog="\n".join(textwrap.fill(x,
-                                       width=help_width,
-                                       drop_whitespace=False,
-                                       replace_whitespace=False)
-                         for x in REQUEST_HELP.splitlines()),
+        epilog=epilog,
         formatter_class=partial(argparse.RawDescriptionHelpFormatter,
                                 width=help_width),
         )
