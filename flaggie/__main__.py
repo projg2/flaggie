@@ -194,6 +194,7 @@ def main(prog_name: str, *argv: str) -> int:
         diff_default = "diff -d -u --"
 
     argp = argparse.ArgumentParser(
+        add_help=False,
         prog=os.path.basename(prog_name),
         usage="%(prog)s [options] request ...",
         epilog=epilog,
@@ -216,6 +217,9 @@ def main(prog_name: str, *argv: str) -> int:
                       action="store_true",
                       help="Force performing the action even if arguments "
                            "are invalid")
+    argp.add_argument("--help",
+                      action="help",
+                      help="Print help text and exit")
     argp.add_argument("--no-diff",
                       action="store_const",
                       const=None,
