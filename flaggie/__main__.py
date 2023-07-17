@@ -15,6 +15,7 @@ import typing
 from functools import partial
 from pathlib import Path
 
+from flaggie import __version__
 from flaggie.config import (TokenType, find_config_files, read_config_files,
                             save_config_files, ConfigFile,
                             )
@@ -233,6 +234,10 @@ def main(prog_name: str, *argv: str) -> int:
     argp.add_argument("--pretend",
                       action="store_true",
                       help="Do not write any changes to the original files")
+    argp.add_argument("--version",
+                      action="version",
+                      help="Print program version and exit",
+                      version=f"flaggie {__version__}")
     args, request = argp.parse_known_args(argv)
 
     if args.debug:
