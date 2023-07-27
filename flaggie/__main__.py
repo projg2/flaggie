@@ -168,12 +168,13 @@ def guess_token_type(argp: argparse.ArgumentParser,
     matched_types = set(get_matching_types())
     if not matched_types:
         argp.error(f"{op}: Argument not recognized as any type, pass "
-                   f"e.g. use::{flag} to force one")
+                   f"e.g. use::{flag} to force one (for packages: "
+                   f"{packages})")
     elif len(matched_types) > 1:
         names = sorted(x[0] for x in matched_types)
         argp.error(f"{op}: Argument matches multiple token types: "
                    f"{', '.join(names)}; pass e.g. {names[0]}::{flag} to "
-                   "disambiguate")
+                   f"disambiguate (for packages: {packages})")
     return next(iter(matched_types))[0]
 
 
