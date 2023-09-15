@@ -176,7 +176,7 @@ def test_match_package_no_pm_no_category(package):
      ("app-foo/bar", TokenType.KEYWORD, None,
       ["*", "~*", "**", "~amd64", "amd64", "~riscv"]),
      ("=app-foo/bar-1", TokenType.KEYWORD, None,
-      ["*", "**", "amd64"]),
+      ["*", "~*", "**", "~amd64", "amd64"]),
      ("=app-foo/bar-2", TokenType.KEYWORD, None,
       ["~*", "**", "~amd64", "~riscv"]),
      ("=app-foo/live-1", TokenType.KEYWORD, None,

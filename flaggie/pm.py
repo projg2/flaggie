@@ -156,8 +156,13 @@ def get_valid_values(pm: typing.Optional["gentoopm.basepm.PMBase"],
                 for keyword in pkg.keywords:
                     if keyword.startswith("-"):
                         continue
-                    values.add("~*" if keyword.startswith("~") else "*")
                     values.add(keyword)
+                    values.add("~*")
+                    if not keyword.startswith("~"):
+                        values.add("*")
+                        # allow ~arch even if the package is stable already
+                        # https://github.com/projg2/flaggie/issues/42
+                        values.add(f"~{keyword}")
             elif token_type == TokenType.LICENSE:
                 values.update(more_itertools.collapse(pkg.license))
             elif token_type == TokenType.PROPERTY:
