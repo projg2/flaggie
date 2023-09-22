@@ -378,8 +378,8 @@ def test_remove_flag(package):
                          "",
                          f"{package} foo bar GROUP: foo",
                          "dev-foo/bar foo",
-                         f"{package} baz foo group_foo",
-                         f"{package} foo",
+                         f"{package} baz -foo group_foo",
+                         f"{package} -foo",
                          ])
     remove_flag(config, package, None, "foo")
     assert get_modified_line_nos(config[0]) == {2, 4}
@@ -396,10 +396,10 @@ def test_remove_flag(package):
 def test_remove_flag_in_group(package):
     config = get_config(["*/* foo GROUP: foo",
                          "",
-                         f"{package} foo bar GROUP: foo bar GROUP: foo",
+                         f"{package} foo bar GROUP: foo bar GROUP: -foo",
                          "dev-foo/bar foo",
                          f"{package} baz foo group_foo",
-                         f"{package} group_foo GROUP: foo",
+                         f"{package} -group_foo GROUP: foo",
                          ])
     remove_flag(config, package, "group", "foo")
     assert get_modified_line_nos(config[0]) == {2, 4}
@@ -416,7 +416,7 @@ def test_remove_flag_in_group(package):
 def test_remove_all_in_group(package):
     config = get_config(["*/* foo GROUP: foo",
                          "",
-                         f"{package} foo bar GROUP: foo bar GROUP: foo",
+                         f"{package} foo bar GROUP: foo -bar GROUP: foo",
                          "dev-foo/bar foo",
                          f"{package} baz foo group_foo",
                          f"{package} group_foo GROUP: foo",
@@ -436,10 +436,10 @@ def test_remove_all_in_group(package):
 def test_remove_all(package):
     config = get_config(["*/* foo GROUP: foo",
                          "",
-                         f"{package} foo bar GROUP: foo bar GROUP: foo",
+                         f"{package} foo -bar GROUP: foo bar GROUP: foo",
                          "dev-foo/bar foo",
-                         f"{package} baz foo group_foo",
-                         f"{package} group_foo GROUP: foo",
+                         f"{package} baz -foo group_foo",
+                         f"{package} group_foo GROUP: -foo",
                          ])
     remove_flag(config, package, None, None)
     assert get_modified_line_nos(config[0]) == set()

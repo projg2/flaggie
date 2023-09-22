@@ -319,21 +319,21 @@ def remove_flag(config_files: list[ConfigFile],
             matched = False
 
         def filter_by_full(flag: str) -> bool:
-            if flag == full_name:
+            if flag.lstrip("-") == full_name:
                 logging.debug(f"Removing {flag}")
                 shared.matched = True
                 return False
             return True
 
         def filter_by_prefix(flag: str) -> bool:
-            if flag.startswith(f"{prefix_lc}_"):
+            if flag.lstrip("-").startswith(f"{prefix_lc}_"):
                 logging.debug(f"Removing {flag}")
                 shared.matched = True
                 return False
             return True
 
         def filter_by_name(flag: str) -> bool:
-            if flag == name:
+            if flag.lstrip("-") == name:
                 logging.debug(f"Removing {prefix}: {flag}")
                 shared.matched = True
                 return False
